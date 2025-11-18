@@ -70,6 +70,33 @@ extractCellsAlongLine1_4Display_1 = Show(extractCellsAlongLine1_4, spreadSheetVi
 # export view
 ExportView('/home/bollerma/LESdata/fullCD_RCM2Domain/cleanCav/test21/test21_000/uvxData/US/yyUS.csv', view=spreadSheetView1)
 
+#### CALCULATES THE mag(delRho) ####
+
+# create a new 'Volcano Slice'
+volcanoSlice1 = VolcanoSlice(registrationName='VolcanoSlice1', Input=latestvolcano)
+
+# create a new 'Gradient'
+gradient1 = Gradient(registrationName='Gradient1', Input=volcanoSlice1)
+
+# rename source object
+RenameSource('DensityGradient', gradient1)
+
+# Properties modified on gradient1
+gradient1.ResultArrayName = 'delRho'
+
+# create a new 'Calculator'
+calculator1 = Calculator(registrationName='Calculator1', Input=gradient1)
+
+# rename source object
+RenameSource('magDelRho', calculator1)
+
+# set active source
+SetActiveSource(calculator1)
+
+# Properties modified on calculator1
+calculator1.ResultArrayName = 'magDelRho'
+calculator1.Function = 'mag(delRho)'
+
 #### ADDITIONAL MISC FUNCTIONS ####
 
 # Setting camera for views 
