@@ -2,11 +2,14 @@ from paraview.simple import *
 from paraview import servermanager
 import os
 
-# ---------------- USER SETTINGS ----------------
-INPUT_CASE = 
+
+#should be constant across radii
 INPUT_ROOT = r"E:\Boller CFD\VULCAN Data\SSWT"
-INPUT_FILE = 
-OUTPUT_DIR = r"D:\BollerCFD\PostProcessingOct2025\test\output"
+INPUT_DIR = "iteration-009\Plot_files\vulcan_solution.plt" 
+OUTPUT_ROOT = r"E:\Boller CFD\AVIATION CFD\output\VulcanProcessingOutput"
+
+# ---------------- USER SETTINGS - Controls the VULCAN case to be processed ----------------
+CASE = "CAVmix_SSWT_r0p5_noinject"
 
 # Slice positions
 YZ_SLICE_X = [-0.26, -0.2, -0.15, -0.1]   
@@ -25,6 +28,11 @@ VELOCITY_X_NAME = "Velocity_X"
 CAMERA_ZOOM = 0.25
 IMG_RESOLUTION = [1920, 1080]
 
+# ------------------------------------------------------------------------------------------
+
+# I/O Directory Management
+OUTPUT_DIR = f"{OUTPUT_ROOT}\{CASE}"
+INPUT_FILE = f"{INPUT_ROOT}\{CASE}\{INPUT_DIR}"
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
