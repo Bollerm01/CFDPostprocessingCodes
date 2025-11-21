@@ -3,7 +3,9 @@ from paraview import servermanager
 import os
 
 # ---------------- USER SETTINGS ----------------
-INPUT_FILE = r"D:\BollerCFD\PostProcessingOct2025\test\cleanCoarse20kv4.cgns"
+INPUT_CASE = 
+INPUT_ROOT = r"E:\Boller CFD\VULCAN Data\SSWT"
+INPUT_FILE = 
 OUTPUT_DIR = r"D:\BollerCFD\PostProcessingOct2025\test\output"
 
 # Slice positions
