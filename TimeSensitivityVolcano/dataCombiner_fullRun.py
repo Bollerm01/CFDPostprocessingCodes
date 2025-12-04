@@ -1,3 +1,7 @@
+# Code to take data from line probes, pull the last timesteps data, and concatenate to the probe point coordinates
+# Iterates through for all of the probes within a given simulation
+# Outputs to an .xlsx file for each probe
+
 import pandas as pd
 import re
 import os
