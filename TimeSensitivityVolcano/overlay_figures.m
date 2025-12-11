@@ -1,7 +1,7 @@
 %% ================================================================
 %  Script: overlay_figures.m
-%  Purpose: Load 3 MATLAB FIG files and overlay their line data using
-%           the original legend entries stored in each figure.
+%  Purpose: Load 3 MATLAB FIG files, extract their lines, preserve
+%           legend names, and assign a unique color to each line.
 % ================================================================
 
 clear; clc; close all;
@@ -34,24 +34,20 @@ for i = 1:3
     
     figFile = fullfile(path, files{i});
     
-    % Open figure invisibly (no GUI popup)
+    % Open figure invisibly
     fig = openfig(figFile, 'invisible');
     
-    % Find all lines
-    lines = findobj(fig, 'Type', 'line');
+    % Find all line objects (reverse order to preserve plotting order)
+    lineObjs = flipud(findobj(fig, 'Type', 'line'));
     
-    % Reverse them because MATLAB stores them backwards in children list
-    lines = flipud(lines);
-    
-    % Loop through all lines in the figure
-    for k = 1:length(lines)
-        allX{end+1} = lines(k).XData;
-        allY{end+1} = lines(k).YData;
+    for k = 1:length(lineObjs)
+        allX{end+1} = lineObjs(k).XData;
+        allY{end+1} = lineObjs(k).YData;
 
-        % Extract the original DisplayName (legend text)
-        label = lines(k).DisplayName;
+        % Extract legend label
+        label = lineObjs(k).DisplayName;
 
-        % If no DisplayName was set, fall back to a structured name
+        % If missing, create fallback label
         if isempty(label)
             [~, figName] = fileparts(files{i});
             label = sprintf('%s - Line %d', figName, k);
@@ -63,20 +59,29 @@ for i = 1:3
     close(fig);
 end
 
+%% --- Guarantee EXACTLY 12 different colors ---
+numLines = length(allX);
+
+if numLines ~= 12
+    error('Expected 12 lines (3 figures × 4 lines), but found %d.', numLines);
+end
+
+colorMap = lines(12);   % 12 visually distinct colors
+
 %% --- Plot the combined overlay ---
 figure('Color', 'w', 'Name', 'Overlay of All Lines');
 hold on; grid on;
 
-for n = 1:length(allX)
-    plot(allX{n}, allY{n}, 'LineWidth', 2);
+for n = 1:12
+    plot(allX{n}, allY{n}, 'LineWidth', 2, 'Color', colorMap(n,:));
 end
 
-title('Pressure Test Overlay', 'Interpreter','none');
+title('Overlay of Test 1-12 Pressure Data', 'Interpreter','none');
 xlabel('Pressure (Pa)');
 ylabel('Y');
 
-% Use original legend names
 legend(allLabels, 'Interpreter','none', 'Location','bestoutside');
 
-disp('Overlay plot created with original legend entries.');
+disp('Overlay plot created with 12 unique colors.');
+
 
