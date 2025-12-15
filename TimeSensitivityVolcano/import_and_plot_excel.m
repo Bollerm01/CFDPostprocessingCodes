@@ -18,30 +18,51 @@ function import_and_plot_excel()
 
     %% --- List subfolders (expect 6) ---
     folderInfo = dir(mainFolder);
-    subfolders = folderInfo([folderInfo.isdir] & ~ismember({folderInfo.name}, {'.','..'}));
+    subfolders = folderInfo([folderInfo.isdir] & ...
+                            ~ismember({folderInfo.name},{'.','..'}));
 
     if numel(subfolders) ~= 6
         error('Expected exactly 6 subfolders, but found %d.', numel(subfolders));
     end
 
-    %% --- Loop through each folder ---
+    %% --- Ask user for number of Excel files (constant across folders) ---
+    answer = inputdlg( ...
+        'Number of Excel files in EACH subfolder:', ...
+        'Excel File Count', ...
+        [1 50], ...
+        {'4'} );
+
+    if isempty(answer)
+        disp('User cancelled file count input.');
+        return;
+    end
+
+    nFiles = str2double(answer{1});
+
+    if isnan(nFiles) || nFiles <= 0 || mod(nFiles,1) ~= 0
+        error('Number of Excel files must be a positive integer.');
+    end
+
+    %% --- Loop through each subfolder ---
     for f = 1:6
         folderPath = fullfile(mainFolder, subfolders(f).name);
 
         fprintf('\n=============================\n');
         fprintf('Processing Folder %d: %s\n', f, subfolders(f).name);
+        fprintf('Expected Excel files: %d\n', nFiles);
         fprintf('=============================\n');
 
         %% --- Find Excel files ---
-        excelFiles = dir(fullfile(folderPath, '*.xlsx'));
+        excelFiles = dir(fullfile(folderPath,'*.xlsx'));
         excelFiles = [excelFiles; dir(fullfile(folderPath,'*.xls'))];
 
-        if numel(excelFiles) ~= 4
-            error('Folder "%s" must contain exactly 4 Excel files.', subfolders(f).name);
+        if numel(excelFiles) ~= nFiles
+            error('Folder "%s" must contain exactly %d Excel files (found %d).', ...
+                  subfolders(f).name, nFiles, numel(excelFiles));
         end
 
         files = {excelFiles.name};
-        path = folderPath;
+        path  = folderPath;
 
         %% --- Prefix based on first file ---
         [~, nameOnly] = fileparts(files{1});
@@ -49,12 +70,12 @@ function import_and_plot_excel()
         savePrefix = tokens{1};
 
         %% --- Load data ---
-        Y  = cell(1,4);
-        M  = cell(1,4);
-        P  = cell(1,4);
-        Vx = cell(1,4);
+        Y  = cell(1,nFiles);
+        M  = cell(1,nFiles);
+        P  = cell(1,nFiles);
+        Vx = cell(1,nFiles);
 
-        for i = 1:4
+        for i = 1:nFiles
             T = readtable(fullfile(path, files{i}));
             Y{i}  = T.y;
             M{i}  = T.machnumberavg;
@@ -62,13 +83,13 @@ function import_and_plot_excel()
             Vx{i} = T.velocityxavg;
         end
 
-        %% --- Create output subfolder for this run ---
+        %% --- Create output subfolder ---
         saveSub = fullfile(outFolder, subfolders(f).name);
         if ~isfolder(saveSub)
             mkdir(saveSub);
         end
 
-        %% --- Generate plots (using helper function) ---
+        %% --- Generate plots ---
         save_overlay(M, Y, files, savePrefix, saveSub, ...
                      'machnumberavg', 'Overlay: Mach Number vs y', 'mach');
 
@@ -88,17 +109,16 @@ end
 
 
 
+
 %%                 Helper Function (Subfunction)
 function save_overlay(xData, yData, files, savePrefix, saveFolder, xLabel, titleText, tag)
-    %
-    % This helper function is now fully independent:
-    % ALL needed variables are passed in as arguments.
-    %
 
     fig = figure('Visible','on');
     hold on; grid on;
 
-    for k = 1:4
+    nCurves = numel(xData);
+
+    for k = 1:nCurves
         plot(xData{k}, yData{k}, 'LineWidth', 2);
     end
 
@@ -108,13 +128,15 @@ function save_overlay(xData, yData, files, savePrefix, saveFolder, xLabel, title
     legend(files, 'Interpreter','none', 'Location','northwest');
 
     % Save FIG
-    saveas(fig, fullfile(saveFolder, sprintf('%s_%s.fig', savePrefix, tag)),'fig');
+    saveas(fig, fullfile(saveFolder, sprintf('%s_%s.fig', savePrefix, tag)), 'fig');
 
     % Save JPEG
-    print(fig, fullfile(saveFolder, sprintf('%s_%s.jpg', savePrefix, tag)),'-djpeg', '-r300');
+    print(fig, fullfile(saveFolder, sprintf('%s_%s.jpg', savePrefix, tag)), ...
+          '-djpeg','-r300');
 
     close(fig);
 end
+
 
 
 
