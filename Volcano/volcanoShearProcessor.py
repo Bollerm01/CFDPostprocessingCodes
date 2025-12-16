@@ -191,4 +191,4 @@ if ENABLE_SCHLIEREN:
             create_slice(calc, [0,0,z], [0,0,1], name,
                          f"XZ_z{z:+0.5f}_{name}.png")
 
-print("\n✅ Schlieren-style density gradient slices completed.")
+print("\n Schlieren-style density gradient slices completed.")
