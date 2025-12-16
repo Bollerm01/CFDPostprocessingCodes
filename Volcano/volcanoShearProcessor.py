@@ -134,39 +134,49 @@ def create_slice(input_src, origin, normal, scalar, fname):
     view.Background = BACKGROUND_COLOR
     view.UseColorPaletteForBackground = 0
 
+    # ---- VolcanoSlice (NO SliceType!) ----
     sl = VolcanoSlice(Input=input_src)
     sl.MinMaxField = scalar
     sl.InterpolatedField = scalar
     sl.Crinkle = 0
-    sl.SliceType = "Plane"
-    sl.SliceType.Origin = origin
-    sl.SliceType.Normal = normal
+
+    # VolcanoSlice-specific plane controls
+    sl.Normal = normal
+    sl.Origin = origin
+
     sl.UpdatePipeline()
 
     disp = Show(sl, view)
     disp.Representation = "Surface"
+
     apply_colormap(scalar, disp, view)
 
+    # ---- Camera ----
     cam = view.GetActiveCamera()
     view.CameraParallelProjection = 1
     view.CameraParallelScale = CAMERA_PARALLEL_SCALE
 
-    if normal == [1, 0, 0]:
-        cam.SetPosition(origin[0] + 1, 0, 0)
+    if normal == [1, 0, 0]:  # YZ
+        cam.SetPosition(origin[0] + 1.0, 0.0, 0.0)
         cam.SetFocalPoint(origin)
         cam.SetViewUp(0, 0, 1)
-    else:
-        cam.SetPosition(0, 0, origin[2] + 1)
+    elif normal == [0, 0, 1]:  # XZ
+        cam.SetPosition(0.0, 0.0, origin[2] + 1.0)
         cam.SetFocalPoint(origin)
         cam.SetViewUp(0, 1, 0)
 
+    # ---- Label ----
     label = add_slice_label(view, fname)
 
     RenderAllViews()
-    SaveScreenshot(os.path.join(OUTPUT_DIR, fname), view, ImageResolution=IMG_RES)
+    SaveScreenshot(os.path.join(OUTPUT_DIR, fname),
+                   view, ImageResolution=IMG_RES)
 
+    # ---- Cleanup ----
     Delete(label)
+    Hide(sl, view)
     Delete(sl)
+
 
 # ============================================================
 # ===================== GENERATE SLICES =======================
