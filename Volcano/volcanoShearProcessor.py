@@ -48,7 +48,7 @@ LABEL_FONT_SIZE = 18
 LABEL_COLOR = [0, 0, 0]
 LABEL_BG_COLOR = [1, 1, 1]
 LABEL_BG_OPACITY = 0.6
-LABEL_POSITION = "UpperLeftCorner"
+LABEL_POSITION = "Upper Left Corner"
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
@@ -111,18 +111,25 @@ def apply_colormap(array_name, display, view):
 # ============================================================
 
 def add_slice_label(view, output_name):
-    txt = Text()
-    txt.Text = os.path.splitext(output_name)[0]
 
-    disp = Show(txt, view)
-    disp.FontSize = LABEL_FONT_SIZE
-    disp.Color = LABEL_COLOR
-    disp.WindowLocation = LABEL_POSITION
-    disp.UseBackgroundColor = 1
-    disp.BackgroundColor = LABEL_BG_COLOR
-    disp.BackgroundOpacity = LABEL_BG_OPACITY
+    label_text = os.path.splitext(output_name)[0]
+
+    txt = Text()
+    txt.Text = label_text
+
+    txtDisp = Show(txt, view)
+    txtDisp.FontSize = LABEL_FONT_SIZE
+    txtDisp.Color = LABEL_COLOR
+
+    # UPDATED enum (spaces required)
+    txtDisp.WindowLocation = LABEL_POSITION
+
+    txtDisp.UseBackgroundColor = 1
+    txtDisp.BackgroundColor = LABEL_BG_COLOR
+    txtDisp.BackgroundOpacity = LABEL_BG_OPACITY
 
     return txt
+
 
 # ============================================================
 # ================== SLICE FUNCTION ===========================
