@@ -146,7 +146,7 @@ def create_slice(input_src, origin, normal, scalar, fname):
 
     sl.UpdatePipeline()
 
-    disp = Show(sl, view)
+    disp = Show(sl, view, 'UnstructuredGridRepresentation')
     disp.Representation = "Surface"
 
     apply_colormap(scalar, disp, view)
@@ -169,8 +169,7 @@ def create_slice(input_src, origin, normal, scalar, fname):
     label = add_slice_label(view, fname)
 
     RenderAllViews()
-    SaveScreenshot(os.path.join(OUTPUT_DIR, fname),
-                   view, ImageResolution=IMG_RES)
+    SaveScreenshot(os.path.join(OUTPUT_DIR, fname), view, ImageResolution=IMG_RES)
 
     # ---- Cleanup ----
     Delete(label)
@@ -185,20 +184,16 @@ def create_slice(input_src, origin, normal, scalar, fname):
 # ---- Standard scalars ----
 for scalar in SCALARS:
     for x in YZ_SLICE_X:
-        create_slice(source, [x,0,0], [1,0,0], scalar,
-                     f"YZ_x{x:+0.5f}_{scalar}.png")
+        create_slice(source, [x,0,0], [1,0,0], scalar, f"YZ_x{x:+0.5f}_{scalar}.png")
     for z in XZ_SLICE_Z:
-        create_slice(source, [0,0,z], [0,0,1], scalar,
-                     f"XZ_z{z:+0.5f}_{scalar}.png")
+        create_slice(source, [0,0,z], [0,0,1], scalar, f"XZ_z{z:+0.5f}_{scalar}.png")
 
 # ---- Schlieren slices ----
 if ENABLE_SCHLIEREN:
     for name, calc in calculators.items():
         for x in YZ_SLICE_X:
-            create_slice(calc, [x,0,0], [1,0,0], name,
-                         f"YZ_x{x:+0.5f}_{name}.png")
+            create_slice(calc, [x,0,0], [1,0,0], name, f"YZ_x{x:+0.5f}_{name}.png")
         for z in XZ_SLICE_Z:
-            create_slice(calc, [0,0,z], [0,0,1], name,
-                         f"XZ_z{z:+0.5f}_{name}.png")
+            create_slice(calc, [0,0,z], [0,0,1], name, f"XZ_z{z:+0.5f}_{name}.png")
 
 print("\n Schlieren-style density gradient slices completed.")
