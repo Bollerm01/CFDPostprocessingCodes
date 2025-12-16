@@ -108,7 +108,7 @@ registration_name = path_parts[-3] if len(path_parts) >= 3 else "volcano"
 
 vol = FileSeriesReader(registrationName=registration_name, FileNames=[INPUT_FILE])
 vol.CellArrayStatus = SCALARS + ([DENSITY_NAME] if ENABLE_SCHLIEREN else [])
-vol.UpdatePipeline()
+#vol.UpdatePipeline()
 
 source = vol
 
@@ -120,7 +120,8 @@ if ENABLE_SCHLIEREN:
     print("Creating density gradient pipeline...")
 
     grad = Gradient(Input=source)
-    grad.ScalarArray = ['POINTS', DENSITY_NAME]
+    #grad.ScalarArray = ['POINTS', DENSITY_NAME]
+    grad.ScalarArray =  DENSITY_NAME
     grad.ResultArrayName = "delRho"
 
     source = grad
