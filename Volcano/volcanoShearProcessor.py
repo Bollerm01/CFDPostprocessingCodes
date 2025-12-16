@@ -239,7 +239,12 @@ def create_slice(input_src, origin, normal, scalar, fname,
         view,
         ImageResolution=IMG_RES
     )
-
+    
+    # ---- Cleanup ----
+    Delete(label)
+    Hide(sl, view)
+    Delete(sl)
+    
     return sl
 
 
