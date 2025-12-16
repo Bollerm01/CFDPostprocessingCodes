@@ -46,8 +46,8 @@ COLORMAP_PRESET = "Cool to Warm (Extended)"
 # Label style
 LABEL_FONT_SIZE = 18
 LABEL_COLOR = [0, 0, 0]
-LABEL_BG_COLOR = [1, 1, 1, 1]
-LABEL_BG_OPACITY = 0.6
+LABEL_BG_COLOR = [1.0, 1.0, 1.0, 0.6]
+
 LABEL_POSITION = "Upper Left Corner"
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -125,7 +125,6 @@ def add_slice_label(view, output_name):
     txtDisp.WindowLocation = LABEL_POSITION
 
     txtDisp.BackgroundColor = LABEL_BG_COLOR
-    txtDisp.BackgroundOpacity = LABEL_BG_OPACITY
 
     return txt
 
