@@ -141,8 +141,8 @@ def create_slice(input_src, origin, normal, scalar, fname):
     sl.Crinkle = 0
 
     # VolcanoSlice-specific plane controls
-    sl.Normal = normal
-    sl.Origin = origin
+    sl.SliceNormal = normal
+    sl.SlicePoint = origin
 
     sl.UpdatePipeline()
 
