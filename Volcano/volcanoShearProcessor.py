@@ -43,6 +43,49 @@ CAMERA_PARALLEL_SCALE = 0.25
 IMG_RES = [1920, 1080]
 COLORMAP_PRESET = "Cool to Warm (Extended)"
 
+CAMERA_PRESETS = {
+
+    # ---------- XZ FARFIELD ----------
+    "XZ_FAR": {
+        "CameraPosition":     [1.4547914383436304, 0.05994982668344116, 5.011016610690195],
+        "CameraFocalPoint":   [1.4547914383436304, 0.05994982668344116, 0.0],
+        "CameraViewUp":       [0.0, 1.0, 0.0],
+        "ParallelScale":      0.7320925072135284,
+        "Colorbar": {
+            "Orientation": "Horizontal",
+            "Position":    [0.2899460916442047, 0.2630597014925373],
+            "Length":      0.33,
+        }
+    },
+
+    # ---------- XY ----------
+    "XY": {
+        "CameraPosition":     [2.7452049999995722, 0.08874126502707114, 0.0],
+        "CameraFocalPoint":   [2.1505799999995725, 0.08874126502707114, 0.0],
+        "CameraViewUp":       [0.0, 1.0, 0.0],
+        "ParallelScale":      0.11684418042846643,
+        "InteractionMode":    "2D",
+        "Colorbar": {
+            "Orientation": "Vertical",
+            "Position":    [0.6610512129380054, 0.3789552238805967],
+            "Length":      0.33,
+        }
+    },
+
+    # ---------- XZ NEARFIELD ----------
+    "XZ_NEAR": {
+        "CameraPosition":     [2.1922574427684838, 0.018226216790868725, 5.011192474629075],
+        "CameraFocalPoint":   [2.1922574427684838, 0.018226216790868725, 0.0],
+        "CameraViewUp":       [0.0, 1.0, 0.0],
+        "ParallelScale":      0.06142870916705136,
+        "Colorbar": {
+            "Orientation": "Horizontal",
+            "Position":    [0.3108355795148248, 0.14925373134328357],
+            "Length":      0.33,
+        }
+    }
+}
+
 # Label style
 LABEL_FONT_SIZE = 18
 LABEL_COLOR = [0, 0, 0]
@@ -90,6 +133,33 @@ if ENABLE_SCHLIEREN:
         calculators[name] = calc
 
 # ============================================================
+# ================== CAMERA FUNCTION ========================
+# ============================================================
+
+def apply_camera_and_colorbar(view, display, preset_name, scalar):
+
+    preset = CAMERA_PRESETS[preset_name]
+
+    view.CameraParallelProjection = 1
+    view.CameraPosition   = preset["CameraPosition"]
+    view.CameraFocalPoint = preset["CameraFocalPoint"]
+    view.CameraViewUp     = preset.get("CameraViewUp", [0, 1, 0])
+    view.CameraParallelScale = preset["ParallelScale"]
+
+    if "InteractionMode" in preset:
+        view.InteractionMode = preset["InteractionMode"]
+
+    # Colorbar
+    lut = GetColorTransferFunction(scalar)
+    display.SetScalarBarVisibility(view, True)
+    cb = GetScalarBar(lut, view)
+
+    cb.Orientation       = preset["Colorbar"]["Orientation"]
+    cb.WindowLocation    = "Any Location"
+    cb.Position          = preset["Colorbar"]["Position"]
+    cb.ScalarBarLength   = preset["Colorbar"]["Length"]
+
+# ============================================================
 # ================== COLORMAP FUNCTION ========================
 # ============================================================
 
@@ -133,59 +203,45 @@ def add_slice_label(view, output_name):
 # ================== SLICE FUNCTION ===========================
 # ============================================================
 
-def create_slice(input_src, origin, normal, scalar, fname):
+def create_slice(input_src, origin, normal, scalar, fname,
+                 plane="XZ", field_region="FAR"):
 
     view = GetActiveViewOrCreate("RenderView")
-    view.Background = BACKGROUND_COLOR
-    view.UseColorPaletteForBackground = 0
 
-    # ---- Create VolcanoSlice ----
     sl = VolcanoSlice(Input=input_src)
     sl.MinMaxField = scalar
     sl.InterpolatedField = scalar
     sl.Crinkle = 0
-
-    # VolcanoSlice plane definition (UPDATED)
     sl.SlicePoint  = origin
     sl.SliceNormal = normal
-
     sl.UpdatePipeline()
 
-    # ---- Explicit representation (REQUIRED) ----
     disp = Show(sl, view, 'UnstructuredGridRepresentation')
     disp.Representation = "Surface"
 
-    apply_colormap(scalar, disp, view)
+    ColorBy(disp, ('POINTS', scalar))
+    disp.RescaleTransferFunctionToDataRange(True, False)
 
-    # ---- Camera ----
-    cam = view.GetActiveCamera()
-    view.CameraParallelProjection = 1
-    view.CameraParallelScale = CAMERA_PARALLEL_SCALE
+    # -------- CAMERA SELECTION --------
+    if plane == "XZ":
+        preset = "XZ_NEAR" if field_region == "NEAR" else "XZ_FAR"
+    elif plane == "XY":
+        preset = "XY"
+    else:
+        raise ValueError("Unsupported plane")
 
-    if normal == [1, 0, 0]:      # YZ slice
-        cam.SetPosition(origin[0] + 1.0, 0.0, 0.0)
-        cam.SetFocalPoint(origin)
-        cam.SetViewUp(0, 0, 1)
-    elif normal == [0, 0, 1]:    # XZ slice
-        cam.SetPosition(0.0, 0.0, origin[2] + 1.0)
-        cam.SetFocalPoint(origin)
-        cam.SetViewUp(0, 1, 0)
+    apply_camera_and_colorbar(view, disp, preset, scalar)
 
-    # ---- Label ----
-    add_slice_label(view, fname)
-
-    # ---- FORCE render ----
     Render(view)
 
-    # ---- Save screenshot ----
     SaveScreenshot(
         os.path.join(OUTPUT_DIR, fname),
         view,
         ImageResolution=IMG_RES
     )
 
-    # ---- KEEP slice (do not delete) ----
     return sl
+
 
 
 
@@ -198,7 +254,11 @@ for scalar in SCALARS:
     for x in YZ_SLICE_X:
         create_slice(source, [x,0,0], [1,0,0], scalar, f"YZ_x{x:+0.5f}_{scalar}.png")
     for z in XZ_SLICE_Z:
-        create_slice(source, [0,0,z], [0,0,1], scalar, f"XZ_z{z:+0.5f}_{scalar}.png")
+        # Nearfield slices
+        create_slice(source, [0,0,z], [0,0,1], scalar, f"XZ_near_z{z:+0.5f}_{scalar}.png", plane="XZ", field_region="NEAR")
+        # Farfield slices
+        create_slice(source, [0,0,z], [0,0,1], scalar, f"XZ_far_z{z:+0.5f}_{scalar}.png", plane="XZ", field_region="FAR")
+print("\n Non-calculated slices completed.")
 
 # ---- Schlieren slices ----
 if ENABLE_SCHLIEREN:
@@ -206,6 +266,9 @@ if ENABLE_SCHLIEREN:
         for x in YZ_SLICE_X:
             create_slice(calc, [x,0,0], [1,0,0], name, f"YZ_x{x:+0.5f}_{name}.png")
         for z in XZ_SLICE_Z:
-            create_slice(calc, [0,0,z], [0,0,1], name, f"XZ_z{z:+0.5f}_{name}.png")
+            # Nearfield slice
+            create_slice(calc, [0,0,z], [0,0,1], name, f"XZ_near_z{z:+0.5f}_{name}.png", plane="XZ", field_region="NEAR")
+            # Farfield slice
+            create_slice(calc, [0,0,z], [0,0,1], name, f"XZ_far_z{z:+0.5f}_{name}.png", plane="XZ", field_region="FAR")
 
-print("\n Schlieren-style density gradient slices completed.")
+print("\n Schlieren slices completed.")
