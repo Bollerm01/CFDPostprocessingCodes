@@ -46,7 +46,7 @@ COLORMAP_PRESET = "Cool to Warm (Extended)"
 # Label style
 LABEL_FONT_SIZE = 18
 LABEL_COLOR = [0, 0, 0]
-LABEL_BG_COLOR = [1, 1, 1]
+LABEL_BG_COLOR = [1, 1, 1, 1]
 LABEL_BG_OPACITY = 0.6
 LABEL_POSITION = "Upper Left Corner"
 
