@@ -124,7 +124,6 @@ def add_slice_label(view, output_name):
     # UPDATED enum (spaces required)
     txtDisp.WindowLocation = LABEL_POSITION
 
-    txtDisp.UseBackgroundColor = 1
     txtDisp.BackgroundColor = LABEL_BG_COLOR
     txtDisp.BackgroundOpacity = LABEL_BG_OPACITY
 
