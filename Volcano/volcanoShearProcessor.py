@@ -116,10 +116,37 @@ source = vol
 # =============== SCHLIEREN GRADIENT PIPELINE =================
 # ============================================================
 
-if ENABLE_SCHLIEREN:
-    print("Creating density gradient pipeline...")
+def create_schlieren_gradient(slice_source, slice_name="Slice", result_name="delRho"):
+    """
+    Create a gradient and magnitude calculator on a Volcano slice for Schlieren.
+    
+    Parameters:
+        slice_source : ParaView slice object (VolcanoSlice)
+        slice_name   : Name for the gradient object
+        result_name  : Name for the magnitude result array
+    Returns:
+        calculator : Calculator object with magnitude of gradient
+    """
+    # create gradient on slice
+    gradient = Gradient(Input=slice_source)
+    gradient.ResultArrayName = result_name
+    RenameSource(f"{slice_name}_Gradient", gradient)
 
-    grad = Gradient(Input=source)
+    # create calculator to get magnitude
+    calculator = Calculator(Input=gradient)
+    calculator.ResultArrayName = f"mag{result_name}"
+    calculator.Function = f"mag({result_name})"
+    RenameSource(f"{slice_name}_MagGradient", calculator)
+
+    return gradient, calculator
+
+
+if ENABLE_SCHLIEREN:
+    
+    print("Creating density gradient pipeline...")
+    
+    # Commenting in case returning to
+    '''grad = Gradient(Input=source)
     grad.ScalarArray = ['POINTS', DENSITY_NAME]
     grad.ResultArrayName = "delRho"
 
@@ -131,7 +158,13 @@ if ENABLE_SCHLIEREN:
         calc.ResultArrayName = name
         calc.Function = expr
         calculators[name] = calc
+    '''
+    # create gradient and magnitude only on the slice
+    grad, calc = create_schlieren_gradient(sl, slice_name=f"Slice_{scalar}", result_name="delRho")
+    # use calc as the new data source for coloring
+    ColorBy(sl_disp, ('POINTS', 'magDelRho'))
 
+    
 # ============================================================
 # ================== CAMERA FUNCTION ========================
 # ============================================================
