@@ -108,7 +108,7 @@ registration_name = path_parts[-3] if len(path_parts) >= 3 else "volcano"
 
 vol = FileSeriesReader(registrationName=registration_name, FileNames=[INPUT_FILE])
 vol.CellArrayStatus = SCALARS + ([DENSITY_NAME] if ENABLE_SCHLIEREN else [])
-#vol.UpdatePipeline()
+vol.UpdatePipeline()
 
 source = vol
 
@@ -120,8 +120,7 @@ if ENABLE_SCHLIEREN:
     print("Creating density gradient pipeline...")
 
     grad = Gradient(Input=source)
-    #grad.ScalarArray = ['POINTS', DENSITY_NAME]
-    grad.ScalarArray =  DENSITY_NAME
+    grad.ScalarArray = ['POINTS', DENSITY_NAME]
     grad.ResultArrayName = "delRho"
 
     source = grad
@@ -260,7 +259,7 @@ for scalar in SCALARS:
         create_slice(source, [x,0,0], [1,0,0], scalar, f"YZ_x{x:+0.5f}_{scalar}.png")
     for z in XZ_SLICE_Z:
         # Nearfield slices
-        create_slice(source, [0,0,z], [0,0,1], scalar, f"XZ_near_z{z:+0.5f}_{scalar}.png", plane="XZ", field_region="NEAR")
+        #create_slice(source, [0,0,z], [0,0,1], scalar, f"XZ_near_z{z:+0.5f}_{scalar}.png", plane="XZ", field_region="NEAR")
         # Farfield slices
         create_slice(source, [0,0,z], [0,0,1], scalar, f"XZ_far_z{z:+0.5f}_{scalar}.png", plane="XZ", field_region="FAR")
 print("\n Non-calculated slices completed.")
@@ -272,7 +271,7 @@ if ENABLE_SCHLIEREN:
             create_slice(calc, [x,0,0], [1,0,0], name, f"YZ_x{x:+0.5f}_{name}.png")
         for z in XZ_SLICE_Z:
             # Nearfield slice
-            create_slice(calc, [0,0,z], [0,0,1], name, f"XZ_near_z{z:+0.5f}_{name}.png", plane="XZ", field_region="NEAR")
+            #create_slice(calc, [0,0,z], [0,0,1], name, f"XZ_near_z{z:+0.5f}_{name}.png", plane="XZ", field_region="NEAR")
             # Farfield slice
             create_slice(calc, [0,0,z], [0,0,1], name, f"XZ_far_z{z:+0.5f}_{name}.png", plane="XZ", field_region="FAR")
 
