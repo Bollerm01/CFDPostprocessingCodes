@@ -17,9 +17,8 @@ SCALARS = [
 ENABLE_SCHLIEREN = True
 DENSITY_NAME = "density"
 
-# Debug sweep (expand for full runs)
-YZ_SLICE_X = [2.011691]   # normal X
-XY_SLICE_Z = [0.0]        # normal Z
+YZ_SLICE_X = [2.011691]
+XY_SLICE_Z = [0.0]
 
 IMG_RES = [1920, 1080]
 COLORMAP_PRESET = "Cool to Warm (Extended)"
@@ -29,45 +28,39 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 # ============================================================
 # ===================== CAMERA PRESETS =======================
 # ============================================================
-# Names now reflect *physical planes*
 
 CAMERA_PRESETS = {
-    # XY plane (normal Z) — FAR
-    "XY_FAR": {
-        "CameraPosition":     [1.4547914383436304, 0.05994982668344116, 5.011016610690195],
-        "CameraFocalPoint":   [1.4547914383436304, 0.05994982668344116, 0.0],
-        "CameraViewUp":       [0.0, 1.0, 0.0],
-        "ParallelScale":      0.7320925072135284,
-        "Colorbar": {
-            "Orientation": "Horizontal",
-            "Position":    [0.2899460916442047, 0.2630597014925373],
-            "Length":      0.33,
-        }
-    },
-
-    # XY plane (normal Z) — NEAR
     "XY_NEAR": {
-        "CameraPosition":     [2.1922574427684838, 0.018226216790868725, 5.011192474629075],
-        "CameraFocalPoint":   [2.1922574427684838, 0.018226216790868725, 0.0],
-        "CameraViewUp":       [0.0, 1.0, 0.0],
-        "ParallelScale":      0.06142870916705136,
+        "CameraPosition":   [2.1922574427684838, 0.018226216790868725, 5.011192474629075],
+        "CameraFocalPoint": [2.1922574427684838, 0.018226216790868725, 0.0],
+        "CameraViewUp":     [0,1,0],
+        "ParallelScale":    0.06142870916705136,
         "Colorbar": {
             "Orientation": "Horizontal",
-            "Position":    [0.3108355795148248, 0.14925373134328357],
+            "Position":    [0.31, 0.15],
             "Length":      0.33,
         }
     },
-
-    # YZ plane (normal X)
+    "XY_FAR": {
+        "CameraPosition":   [1.4547914383436304, 0.05994982668344116, 5.011016610690195],
+        "CameraFocalPoint": [1.4547914383436304, 0.05994982668344116, 0.0],
+        "CameraViewUp":     [0,1,0],
+        "ParallelScale":    0.7320925072135284,
+        "Colorbar": {
+            "Orientation": "Horizontal",
+            "Position":    [0.29, 0.26],
+            "Length":      0.33,
+        }
+    },
     "YZ": {
-        "CameraPosition":     [2.7452049999995722, 0.08874126502707114, 0.0],
-        "CameraFocalPoint":   [2.1505799999995725, 0.08874126502707114, 0.0],
-        "CameraViewUp":       [0.0, 1.0, 0.0],
-        "ParallelScale":      0.11684418042846643,
-        "InteractionMode":    "2D",
+        "CameraPosition":   [2.745205, 0.0887413, 0.0],
+        "CameraFocalPoint": [2.15058,  0.0887413, 0.0],
+        "CameraViewUp":     [0,1,0],
+        "ParallelScale":    0.11684418,
+        "InteractionMode":  "2D",
         "Colorbar": {
             "Orientation": "Vertical",
-            "Position":    [0.6610512129380054, 0.3789552238805967],
+            "Position":    [0.66, 0.38],
             "Length":      0.33,
         }
     }
@@ -81,12 +74,16 @@ src = OpenDataFile(INPUT_FILE)
 src.CellArrayStatus = SCALARS + [DENSITY_NAME]
 
 view = GetActiveViewOrCreate("RenderView")
-view.Background = [1, 1, 1]
+view.Background = [1,1,1]
 view.CameraParallelProjection = 1
 
 # ============================================================
 # ===================== UTILITIES ============================
 # ============================================================
+
+def hide_all_scalar_bars():
+    for lut in GetColorTransferFunctions().values():
+        HideScalarBarIfNotNeeded(lut, view)
 
 def array_location(source, name):
     if source.GetPointDataInformation().GetArray(name):
@@ -96,12 +93,12 @@ def array_location(source, name):
     raise RuntimeError(f"Array '{name}' not found")
 
 def apply_camera_and_colorbar(lut, preset):
-    p = CAMERA_PRESETS[preset]
+    hide_all_scalar_bars()
 
-    view.CameraParallelProjection = 1
-    view.CameraPosition = p["CameraPosition"]
-    view.CameraFocalPoint = p["CameraFocalPoint"]
-    view.CameraViewUp = p.get("CameraViewUp", [0,1,0])
+    p = CAMERA_PRESETS[preset]
+    view.CameraPosition     = p["CameraPosition"]
+    view.CameraFocalPoint   = p["CameraFocalPoint"]
+    view.CameraViewUp       = p["CameraViewUp"]
     view.CameraParallelScale = p["ParallelScale"]
 
     if "InteractionMode" in p:
@@ -109,7 +106,7 @@ def apply_camera_and_colorbar(lut, preset):
 
     bar = GetScalarBar(lut, view)
     bar.Orientation = p["Colorbar"]["Orientation"]
-    bar.Position = p["Colorbar"]["Position"]
+    bar.Position    = p["Colorbar"]["Position"]
     bar.ScalarBarLength = p["Colorbar"]["Length"]
     bar.TitleFontSize = 18
     bar.LabelFontSize = 16
@@ -149,35 +146,40 @@ def create_slice(origin, normal, preset, fname, scalar, schlieren=False):
     sl.MinMaxField = scalar
     sl.Crinkle = 0
 
-    disp = Show(sl, view)
-    disp.Representation = "Surface"
-    disp.SetScalarBarVisibility(view, False)
+    if not schlieren:
+        disp = Show(sl, view)
+        loc = array_location(sl, scalar)
+        ColorBy(disp, (loc, scalar))
 
-    def render_and_save(array_name, src_obj):
-        loc = array_location(src_obj, array_name)
-        ColorBy(disp, (loc, array_name))
-
-        lut = GetColorTransferFunction(array_name)
+        lut = GetColorTransferFunction(scalar)
         lut.RescaleTransferFunctionToDataRange()
         lut.ApplyPreset(COLORMAP_PRESET, True)
 
         apply_camera_and_colorbar(lut, preset)
-        disp.SetScalarBarVisibility(view, True)
-
         Render(view)
-        SaveScreenshot(
-            os.path.join(OUTPUT_DIR, f"{fname}_{array_name}.png"),
-            view,
-            ImageResolution=IMG_RES
-        )
 
-    if not schlieren:
-        render_and_save(scalar, sl)
+        SaveScreenshot(os.path.join(OUTPUT_DIR, f"{fname}_{scalar}.png"),
+                       view, ImageResolution=IMG_RES)
         Hide(sl, view)
         return
 
+    # ---- Schlieren (each component gets its own display) ----
     for calc in schlieren_pipeline(sl):
-        render_and_save(calc.ResultArrayName, calc)
+        disp = Show(calc, view)
+        name = calc.ResultArrayName
+        loc = array_location(calc, name)
+
+        ColorBy(disp, (loc, name))
+        lut = GetColorTransferFunction(name)
+        lut.RescaleTransferFunctionToDataRange()
+        lut.ApplyPreset(COLORMAP_PRESET, True)
+
+        apply_camera_and_colorbar(lut, preset)
+        Render(view)
+
+        SaveScreenshot(os.path.join(OUTPUT_DIR, f"{fname}_{name}.png"),
+                       view, ImageResolution=IMG_RES)
+        Hide(calc, view)
 
     Hide(sl, view)
 
@@ -185,46 +187,19 @@ def create_slice(origin, normal, preset, fname, scalar, schlieren=False):
 # ===================== EXECUTION ============================
 # ============================================================
 
-# --- YZ slices (normal X) ---
 for s in SCALARS:
     for x in YZ_SLICE_X:
-        create_slice(
-            origin=[x,0,0],
-            normal=[1,0,0],
-            preset="YZ",
-            fname=f"YZ_x{x:+0.5f}",
-            scalar=s
-        )
+        create_slice([x,0,0], [1,0,0], "YZ", f"YZ_x{x:+0.5f}", s)
 
-# --- XY slices (normal Z), near / far ---
-for s in SCALARS:
     for z in XY_SLICE_Z:
-        create_slice(
-            [0,0,z], [0,0,1],
-            "XY_NEAR",
-            f"XY_near_z{z:+0.5f}",
-            s
-        )
-        create_slice(
-            [0,0,z], [0,0,1],
-            "XY_FAR",
-            f"XY_far_z{z:+0.5f}",
-            s
-        )
+        create_slice([0,0,z], [0,0,1], "XY_NEAR", f"XY_near_z{z:+0.5f}", s)
+        create_slice([0,0,z], [0,0,1], "XY_FAR",  f"XY_far_z{z:+0.5f}",  s)
 
 if ENABLE_SCHLIEREN:
     for z in XY_SLICE_Z:
-        create_slice(
-            [0,0,z], [0,0,1],
-            "XY_NEAR",
-            f"XY_near_z{z:+0.5f}_Schlieren",
-            DENSITY_NAME, True
-        )
-        create_slice(
-            [0,0,z], [0,0,1],
-            "XY_FAR",
-            f"XY_far_z{z:+0.5f}_Schlieren",
-            DENSITY_NAME, True
-        )
+        create_slice([0,0,z], [0,0,1], "XY_NEAR",
+                     f"XY_near_z{z:+0.5f}_Schlieren", DENSITY_NAME, True)
+        create_slice([0,0,z], [0,0,1], "XY_FAR",
+                     f"XY_far_z{z:+0.5f}_Schlieren",  DENSITY_NAME, True)
 
-print("\n✅ All slices rendered with physically correct camera preset names.")
+print("\nAll slices rendered correctly.")
