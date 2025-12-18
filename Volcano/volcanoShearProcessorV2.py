@@ -52,7 +52,7 @@ view.CameraParallelProjection = 1
 # ============================================================
 
 def hide_all_scalar_bars(view):
-    for lut in list(GetColorTransferFunctions().values()):
+    for lut in list(GetColorTransferFunction().values()):
         HideScalarBarIfNotNeeded(lut, view)
 
 def array_location(source, name):
