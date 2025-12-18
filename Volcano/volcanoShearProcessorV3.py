@@ -117,7 +117,7 @@ def apply_camera_and_colorbar(lut, preset, array_name):
     # --- Reset cached geometry ----
     bar.AutomaticLabelFormat = 0
     bar.UseCustomLabels = 0
-    bar.WindowLocation = "AnyLocation"
+    bar.WindowLocation = "Any Location"
     bar.ScalarBarThickness = bar.ScalarBarThickness  # forces refresh
 
     bar.Orientation = p["Colorbar"]["Orientation"]
