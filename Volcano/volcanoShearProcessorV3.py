@@ -200,7 +200,7 @@ def create_slice(origin, normal, preset, fname, scalar, schlieren=False):
 
     # ---- Schlieren (each component gets its own display) ----
     for calc in schlieren_pipeline(sl):
-        for sb in GetScalarBars(view).values():
+        for sb in GetScalarBar(view).values():
             sb.Visibility = 0
         disp = Show(calc, view)
         name = calc.ResultArrayName
