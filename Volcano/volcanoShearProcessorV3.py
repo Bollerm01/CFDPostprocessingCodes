@@ -122,22 +122,22 @@ def apply_camera_and_colorbar(lut, preset, array_name):
 def schlieren_pipeline(slice_src):
     grad = Gradient(Input=slice_src)
     grad.ResultArrayName = "delRho"
-    grad.UpdatePipeline()  
+    #grad.UpdatePipeline()  
 
     mag = Calculator(Input=grad)
     mag.ResultArrayName = "magDelRho"
     mag.Function = "mag(delRho)"
-    mag.UpdatePipeline()    
+    #mag.UpdatePipeline()    
 
     dx = Calculator(Input=grad)
     dx.ResultArrayName = "Schlieren_dRho_dX"
     dx.Function = "delRho[0]"
-    dx.UpdatePipeline()     
+    #dx.UpdatePipeline()     
 
     dy = Calculator(Input=grad)
     dy.ResultArrayName = "Schlieren_dRho_dY"
     dy.Function = "delRho[1]"
-    dy.UpdatePipeline()     
+    #dy.UpdatePipeline()     
 
     return [mag, dx, dy]
 
