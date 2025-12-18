@@ -81,9 +81,12 @@ view.CameraParallelProjection = 1
 # ===================== UTILITIES ============================
 # ============================================================
 
-def hide_all_scalar_bars():
-    for lut in GetColorTransferFunction().values():
+def hide_scalar_bar_for_array(array_name):
+    try:
+        lut = GetColorTransferFunction(array_name)
         HideScalarBarIfNotNeeded(lut, view)
+    except:
+        pass
 
 def array_location(source, name):
     if source.GetPointDataInformation().GetArray(name):
@@ -92,13 +95,13 @@ def array_location(source, name):
         return "CELLS"
     raise RuntimeError(f"Array '{name}' not found")
 
-def apply_camera_and_colorbar(lut, preset):
-    hide_all_scalar_bars()
+def apply_camera_and_colorbar(lut, preset, array_name):
+    hide_scalar_bar_for_array(array_name)
 
     p = CAMERA_PRESETS[preset]
-    view.CameraPosition     = p["CameraPosition"]
-    view.CameraFocalPoint   = p["CameraFocalPoint"]
-    view.CameraViewUp       = p["CameraViewUp"]
+    view.CameraPosition      = p["CameraPosition"]
+    view.CameraFocalPoint    = p["CameraFocalPoint"]
+    view.CameraViewUp        = p["CameraViewUp"]
     view.CameraParallelScale = p["ParallelScale"]
 
     if "InteractionMode" in p:
@@ -110,6 +113,7 @@ def apply_camera_and_colorbar(lut, preset):
     bar.ScalarBarLength = p["Colorbar"]["Length"]
     bar.TitleFontSize = 18
     bar.LabelFontSize = 16
+
 
 # ============================================================
 # ===================== SCHLIEREN ============================
@@ -155,7 +159,7 @@ def create_slice(origin, normal, preset, fname, scalar, schlieren=False):
         lut.RescaleTransferFunctionToDataRange()
         lut.ApplyPreset(COLORMAP_PRESET, True)
 
-        apply_camera_and_colorbar(lut, preset)
+        apply_camera_and_colorbar(lut, preset, scalar)
         Render(view)
 
         SaveScreenshot(os.path.join(OUTPUT_DIR, f"{fname}_{scalar}.png"),
@@ -174,7 +178,7 @@ def create_slice(origin, normal, preset, fname, scalar, schlieren=False):
         lut.RescaleTransferFunctionToDataRange()
         lut.ApplyPreset(COLORMAP_PRESET, True)
 
-        apply_camera_and_colorbar(lut, preset)
+        apply_camera_and_colorbar(lut, preset, name)
         Render(view)
 
         SaveScreenshot(os.path.join(OUTPUT_DIR, f"{fname}_{name}.png"),
