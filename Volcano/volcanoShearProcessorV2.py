@@ -106,7 +106,7 @@ def schlieren_pipeline(slice_src):
 
 def create_slice(origin, normal, plane, fname, scalar, schlieren=False):
 
-    sl = VolcanoSlice(Input=src)
+    sl = VolcanoSlice(registrationName=fname, Input=src)
     sl.SlicePoint = origin
     sl.SliceNormal = normal
     sl.InterpolatedField = scalar
