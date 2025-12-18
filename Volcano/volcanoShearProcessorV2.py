@@ -58,9 +58,9 @@ def hide_all_scalar_bars(view):
 def array_location(source, name):
     pd = source.GetPointDataInformation()
     cd = source.GetCellDataInformation()
-    if pd.HasArray(name):
+    if pd.GetArray(name) is not None:
         return "POINTS"
-    if cd.HasArray(name):
+    if cd.GetArray(name) is not None:
         return "CELLS"
     raise RuntimeError(f"Array '{name}' not found on points or cells")
 
