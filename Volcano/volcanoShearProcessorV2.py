@@ -90,15 +90,15 @@ def schlieren_pipeline(slice_src):
     mag.ResultArrayName = "magDelRho"
     mag.Function = "mag(delRho)"
 
+    dx = Calculator(Input=grad)
+    dx.ResultArrayName = "Schlieren_dRho_dX"
+    dx.Function = "delRho[0]"
+
     dy = Calculator(Input=grad)
     dy.ResultArrayName = "Schlieren_dRho_dY"
     dy.Function = "delRho[1]"
 
-    dz = Calculator(Input=grad)
-    dz.ResultArrayName = "Schlieren_dRho_dZ"
-    dz.Function = "delRho[2]"
-
-    return [mag, dy, dz]
+    return [mag, dx, dy]
 
 # ============================================================
 # ===================== SLICE ================================
