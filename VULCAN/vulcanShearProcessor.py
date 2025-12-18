@@ -40,172 +40,244 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 reader = CONVERGECFDCGNSReader(FileNames=[INPUT_FILE])
 reader.UpdatePipeline()
 
-# ---------------- CALCULATOR: Extract Velocity X-component ----------------
-calcUx = Calculator(Input=reader)
-calcUx.ResultArrayName = VELOCITY_X_NAME
-calcUx.Function = "Velocity[0]"  # Extract X-component (first column)
-calcUx.UpdatePipeline()
+# BEGIN VOLCANO TEMPLATE FOR LOGIC (CROSS COMPARE TO SHEARPROCESSORV3 FOR 1-to-1 CHANGES)
 
-# Use this as the source for all slices and lines
-source_for_processing = calcUx
+SCALARS = [
+    "reynoldsstressxx", "reynoldsstressyy", "reynoldsstresszz",
+    "reynoldsstressxy", "reynoldsstressxz", "reynoldsstressyz",
+    "velocityx", "velocityxavg", "tke", "pressureavg"
+]
 
-# ---------------- GLOBAL RANGE SCANNER ----------------
-def get_global_range(proxy, array_name, component=None):
-    data = servermanager.Fetch(proxy)
-    vmin, vmax = float('inf'), float('-inf')
+ENABLE_SCHLIEREN = True
+DENSITY_NAME = "density"
 
-    if data.IsA("vtkPartitionedDataSetCollection"):
-        n_top = data.GetNumberOfPartitionedDataSets()
-        for i in range(n_top):
-            n_parts = data.GetNumberOfPartitions(i)
-            for j in range(n_parts):
-                block = data.GetPartition(i, j)
-                if block is None: continue
-                pd = block.GetPointData()
-                for k in range(pd.GetNumberOfArrays()):
-                    arr = pd.GetArray(k)
-                    if not arr: continue
-                    if arr.GetName() == array_name:
-                        for t in range(arr.GetNumberOfTuples()):
-                            val = arr.GetTuple(t)[component] if component is not None else arr.GetTuple1(t)
-                            vmin = min(vmin, val)
-                            vmax = max(vmax, val)
-    return vmin, vmax
+# Debugging loop
+#YZ_SLICE_X = [2.011691]
+#XY_SLICE_Z = [0.0]
 
-global_ranges = {
-    PRESSURE_NAME: get_global_range(source_for_processing, PRESSURE_NAME),
-    VELOCITY_X_NAME: get_global_range(source_for_processing, VELOCITY_X_NAME),
-    VELMAG_NAME: get_global_range(source_for_processing, VELMAG_NAME)
+# full loop
+YZ_SLICE_X = [2.011691, 2.080109, 2.114318, 2.15057954, 2.16015806, 2.1690524, 2.1793151, 2.18889362, 2.19847214, 2.20736648, 2.216945, 2.307804104]
+XY_SLICE_Z = [-0.0381, 0.00, 0.0381]
+
+IMG_RES = [1920, 1080]
+COLORMAP_PRESET = "Cool to Warm (Extended)"
+
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+# ============================================================
+# ===================== CAMERA PRESETS =======================
+# ============================================================
+
+CAMERA_PRESETS = {
+    "XY_NEAR": {
+        "CameraPosition":   [2.1922574427684838, 0.018226216790868725, 5.011192474629075],
+        "CameraFocalPoint": [2.1922574427684838, 0.018226216790868725, 0.0],
+        "CameraViewUp":     [0,1,0],
+        "ParallelScale":    0.06142870916705136,
+        "Colorbar": {
+            "Orientation": "Horizontal",
+            "Position":    [0.31, 0.15],
+            "Length":      0.5, # was 0.33
+        }
+    },
+    "XY_FAR": {
+        "CameraPosition":   [1.25, 0.05994982668344116, 5.011016610690195], # was [1.4547914383436304, 0.05994982668344116, 5.011016610690195]
+        "CameraFocalPoint": [1.25, 0.05994982668344116, 0.0], # was [1.4547914383436304, 0.05994982668344116, 0.0]
+        "CameraViewUp":     [0,1,0],
+        "ParallelScale":    0.75, # was 0.7320925072135284, 0.8 for centered
+        "Colorbar": {
+            "Orientation": "Horizontal",
+            "Position":    [0.29, 0.26],
+            "Length":      0.5,
+        }
+    },
+    "YZ": {
+        "CameraPosition":   [2.745205, 0.0887413, 0.0],
+        "CameraFocalPoint": [2.15058,  0.0887413, 0.0],
+        "CameraViewUp":     [0,1,0],
+        "ParallelScale":    0.10, # was 0.11684418
+        "InteractionMode":  "2D",
+        "Colorbar": {
+            "Orientation": "Vertical",
+            "Position":    [0.80, 0.38],
+            "Length":      0.5,
+        }
+    }
 }
 
-print("\nGlobal variable ranges:")
-for k, v in global_ranges.items():
-    print(f"  {k}: {v}")
+# ============================================================
+# ===================== LOAD DATA ============================
+# ============================================================
 
-# ---------------- APPLY COLORMAP ----------------
-def apply_colormap(array_name, display):
-    # Fetch the color transfer function for the array
-    lut = GetColorTransferFunction(array_name)
-    pwf = GetOpacityTransferFunction(array_name)
+src = OpenDataFile(INPUT_FILE)
+src.CellArrayStatus = SCALARS + [DENSITY_NAME]
 
-    # Auto-rescale to current data
-    lut.RescaleTransferFunctionToDataRange()
-    pwf.RescaleTransferFunctionToDataRange()
+view = GetActiveViewOrCreate("RenderView")
+view.Background = [1,1,1]
+view.CameraParallelProjection = 1
 
-    # Apply to the display
-    view = GetActiveViewOrCreate('RenderView')
-    ColorBy(display, ('POINTS', array_name))
+# ============================================================
+# ===================== UTILITIES ============================
+# ============================================================
 
-    # Optional: use a journal-quality colormap
-    lut.ApplyPreset('Cool to Warm (Extended)', True)  # or 'Viridis (matplotlib)'
+def hide_scalar_bar_for_array(array_name):
+    try:
+        lut = GetColorTransferFunction(array_name)
+        HideScalarBarIfNotNeeded(lut, view)
+    except:
+        pass
 
-    # Scalar bar
+def array_location(source, name):
+    pd = source.GetPointDataInformation()
+    cd = source.GetCellDataInformation()
+    if pd.GetArray(name) is not None:
+        return "POINTS"
+    if cd.GetArray(name) is not None:
+        return "CELLS"
+    raise RuntimeError(f"Array '{name}' not found on points or cells")
+
+def apply_camera_and_colorbar(lut, preset, array_name):
+
+    p = CAMERA_PRESETS[preset]
+
+    # ---- Camera ----
+    view.CameraPosition      = p["CameraPosition"]
+    view.CameraFocalPoint    = p["CameraFocalPoint"]
+    view.CameraViewUp        = p["CameraViewUp"]
+    view.CameraParallelScale = p["ParallelScale"]
+
+    if "InteractionMode" in p:
+        view.InteractionMode = p["InteractionMode"]
+
+    # ---- Scalar bar ----
     bar = GetScalarBar(lut, view)
+    bar.Visibility = 1
+
+    # --- Reset cached geometry ----
+    bar.AutomaticLabelFormat = 0
+    bar.UseCustomLabels = 0
+    bar.WindowLocation = "Any Location"
+    bar.ScalarBarThickness = bar.ScalarBarThickness  # forces refresh
+
+    bar.Orientation = p["Colorbar"]["Orientation"]
+    bar.Position    = p["Colorbar"]["Position"]
+    bar.ScalarBarLength = p["Colorbar"]["Length"]
+
+    # ---- Title ----
     bar.Title = array_name
-    bar.Orientation = "Horizontal"
-    bar.Position = [0.25, 0.05]
-    bar.ScalarBarLength = 0.5
-    bar.TitleFontSize = 12
-    bar.LabelFontSize = 10
-    bar.TitleColor = [0, 0, 0]
-    bar.LabelColor = [0, 0, 0]
-    display.SetScalarBarVisibility(view, True)
+    bar.ComponentTitle = ""
 
-# ---------------- SLICE FUNCTION ----------------
-def make_slice(input_proxy, normal, origin, array_name, filename):
-    """
-    Create a slice, color it, orient camera, style scalar bar, and save image.
-    """
+    bar.TitleFontSize = 12 # was 18
+    bar.LabelFontSize = 10 # was 16
 
-    # Ensure we pass float tuples to ParaView properties
-    normal = tuple(float(x) for x in normal)
-    origin = tuple(float(x) for x in origin)
 
-    # --- Slice creation ---
-    sl = Slice(Input=input_proxy)
-    sl.SliceType = 'Plane'
-    sl.SliceType.Normal = normal
-    sl.SliceType.Origin = origin
-    sl.UpdatePipeline()
 
-    view = GetActiveViewOrCreate('RenderView')
-    #view.BackgroundTexture = None
-    #view.BackgroundColorMode = 'Single Color'
-    #view.Background = [1.0, 1.0, 1.0]
-    view.OrientationAxesVisibility = 1
-    SetViewProperties(
-        Background=[1, 1, 1],
-        UseColorPaletteForBackground = 0,
-    )
+# ============================================================
+# ===================== SCHLIEREN ============================
+# ============================================================
 
-    disp = Show(sl, view)
-    disp.Representation = 'Surface'
-    HideInteractiveWidgets(proxy=sl)
-    
+def schlieren_pipeline(slice_src):
+    # Ensure slice has produced point data
+    slice_src.UpdatePipeline()
 
-    apply_colormap(array_name, disp)
+    # ---- Gradient of density ----
+    grad = Gradient(Input=slice_src)
+    grad.ScalarArray = ['POINTS', DENSITY_NAME]
+    grad.ResultArrayName = "delRho"
+    grad.UpdatePipeline()
 
-    # --- Camera setup ---
-    cam = view.GetActiveCamera()
-    if normal == (1.0, 0.0, 0.0):  # YZ plane (-X view)
-        center_yz = [0.0, 0.06026, 0.0]
-        cam.SetPosition(1.0, center_yz[1], center_yz[2])
-        cam.SetFocalPoint(center_yz)
-        cam.SetViewUp(0.0, 0.0, 1.0)
-        cam.Roll(90)  # CCW rotation
-        view.CameraParallelProjection = 1
-        view.CameraParallelScale = 0.05
-    elif normal == (0.0, 0.0, 1.0):  # XY plane (side view)
-        center_xy = [-0.147222, 0.046904, 0.0]
-        cam.SetPosition(center_xy[0], center_xy[1], 1.0)
-        cam.SetFocalPoint(center_xy)
-        cam.SetViewUp(0.0, 1.0, 0.0)
-        view.CameraParallelProjection = 1
-        view.CameraParallelScale = 0.2  # zoom out more
+    # ---- |∇ρ| ----
+    mag = Calculator(Input=grad)
+    mag.ResultArrayName = "magDelRho"
+    mag.Function = "mag(delRho)"
+    mag.UpdatePipeline()
 
-    # --- Scalar bar styling ---
-    lut = GetColorTransferFunction(array_name)
-    disp.LookupTable = lut
-    sb = GetScalarBar(lut, view)
-    sb.TitleColor = [0, 0, 0]
-    sb.LabelColor = [0, 0, 0]
-    sb.TitleFontSize = 12
-    sb.LabelFontSize = 10
-    sb.ScalarBarThickness = 12
-    sb.ScalarBarLength = 0.50
-    sb.WindowLocation = 'Lower Center'
+    # ---- ∂ρ/∂x ----
+    dx = Calculator(Input=grad)
+    dx.ResultArrayName = "Schlieren_dRho_dX"
+    dx.Function = "delRho[0]"
+    dx.UpdatePipeline()
 
-    # --- Render and save ---
-    RenderAllViews()
-    SaveScreenshot(os.path.join(OUTPUT_DIR, filename), view, ImageResolution=IMG_RESOLUTION)
+    # ---- ∂ρ/∂y ----
+    dy = Calculator(Input=grad)
+    dy.ResultArrayName = "Schlieren_dRho_dY"
+    dy.Function = "delRho[1]"
+    dy.UpdatePipeline()
 
-    # --- Cleanup ---
+    return [mag, dx, dy]
+
+
+# ============================================================
+# ===================== SLICE ================================
+# ============================================================
+
+def create_slice(origin, normal, preset, fname, scalar, schlieren=False):
+
+    sl = VolcanoSlice(registrationName=fname, Input=src)
+    sl.SlicePoint = origin
+    sl.SliceNormal = normal
+    if schlieren:
+        sl.InterpolatedField = DENSITY_NAME
+        sl.MinMaxField = DENSITY_NAME
+    else:
+        sl.InterpolatedField = scalar
+        sl.MinMaxField = scalar
+    sl.Crinkle = 0
+
+    if not schlieren:
+        disp = Show(sl, view)
+        loc = array_location(sl, scalar)
+        ColorBy(disp, (loc, scalar))
+
+        lut = GetColorTransferFunction(scalar)
+        lut.RescaleTransferFunctionToDataRange()
+        lut.ApplyPreset(COLORMAP_PRESET, True)
+
+        apply_camera_and_colorbar(lut, preset, scalar)
+        Render(view)
+
+        SaveScreenshot(os.path.join(OUTPUT_DIR, f"{fname}_{scalar}.png"),
+                       view, ImageResolution=IMG_RES)
+        Hide(sl, view)
+        return
+
+    # ---- Schlieren (each component gets its own display) ----
+    for calc in schlieren_pipeline(sl):
+        disp = Show(calc, view)
+        name = calc.ResultArrayName
+        loc = array_location(calc, name)
+
+        ColorBy(disp, (loc, name))
+        lut = GetColorTransferFunction(name)
+        lut.RescaleTransferFunctionToDataRange()
+        lut.ApplyPreset(COLORMAP_PRESET, True)
+
+        apply_camera_and_colorbar(lut, preset, name)
+        Render(view)
+
+        SaveScreenshot(os.path.join(OUTPUT_DIR, f"{fname}_{name}.png"),
+                       view, ImageResolution=IMG_RES)
+        Hide(calc, view)
+
     Hide(sl, view)
-    Delete(sl)
-    
 
-# ---------------- LINE EXTRACTION ----------------
-def extract_line(input_proxy, xloc, filename):
-    line = PlotOverLine(Input=input_proxy)
-    line.Point1 = [xloc, -0.042964, 0.0]
-    line.Point2 = [xloc, 0.1135, 0.0]
-    line.Resolution = LINE_RESOLUTION
-    line.UpdatePipeline()
-    SaveData(os.path.join(OUTPUT_DIR, filename), proxy=line, FieldAssociation='Point Data')
-    Delete(line)
+# ============================================================
+# ===================== EXECUTION ============================
+# ============================================================
 
-# ---------------- GENERATE OUTPUTS ----------------
-for x in YZ_SLICE_X:
-    make_slice(source_for_processing, [1,0,0], [x,0,0], PRESSURE_NAME, f"YZ_x{x:+0.5f}_P.png")
-    make_slice(source_for_processing, [1,0,0], [x,0,0], VELOCITY_X_NAME, f"YZ_x{x:+0.5f}_Ux.png")
-    make_slice(source_for_processing, [1,0,0], [x,0,0], VELMAG_NAME, f"YZ_x{x:+0.5f}_VelMag.png")
+for s in SCALARS:
+    for x in YZ_SLICE_X:
+        create_slice([x,0,0], [1,0,0], "YZ", f"YZ_x{x:+0.5f}", s)
 
-for z in XY_SLICE_Z:
-    make_slice(source_for_processing, [0,0,1], [0,0,z], PRESSURE_NAME, f"XY_z{z:+0.5f}_P.png")
-    make_slice(source_for_processing, [0,0,1], [0,0,z], VELOCITY_X_NAME, f"XY_z{z:+0.5f}_Ux.png")
-    make_slice(source_for_processing, [0,0,1], [0,0,z], VELMAG_NAME, f"XY_z{z:+0.5f}_VelMag.png")
+    for z in XY_SLICE_Z:
+        create_slice([0,0,z], [0,0,1], "XY_NEAR", f"XY_near_z{z:+0.5f}", s)
+        create_slice([0,0,z], [0,0,1], "XY_FAR",  f"XY_far_z{z:+0.5f}",  s)
 
-for x in X_LOCATIONS_FOR_LINE:
-    extract_line(source_for_processing, x, f"Ux_vs_y_x{x:+0.5f}.csv")
+if ENABLE_SCHLIEREN:
+    for z in XY_SLICE_Z:
+        create_slice([0,0,z], [0,0,1], "XY_NEAR",
+                     f"XY_near_z{z:+0.5f}", DENSITY_NAME, True)
+        create_slice([0,0,z], [0,0,1], "XY_FAR",
+                     f"XY_far_z{z:+0.5f}",  DENSITY_NAME, True)
 
-print("\n✅ Journal-quality slices and line CSVs created successfully.")
+print("\nAll slices rendered correctly.")
