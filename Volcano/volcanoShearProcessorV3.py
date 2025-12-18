@@ -98,9 +98,10 @@ def array_location(source, name):
     raise RuntimeError(f"Array '{name}' not found on points or cells")
 
 def apply_camera_and_colorbar(lut, preset, array_name):
-    hide_scalar_bar_for_array(array_name)
 
     p = CAMERA_PRESETS[preset]
+
+    # ---- Camera ----
     view.CameraPosition      = p["CameraPosition"]
     view.CameraFocalPoint    = p["CameraFocalPoint"]
     view.CameraViewUp        = p["CameraViewUp"]
@@ -109,12 +110,21 @@ def apply_camera_and_colorbar(lut, preset, array_name):
     if "InteractionMode" in p:
         view.InteractionMode = p["InteractionMode"]
 
+    # ---- Scalar bar ----
     bar = GetScalarBar(lut, view)
+    bar.Visibility = 1
+
     bar.Orientation = p["Colorbar"]["Orientation"]
     bar.Position    = p["Colorbar"]["Position"]
     bar.ScalarBarLength = p["Colorbar"]["Length"]
+
+    # ---- Title ----
+    bar.Title = array_name
+    bar.ComponentTitle = ""
+
     bar.TitleFontSize = 18
     bar.LabelFontSize = 16
+
 
 
 # ============================================================
@@ -170,6 +180,8 @@ def create_slice(origin, normal, preset, fname, scalar, schlieren=False):
     sl.Crinkle = 0
 
     if not schlieren:
+        for sb in GetScalarBars(view).values():
+            sb.Visibility = 0
         disp = Show(sl, view)
         loc = array_location(sl, scalar)
         ColorBy(disp, (loc, scalar))
@@ -188,6 +200,8 @@ def create_slice(origin, normal, preset, fname, scalar, schlieren=False):
 
     # ---- Schlieren (each component gets its own display) ----
     for calc in schlieren_pipeline(sl):
+        for sb in GetScalarBars(view).values():
+            sb.Visibility = 0
         disp = Show(calc, view)
         name = calc.ResultArrayName
         loc = array_location(calc, name)
@@ -221,8 +235,8 @@ for s in SCALARS:
 if ENABLE_SCHLIEREN:
     for z in XY_SLICE_Z:
         create_slice([0,0,z], [0,0,1], "XY_NEAR",
-                     f"XY_near_z{z:+0.5f}_Schlieren", DENSITY_NAME, True)
+                     f"XY_near_z{z:+0.5f}", DENSITY_NAME, True)
         create_slice([0,0,z], [0,0,1], "XY_FAR",
-                     f"XY_far_z{z:+0.5f}_Schlieren",  DENSITY_NAME, True)
+                     f"XY_far_z{z:+0.5f}",  DENSITY_NAME, True)
 
 print("\nAll slices rendered correctly.")
