@@ -116,7 +116,9 @@ def create_slice(origin, normal, plane, fname, scalar, schlieren=False):
     disp = Show(sl, view)
     disp.Representation = "Surface"
 
-    hide_all_scalar_bars(view)
+    #hide_all_scalar_bars(view)
+    disp.SetScalarBarVisibility(view, False)
+
 
     if not schlieren:
         loc = array_location(sl, scalar)
