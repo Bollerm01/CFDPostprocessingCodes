@@ -42,8 +42,8 @@ CAMERA_PRESETS = {
         }
     },
     "XY_FAR": {
-        "CameraPosition":   [1.4547914383436304, 0.05994982668344116, 5.011016610690195],
-        "CameraFocalPoint": [1.4547914383436304, 0.05994982668344116, 0.0],
+        "CameraPosition":   [1.25, 0.05994982668344116, 5.011016610690195], # was [1.4547914383436304, 0.05994982668344116, 5.011016610690195]
+        "CameraFocalPoint": [1.25, 0.05994982668344116, 0.0], # was [1.4547914383436304, 0.05994982668344116, 0.0]
         "CameraViewUp":     [0,1,0],
         "ParallelScale":    0.8, # was 0.7320925072135284
         "Colorbar": {
@@ -114,6 +114,12 @@ def apply_camera_and_colorbar(lut, preset, array_name):
     bar = GetScalarBar(lut, view)
     bar.Visibility = 1
 
+    # --- Reset cached geometry ----
+    bar.AutomaticLabelFormat = 0
+    bar.UseCustomLabels = 0
+    bar.WindowLocation = "AnyLocation"
+    bar.ScalarBarThickness = bar.ScalarBarThickness  # forces refresh
+
     bar.Orientation = p["Colorbar"]["Orientation"]
     bar.Position    = p["Colorbar"]["Position"]
     bar.ScalarBarLength = p["Colorbar"]["Length"]
@@ -122,8 +128,8 @@ def apply_camera_and_colorbar(lut, preset, array_name):
     bar.Title = array_name
     bar.ComponentTitle = ""
 
-    bar.TitleFontSize = 14 # was 18
-    bar.LabelFontSize = 12 # was 16
+    bar.TitleFontSize = 12 # was 18
+    bar.LabelFontSize = 10 # was 16
 
 
 
