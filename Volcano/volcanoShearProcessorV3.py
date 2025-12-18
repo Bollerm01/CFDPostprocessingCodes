@@ -89,11 +89,13 @@ def hide_scalar_bar_for_array(array_name):
         pass
 
 def array_location(source, name):
-    if source.GetPointDataInformation().GetArray(name):
+    pd = source.GetPointDataInformation()
+    cd = source.GetCellDataInformation()
+    if pd.GetArray(name) is not None:
         return "POINTS"
-    if source.GetCellDataInformation().GetArray(name):
+    if cd.GetArray(name) is not None:
         return "CELLS"
-    raise RuntimeError(f"Array '{name}' not found")
+    raise RuntimeError(f"Array '{name}' not found on points or cells")
 
 def apply_camera_and_colorbar(lut, preset, array_name):
     hide_scalar_bar_for_array(array_name)
