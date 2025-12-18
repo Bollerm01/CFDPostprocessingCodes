@@ -45,7 +45,7 @@ CAMERA_PRESETS = {
         "CameraPosition":   [1.25, 0.05994982668344116, 5.011016610690195], # was [1.4547914383436304, 0.05994982668344116, 5.011016610690195]
         "CameraFocalPoint": [1.25, 0.05994982668344116, 0.0], # was [1.4547914383436304, 0.05994982668344116, 0.0]
         "CameraViewUp":     [0,1,0],
-        "ParallelScale":    0.8, # was 0.7320925072135284
+        "ParallelScale":    0.75, # was 0.7320925072135284, 0.8 for centered
         "Colorbar": {
             "Orientation": "Horizontal",
             "Position":    [0.29, 0.26],
@@ -60,7 +60,7 @@ CAMERA_PRESETS = {
         "InteractionMode":  "2D",
         "Colorbar": {
             "Orientation": "Vertical",
-            "Position":    [0.66, 0.38],
+            "Position":    [0.80, 0.38],
             "Length":      0.5,
         }
     }
