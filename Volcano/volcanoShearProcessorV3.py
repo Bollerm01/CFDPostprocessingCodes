@@ -122,24 +122,32 @@ def apply_camera_and_colorbar(lut, preset, array_name):
 # ============================================================
 
 def schlieren_pipeline(slice_src):
-    grad = Gradient(Input=slice_src)
-    grad.ResultArrayName = "delRho"
-    #grad.UpdatePipeline()  
+    # Ensure slice has produced point data
+    slice_src.UpdatePipeline()
 
+    # ---- Gradient of density ----
+    grad = Gradient(Input=slice_src)
+    grad.ScalarArray = ['POINTS', DENSITY_NAME]
+    grad.ResultArrayName = "delRho"
+    grad.UpdatePipeline()
+
+    # ---- |∇ρ| ----
     mag = Calculator(Input=grad)
     mag.ResultArrayName = "magDelRho"
     mag.Function = "mag(delRho)"
-    #mag.UpdatePipeline()    
+    mag.UpdatePipeline()
 
+    # ---- ∂ρ/∂x ----
     dx = Calculator(Input=grad)
     dx.ResultArrayName = "Schlieren_dRho_dX"
     dx.Function = "delRho[0]"
-    #dx.UpdatePipeline()     
+    dx.UpdatePipeline()
 
+    # ---- ∂ρ/∂y ----
     dy = Calculator(Input=grad)
     dy.ResultArrayName = "Schlieren_dRho_dY"
     dy.Function = "delRho[1]"
-    #dy.UpdatePipeline()     
+    dy.UpdatePipeline()
 
     return [mag, dx, dy]
 
@@ -153,8 +161,12 @@ def create_slice(origin, normal, preset, fname, scalar, schlieren=False):
     sl = VolcanoSlice(registrationName=fname, Input=src)
     sl.SlicePoint = origin
     sl.SliceNormal = normal
-    sl.InterpolatedField = scalar
-    sl.MinMaxField = scalar
+    if schlieren:
+        sl.InterpolatedField = DENSITY_NAME
+        sl.MinMaxField = DENSITY_NAME
+    else:
+        sl.InterpolatedField = scalar
+        sl.MinMaxField = scalar
     sl.Crinkle = 0
 
     if not schlieren:
