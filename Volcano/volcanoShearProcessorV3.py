@@ -180,7 +180,7 @@ def create_slice(origin, normal, preset, fname, scalar, schlieren=False):
     sl.Crinkle = 0
 
     if not schlieren:
-        for sb in GetScalarBars(view).values():
+        for sb in GetScalarBar(view).values():
             sb.Visibility = 0
         disp = Show(sl, view)
         loc = array_location(sl, scalar)
