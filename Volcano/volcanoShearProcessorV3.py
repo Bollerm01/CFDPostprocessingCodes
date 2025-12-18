@@ -38,30 +38,30 @@ CAMERA_PRESETS = {
         "Colorbar": {
             "Orientation": "Horizontal",
             "Position":    [0.31, 0.15],
-            "Length":      0.33,
+            "Length":      0.5, # was 0.33
         }
     },
     "XY_FAR": {
         "CameraPosition":   [1.4547914383436304, 0.05994982668344116, 5.011016610690195],
         "CameraFocalPoint": [1.4547914383436304, 0.05994982668344116, 0.0],
         "CameraViewUp":     [0,1,0],
-        "ParallelScale":    0.7320925072135284,
+        "ParallelScale":    0.8, # was 0.7320925072135284
         "Colorbar": {
             "Orientation": "Horizontal",
             "Position":    [0.29, 0.26],
-            "Length":      0.33,
+            "Length":      0.5,
         }
     },
     "YZ": {
         "CameraPosition":   [2.745205, 0.0887413, 0.0],
         "CameraFocalPoint": [2.15058,  0.0887413, 0.0],
         "CameraViewUp":     [0,1,0],
-        "ParallelScale":    0.11684418,
+        "ParallelScale":    0.10, # was 0.11684418
         "InteractionMode":  "2D",
         "Colorbar": {
             "Orientation": "Vertical",
             "Position":    [0.66, 0.38],
-            "Length":      0.33,
+            "Length":      0.5,
         }
     }
 }
@@ -122,8 +122,8 @@ def apply_camera_and_colorbar(lut, preset, array_name):
     bar.Title = array_name
     bar.ComponentTitle = ""
 
-    bar.TitleFontSize = 18
-    bar.LabelFontSize = 16
+    bar.TitleFontSize = 14 # was 18
+    bar.LabelFontSize = 12 # was 16
 
 
 
