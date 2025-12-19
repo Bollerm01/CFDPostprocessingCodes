@@ -27,7 +27,9 @@ INPUT_FILE = f"{INPUT_ROOT}\{CASE}\{INPUT_DIR}"
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-# ---------------- LOAD .plt ----------------
+# ============================================================
+# ===================== LOAD .PLT ============================
+# ============================================================
 reader = VisItTecplotBinaryReader(registrationName=CASE, FileNames=[INPUT_FILE])
 reader.Set(
     MeshStatus=['zone1','zone2'],
@@ -55,8 +57,6 @@ reader.Set(
 
 reader.UpdatePipeline()
 
-# BEGIN VOLCANO TEMPLATE FOR LOGIC (CROSS COMPARE TO SHEARPROCESSORV3 FOR 1-to-1 CHANGES)
-
 ENABLE_SCHLIEREN = True
 DENSITY_NAME = "zone2/Density_kg_msup3_sup" # fix logic below
 
@@ -70,48 +70,43 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 # ============================================================
 
 CAMERA_PRESETS = {
-    "XY_NEAR": {
-        "CameraPosition":   [2.1922574427684838, 0.018226216790868725, 5.011192474629075],
-        "CameraFocalPoint": [2.1922574427684838, 0.018226216790868725, 0.0],
-        "CameraViewUp":     [0,1,0],
-        "ParallelScale":    0.06142870916705136,
+    "YZ": {  # renderView1
+        "CameraPosition": [0.9120590004774782, 0.06435919553041458, 0.01269999984651804],
+        "CameraFocalPoint": [0.4476749897003174,0.06435919553041458,0.01269999984651804],
+        "CameraViewUp": [0, 1, 0],
+        "ParallelScale": 0.4564267410905977,
+        "Colorbar": {
+            "Orientation": "Vertical",  # default (never overridden)
+            "Position": [0.6419153365718251,0.35205992509363293],
+            "Length": 0.33,
+        },
+    },
+
+    "XY_FAR": {  # renderView2
+        "CameraPosition": [0.4476749897003174,0.06435919553041458,0.8285855560611272],
+        "CameraFocalPoint": [0.4476749897003174,0.06435919553041458,0.01269999984651804],
+        "CameraViewUp": [0, 1, 0],
+        "ParallelScale": 0.5477120893087172,
         "Colorbar": {
             "Orientation": "Horizontal",
-            "Position":    [0.31, 0.15],
-            "Length":      0.5, # was 0.33
-        }
+            "Position": [0.3329077029840388,0.0898876404494382],
+            "Length": 0.33,
+        },
     },
-    "XY_FAR": {
-        "CameraPosition":   [1.25, 0.05994982668344116, 5.011016610690195], # was [1.4547914383436304, 0.05994982668344116, 5.011016610690195]
-        "CameraFocalPoint": [1.25, 0.05994982668344116, 0.0], # was [1.4547914383436304, 0.05994982668344116, 0.0]
-        "CameraViewUp":     [0,1,0],
-        "ParallelScale":    0.75, # was 0.7320925072135284, 0.8 for centered
+
+    "XY_NEAR": {  # renderView3
+        "CameraPosition": [0.5052304592990174,-0.007906881310699177,0.16060976619697473],
+        "CameraFocalPoint": [0.5052304592990174,-0.007906881310699177, 0.01269999984651804],
+        "CameraViewUp": [0, 1, 0],
+        "ParallelScale": 0.4562500191632675,
         "Colorbar": {
             "Orientation": "Horizontal",
-            "Position":    [0.29, 0.26],
-            "Length":      0.5,
-        }
+            "Position": [0.31070090215128393,0.07490636704119849],
+            "Length": 0.33,
+        },
     },
-    "YZ": {
-        "CameraPosition":   [2.745205, 0.0887413, 0.0],
-        "CameraFocalPoint": [2.15058,  0.0887413, 0.0],
-        "CameraViewUp":     [0,1,0],
-        "ParallelScale":    0.10, # was 0.11684418
-        "InteractionMode":  "2D",
-        "Colorbar": {
-            "Orientation": "Vertical",
-            "Position":    [0.80, 0.38],
-            "Length":      0.5,
-        }
-    }
 }
 
-# ============================================================
-# ===================== LOAD DATA ============================
-# ============================================================
-
-src = OpenDataFile(INPUT_FILE)
-src.CellArrayStatus = SCALARS + [DENSITY_NAME]
 
 view = GetActiveViewOrCreate("RenderView")
 view.Background = [1,1,1]
