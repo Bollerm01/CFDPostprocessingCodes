@@ -11,22 +11,13 @@ OUTPUT_ROOT = r"E:\Boller CFD\AVIATION CFD\output\VulcanProcessingOutput"
 # ---------------- USER SETTINGS - Controls the VULCAN case to be processed ----------------
 CASE = "CAVmix_SSWT_r0p5_noinject"
 
-# Slice positions
-YZ_SLICE_X = [-0.26, -0.2, -0.15, -0.1]   
-XY_SLICE_Z = [0.0, 0.03805]                
+# full loop Slice positions
+#YZ_SLICE_X = [0.327131, 0.395304, 0.4293905, 0.46552219, 0.47506641, 0.4839289, 0.49415485, 0.50369907, 0.51324329, 0.52210578, 0.53165, 0.622183744]   
+#XY_SLICE_Z = [0.0127]   
 
-# Line extraction along Y
-X_LOCATIONS_FOR_LINE = [-0.2, -0.15, -0.1]
-LINE_RESOLUTION = 500
-
-# Variables
-PRESSURE_NAME = "Pressure"
-VELOCITY_NAME = "Velocity"
-VELMAG_NAME = "VelocityMagnitude"
-VELOCITY_X_NAME = "Velocity_X"
-
-CAMERA_ZOOM = 0.25
-IMG_RESOLUTION = [1920, 1080]
+# Testing loop positions
+YZ_SLICE_X = [0.327131]   
+XY_SLICE_Z = [0.0127]              
 
 # ------------------------------------------------------------------------------------------
 
@@ -36,28 +27,38 @@ INPUT_FILE = f"{INPUT_ROOT}\{CASE}\{INPUT_DIR}"
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-# ---------------- LOAD CGNS ----------------
-reader = CONVERGECFDCGNSReader(FileNames=[INPUT_FILE])
+# ---------------- LOAD .plt ----------------
+reader = VisItTecplotBinaryReader(registrationName=CASE, FileNames=[INPUT_FILE])
+reader.Set(
+    MeshStatus=['zone1','zone2'],
+    PointArrayStatus=[
+        'Pressure_Pa', 
+        'U_velocity_m_s',
+        'Density_kg_msup3_sup'
+        'greekt_greeksubxx_subsupt_sup',
+        'greekt_greeksubxy_subsupt_sup', 
+        'greekt_greeksubxz_subsupt_sup', 
+        'greekt_greeksubyy_subsupt_sup', 
+        'greekt_greeksubyz_subsupt_sup', 
+        'greekt_greeksubzz_subsupt_sup',
+        'zone2/Pressure_Pa', 
+        'zone2/U_velocity_m_s',
+        'zone2/Density_kg_msup3_sup',
+        'zone2/greekt_greeksubxx_subsupt_sup',
+        'zone2/greekt_greeksubxy_subsupt_sup', 
+        'zone2/greekt_greeksubxz_subsupt_sup', 
+        'zone2/greekt_greeksubyy_subsupt_sup', 
+        'zone2/greekt_greeksubyz_subsupt_sup', 
+        'zone2/greekt_greeksubzz_subsupt_sup',
+        ]
+)
+
 reader.UpdatePipeline()
 
 # BEGIN VOLCANO TEMPLATE FOR LOGIC (CROSS COMPARE TO SHEARPROCESSORV3 FOR 1-to-1 CHANGES)
 
-SCALARS = [
-    "reynoldsstressxx", "reynoldsstressyy", "reynoldsstresszz",
-    "reynoldsstressxy", "reynoldsstressxz", "reynoldsstressyz",
-    "velocityx", "velocityxavg", "tke", "pressureavg"
-]
-
 ENABLE_SCHLIEREN = True
-DENSITY_NAME = "density"
-
-# Debugging loop
-#YZ_SLICE_X = [2.011691]
-#XY_SLICE_Z = [0.0]
-
-# full loop
-YZ_SLICE_X = [2.011691, 2.080109, 2.114318, 2.15057954, 2.16015806, 2.1690524, 2.1793151, 2.18889362, 2.19847214, 2.20736648, 2.216945, 2.307804104]
-XY_SLICE_Z = [-0.0381, 0.00, 0.0381]
+DENSITY_NAME = "zone2/Density_kg_msup3_sup" # fix logic below
 
 IMG_RES = [1920, 1080]
 COLORMAP_PRESET = "Cool to Warm (Extended)"
