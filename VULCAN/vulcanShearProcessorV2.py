@@ -158,28 +158,25 @@ def render_overlay_slice(origin, normal, preset, fname, logical_scalar):
     # Volume slice (zone2)
     vol_disp = Show(zone2_slice, view)
     vol_disp.Representation = "Surface"
-    vol_disp.Selectable = 0
+    # vol_disp.Selectable = 0  # <-- remove this line
     try:
         loc2 = array_location(zone2_slice, scalar_zone2)
         ColorBy(vol_disp, (loc2, scalar_zone2))
     except RuntimeError:
         print(f"Warning: {scalar_zone2} not found on zone2 slice")
 
-    lut = GetColorTransferFunction(scalar_zone2)
-    lut.RescaleTransferFunctionToDataRange()
-    lut.ApplyPreset(COLORMAP_PRESET, True)
-
     # Edge slice (zone1)
     edge_disp = Show(zone1_slice, view)
     edge_disp.Representation = "Surface With Edges"
     edge_disp.DiffuseColor = [0, 0, 0]
     edge_disp.LineWidth = 1.5
-    edge_disp.Selectable = 0
+    # edge_disp.Selectable = 0  # <-- remove this line
     try:
         loc1 = array_location(zone1_slice, scalar_zone1)
         ColorBy(edge_disp, (loc1, scalar_zone1))
     except RuntimeError:
         pass
+
 
     # Camera and colorbar
     apply_camera_and_colorbar(lut, preset, logical_scalar)
@@ -233,7 +230,6 @@ def render_schlieren(origin, normal, preset, fname):
 
         disp = Show(slice_calc, view)
         disp.Representation = "Surface"
-        disp.Selectable = 0
 
         try:
             loc = array_location(slice_calc, calc.ResultArrayName)
