@@ -36,7 +36,8 @@ reader.Set(
     PointArrayStatus=[
         'Pressure_Pa', 
         'U_velocity_m_s',
-        'Density_kg_msup3_sup'
+        'Density_kg_msup3_sup',
+        'Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup',
         'greekt_greeksubxx_subsupt_sup',
         'greekt_greeksubxy_subsupt_sup', 
         'greekt_greeksubxz_subsupt_sup', 
@@ -46,6 +47,7 @@ reader.Set(
         'zone2/Pressure_Pa', 
         'zone2/U_velocity_m_s',
         'zone2/Density_kg_msup3_sup',
+        'zone2/Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup',
         'zone2/greekt_greeksubxx_subsupt_sup',
         'zone2/greekt_greeksubxy_subsupt_sup', 
         'zone2/greekt_greeksubxz_subsupt_sup', 

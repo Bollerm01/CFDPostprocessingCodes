@@ -2,7 +2,7 @@ from paraview.simple import *
 import os
 
 # ============================================================
-# ===================== USER SETTINGS ========================
+# ===================== USER SETTINGS =======================
 # ============================================================
 
 INPUT_ROOT = r"E:\Boller CFD\VULCAN Data\SSWT"
@@ -17,42 +17,49 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 YZ_SLICE_X = [0.327131]
 XY_SLICE_Z = [0.0127]
 
-# Scalars to render (volume-based)
-SCALARS = [
-    "Pressure_Pa",
-    "U_velocity_m_s",
-]
+# Scalars to render
+SCALAR_MAP = {
 
+    # ---------- Primary flow variables ----------
+    "Pressure_Pa": {"zone1": "Pressure_Pa", "zone2": "zone2/Pressure_Pa"},
+    "U_velocity_m_s": {"zone1": "U_velocity_m_s", "zone2": "zone2/U_velocity_m_s"},
+
+    # ---------- Turbulence kinetic energy ----------
+    "Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup": {
+        "zone1": "Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup",
+        "zone2": "zone2/Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup",
+    },
+
+    # ---------- Reynolds stress components ----------
+    "greekt_greeksubxx_subsupt_sup": {"zone1": "greekt_greeksubxx_subsupt_sup", "zone2": "zone2/greekt_greeksubxx_subsupt_sup"},
+    "greekt_greeksubxy_subsupt_sup": {"zone1": "greekt_greeksubxy_subsupt_sup", "zone2": "zone2/greekt_greeksubxy_subsupt_sup"},
+    "greekt_greeksubxz_subsupt_sup": {"zone1": "greekt_greeksubxz_subsupt_sup", "zone2": "zone2/greekt_greeksubxz_subsupt_sup"},
+    "greekt_greeksubyy_subsupt_sup": {"zone1": "greekt_greeksubyy_subsupt_sup", "zone2": "zone2/greekt_greeksubyy_subsupt_sup"},
+    "greekt_greeksubyz_subsupt_sup": {"zone1": "greekt_greeksubyz_subsupt_sup", "zone2": "zone2/greekt_greeksubyz_subsupt_sup"},
+    "greekt_greeksubzz_subsupt_sup": {"zone1": "greekt_greeksubzz_subsupt_sup", "zone2": "zone2/greekt_greeksubzz_subsupt_sup"},
+}
+
+# Schlieren density
+DENSITY_ZONE2 = "zone2/Density_kg_msup3_sup"
 ENABLE_SCHLIEREN = True
-DENSITY_NAME = "Density_kg_msup3_sup"
 
 IMG_RES = [1920, 1080]
 COLORMAP_PRESET = "Cool to Warm (Extended)"
 
 # ============================================================
-# ===================== LOAD DATA ============================
+# ===================== LOAD DATA ===========================
 # ============================================================
 
 reader = VisItTecplotBinaryReader(
     registrationName=CASE,
-    FileNames=[INPUT_FILE]
+    FileName=[INPUT_FILE]
 )
-
 reader.MeshStatus = ["zone1", "zone2"]
 reader.UpdatePipeline()
 
-# ============================================================
-# ===================== EXTRACT ZONES ========================
-# ============================================================
-
-def extract_zone(src, zone):
-    ex = ExtractBlock(Input=src)
-    ex.Selectors = [f"/Root/{zone}"]
-    ex.UpdatePipeline()
-    return ex
-
-zone1 = extract_zone(reader, "zone1")  # edges / surfaces
-zone2 = extract_zone(reader, "zone2")  # volume
+# Assign blocks
+zone1 = reader  # zone1 variables are read from the reader
+zone2 = reader  # zone2 variables are read from the reader
 
 # ============================================================
 # ===================== VIEW SETUP ===========================
@@ -68,42 +75,30 @@ view.CameraParallelProjection = 1
 
 CAMERA_PRESETS = {
     "YZ": {
-        "CameraPosition": [0.9120590004774782, 0.06435919553041458, 0.0127],
-        "CameraFocalPoint": [0.4476749897003174, 0.06435919553041458, 0.0127],
+        "CameraPosition": [0.912059, 0.064359, 0.0127],
+        "CameraFocalPoint": [0.447675, 0.064359, 0.0127],
         "CameraViewUp": [0, 1, 0],
-        "ParallelScale": 0.4564267410905977,
-        "Colorbar": {
-            "Orientation": "Vertical",
-            "Position": [0.6419153365718251, 0.35205992509363293],
-            "Length": 0.33,
-        },
+        "ParallelScale": 0.4564267,
+        "Colorbar": {"Orientation": "Vertical", "Position": [0.642, 0.352], "Length": 0.33},
     },
     "XY_FAR": {
-        "CameraPosition": [0.4476749897003174, 0.06435919553041458, 0.8285855560611272],
-        "CameraFocalPoint": [0.4476749897003174, 0.06435919553041458, 0.0127],
+        "CameraPosition": [0.447675, 0.064359, 0.828586],
+        "CameraFocalPoint": [0.447675, 0.064359, 0.0127],
         "CameraViewUp": [0, 1, 0],
-        "ParallelScale": 0.5477120893087172,
-        "Colorbar": {
-            "Orientation": "Horizontal",
-            "Position": [0.3329077029840388, 0.0898876404494382],
-            "Length": 0.33,
-        },
+        "ParallelScale": 0.547712,
+        "Colorbar": {"Orientation": "Horizontal", "Position": [0.333, 0.090], "Length": 0.33},
     },
     "XY_NEAR": {
-        "CameraPosition": [0.5052304592990174, -0.007906881310699177, 0.16060976619697473],
-        "CameraFocalPoint": [0.5052304592990174, -0.007906881310699177, 0.0127],
+        "CameraPosition": [0.50523, -0.007907, 0.16061],
+        "CameraFocalPoint": [0.50523, -0.007907, 0.0127],
         "CameraViewUp": [0, 1, 0],
-        "ParallelScale": 0.4562500191632675,
-        "Colorbar": {
-            "Orientation": "Horizontal",
-            "Position": [0.31070090215128393, 0.07490636704119849],
-            "Length": 0.33,
-        },
+        "ParallelScale": 0.45625,
+        "Colorbar": {"Orientation": "Horizontal", "Position": [0.311, 0.075], "Length": 0.33},
     },
 }
 
 # ============================================================
-# ===================== UTILITIES ============================
+# ===================== UTILITIES ===========================
 # ============================================================
 
 def array_location(src, name):
@@ -113,7 +108,8 @@ def array_location(src, name):
         return "POINTS"
     if cd.GetArray(name):
         return "CELLS"
-    raise RuntimeError(f"Array '{name}' not found")
+    raise RuntimeError(f"Array '{name}' not found on source {src.GetXMLName()}")
+
 
 def apply_camera_and_colorbar(lut, preset, title):
     p = CAMERA_PRESETS[preset]
@@ -123,6 +119,10 @@ def apply_camera_and_colorbar(lut, preset, title):
     view.CameraViewUp = p["CameraViewUp"]
     view.CameraParallelScale = p["ParallelScale"]
 
+    # Remove previous scalar bars
+    for bar in GetScalarBars():
+        bar.Visibility = 0
+
     bar = GetScalarBar(lut, view)
     bar.Visibility = 1
     bar.WindowLocation = "Any Location"
@@ -131,10 +131,9 @@ def apply_camera_and_colorbar(lut, preset, title):
     bar.ScalarBarLength = p["Colorbar"]["Length"]
     bar.Title = title
     bar.ComponentTitle = ""
+    bar.TitleFontSize = 12
+    bar.LabelFontSize = 10
 
-# ============================================================
-# ===================== SLICE HELPERS ========================
-# ============================================================
 
 def make_slice(src, origin, normal):
     sl = Slice(Input=src)
@@ -148,100 +147,128 @@ def make_slice(src, origin, normal):
 # ===================== OVERLAY SLICE ========================
 # ============================================================
 
-def render_overlay_slice(origin, normal, preset, fname, scalar):
+def render_overlay_slice(origin, normal, preset, fname, logical_scalar):
+    scalar_zone1 = SCALAR_MAP[logical_scalar]["zone1"]
+    scalar_zone2 = SCALAR_MAP[logical_scalar]["zone2"]
 
-    # ---- Volume slice ----
-    vol_slice = make_slice(zone2, origin, normal)
-    vol_disp = Show(vol_slice, view)
-    loc = array_location(vol_slice, scalar)
-    ColorBy(vol_disp, (loc, scalar))
+    # Slices
+    zone1_slice = make_slice(zone1, origin, normal)
+    zone2_slice = make_slice(zone2, origin, normal)
 
-    lut = GetColorTransferFunction(scalar)
+    # Volume slice (zone2)
+    vol_disp = Show(zone2_slice, view)
+    vol_disp.Representation = "Surface"
+    vol_disp.Selectable = 0
+    try:
+        loc2 = array_location(zone2_slice, scalar_zone2)
+        ColorBy(vol_disp, (loc2, scalar_zone2))
+    except RuntimeError:
+        print(f"Warning: {scalar_zone2} not found on zone2 slice")
+
+    lut = GetColorTransferFunction(scalar_zone2)
     lut.RescaleTransferFunctionToDataRange()
     lut.ApplyPreset(COLORMAP_PRESET, True)
 
-    # ---- Edge slice ----
-    edge_slice = make_slice(zone1, origin, normal)
-    edge_disp = Show(edge_slice, view)
+    # Edge slice (zone1)
+    edge_disp = Show(zone1_slice, view)
     edge_disp.Representation = "Surface With Edges"
     edge_disp.DiffuseColor = [0, 0, 0]
     edge_disp.LineWidth = 1.5
+    edge_disp.Selectable = 0
+    try:
+        loc1 = array_location(zone1_slice, scalar_zone1)
+        ColorBy(edge_disp, (loc1, scalar_zone1))
+    except RuntimeError:
+        pass
 
-    apply_camera_and_colorbar(lut, preset, scalar)
+    # Camera and colorbar
+    apply_camera_and_colorbar(lut, preset, logical_scalar)
+
+    # Render and save
     Render(view)
-
     SaveScreenshot(
-        os.path.join(OUTPUT_DIR, f"{fname}_{scalar}.png"),
+        os.path.join(OUTPUT_DIR, f"{fname}_{logical_scalar}.png"),
         view,
         ImageResolution=IMG_RES
     )
 
-    Hide(vol_slice, view)
-    Hide(edge_slice, view)
+    # Hide slices
+    Hide(zone1_slice, view)
+    Hide(zone2_slice, view)
 
 # ============================================================
 # ===================== SCHLIEREN ============================
 # ============================================================
 
-def schlieren_pipeline(slice_src):
-
-    grad = Gradient(Input=slice_src)
-    grad.ScalarArray = ["POINTS", DENSITY_NAME]
+def schlieren_pipeline_full_domain():
+    # Gradient on full domain
+    grad = Gradient(Input=zone2)
+    grad.ScalarArray = ["POINTS", DENSITY_ZONE2]
     grad.ResultArrayName = "delRho"
+    grad.UpdatePipeline()
 
+    # Magnitude
     mag = Calculator(Input=grad)
     mag.ResultArrayName = "Schlieren_magDelRho"
     mag.Function = "mag(delRho)"
+    mag.UpdatePipeline()
 
+    # Components
     dx = Calculator(Input=grad)
     dx.ResultArrayName = "Schlieren_dRho_dX"
     dx.Function = "delRho[0]"
+    dx.UpdatePipeline()
 
     dy = Calculator(Input=grad)
     dy.ResultArrayName = "Schlieren_dRho_dY"
     dy.Function = "delRho[1]"
+    dy.UpdatePipeline()
 
     return [mag, dx, dy]
 
+
 def render_schlieren(origin, normal, preset, fname):
+    for calc in schlieren_pipeline_full_domain():
+        slice_calc = make_slice(calc, origin, normal)
 
-    base_slice = make_slice(zone2, origin, normal)
+        disp = Show(slice_calc, view)
+        disp.Representation = "Surface"
+        disp.Selectable = 0
 
-    for calc in schlieren_pipeline(base_slice):
-        disp = Show(calc, view)
-        name = calc.ResultArrayName
-        loc = array_location(calc, name)
+        try:
+            loc = array_location(slice_calc, calc.ResultArrayName)
+            ColorBy(disp, (loc, calc.ResultArrayName))
+        except RuntimeError:
+            print(f"Warning: {calc.ResultArrayName} not found on slice")
 
-        ColorBy(disp, (loc, name))
-        lut = GetColorTransferFunction(name)
+        lut = GetColorTransferFunction(calc.ResultArrayName)
         lut.RescaleTransferFunctionToDataRange()
         lut.ApplyPreset(COLORMAP_PRESET, True)
 
-        apply_camera_and_colorbar(lut, preset, name)
-        Render(view)
+        apply_camera_and_colorbar(lut, preset, calc.ResultArrayName)
 
+        # Render and save
+        Render(view)
         SaveScreenshot(
-            os.path.join(OUTPUT_DIR, f"{fname}_{name}.png"),
+            os.path.join(OUTPUT_DIR, f"{fname}_{calc.ResultArrayName}.png"),
             view,
             ImageResolution=IMG_RES
         )
 
-        Hide(calc, view)
-
-    Hide(base_slice, view)
+        Hide(slice_calc, view)
 
 # ============================================================
 # ===================== EXECUTION ============================
 # ============================================================
 
-for scalar in SCALARS:
+for scalar in SCALAR_MAP.keys():
     for x in YZ_SLICE_X:
         render_overlay_slice(
             origin=[x, 0, 0],
             normal=[1, 0, 0],
             preset="YZ",
             fname=f"YZ_x{x:+0.5f}",
-            scalar=scalar
+            logical_scalar=scalar
         )
 
     for z in XY_SLICE_Z:
@@ -250,15 +277,14 @@ for scalar in SCALARS:
             normal=[0, 0, 1],
             preset="XY_NEAR",
             fname=f"XY_near_z{z:+0.5f}",
-            scalar=scalar
+            logical_scalar=scalar
         )
-
         render_overlay_slice(
             origin=[0, 0, z],
             normal=[0, 0, 1],
             preset="XY_FAR",
             fname=f"XY_far_z{z:+0.5f}",
-            scalar=scalar
+            logical_scalar=scalar
         )
 
 if ENABLE_SCHLIEREN:
@@ -269,7 +295,6 @@ if ENABLE_SCHLIEREN:
             preset="XY_NEAR",
             fname=f"XY_near_z{z:+0.5f}"
         )
-
         render_schlieren(
             origin=[0, 0, z],
             normal=[0, 0, 1],
