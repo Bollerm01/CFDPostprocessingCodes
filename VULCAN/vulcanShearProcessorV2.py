@@ -13,7 +13,7 @@ OUTPUT_ROOT = r"E:\Boller CFD\AVIATION CFD\output\VulcanProcessingOutput"
 OUTPUT_DIR = os.path.join(OUTPUT_ROOT, CASE)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-YZ_SLICE_X = [0.327131]
+YZ_SLICE_X = [0.327131, 0.622183744]
 XY_SLICE_Z = [0.0127]
 
 SCALAR_MAP = {
@@ -90,7 +90,7 @@ CAMERA_PRESETS = {
         "CameraPosition": [0.912059, 0.064359, 0.0127],
         "CameraFocalPoint": [0.447675, 0.064359, 0.0127],
         "CameraViewUp": [0, 1, 0],
-        "ParallelScale": 0.08 , # was 0.1
+        "ParallelScale": 0.1 , # was 0.1
         "Colorbar": {"Orientation": "Vertical", "Position": [0.642, 0.352], "Length": 0.33},
     },
     "XY_FAR": {
