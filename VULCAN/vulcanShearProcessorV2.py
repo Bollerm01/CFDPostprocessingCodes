@@ -90,21 +90,21 @@ CAMERA_PRESETS = {
         "CameraPosition": [0.912059, 0.064359, 0.0127],
         "CameraFocalPoint": [0.447675, 0.064359, 0.0127],
         "CameraViewUp": [0, 1, 0],
-        "ParallelScale": 0.1 , # was 0.4564267
+        "ParallelScale": 0.08 , # was 0.1
         "Colorbar": {"Orientation": "Vertical", "Position": [0.642, 0.352], "Length": 0.33},
     },
     "XY_FAR": {
         "CameraPosition": [0.447675, 0.064359, 0.828586],
         "CameraFocalPoint": [0.447675, 0.064359, 0.0127],
         "CameraViewUp": [0, 1, 0],
-        "ParallelScale": 0.30, # was 0.547712
+        "ParallelScale": 0.28, # was 0.3
         "Colorbar": {"Orientation": "Horizontal", "Position": [0.333, 0.090], "Length": 0.33},
     },
     "XY_NEAR": {
         "CameraPosition": [0.50523, -0.007907, 0.16061],
         "CameraFocalPoint": [0.50523, -0.007907, 0.0127],
         "CameraViewUp": [0, 1, 0],
-        "ParallelScale": 0.1, # was 0.45625
+        "ParallelScale": 0.08, # was 0.1
         "Colorbar": {"Orientation": "Horizontal", "Position": [0.311, 0.075], "Length": 0.33},
     },
 }
