@@ -104,7 +104,7 @@ CAMERA_PRESETS = {
         "CameraPosition": [0.50523, -0.007907, 0.16061],
         "CameraFocalPoint": [0.50523, -0.007907, 0.0127],
         "CameraViewUp": [0, 1, 0],
-        "ParallelScale": 0.08, # was 0.1
+        "ParallelScale": 0.05, # was 0.1
         "Colorbar": {"Orientation": "Horizontal", "Position": [0.311, 0.075], "Length": 0.33},
     },
 }
