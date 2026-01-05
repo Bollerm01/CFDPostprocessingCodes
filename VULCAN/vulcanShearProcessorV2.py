@@ -13,13 +13,15 @@ OUTPUT_ROOT = r"E:\Boller CFD\AVIATION CFD\output\VulcanProcessingOutput"
 OUTPUT_DIR = os.path.join(OUTPUT_ROOT, CASE)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-# full loop Slice positions
-#YZ_SLICE_X = [0.327131, 0.395304, 0.4293905, 0.46552219, 0.47506641, 0.4839289, 0.49415485, 0.50369907, 0.51324329, 0.52210578, 0.53165, 0.622183744]   
-#XY_SLICE_Z = [0.0127]  
-
 # Test Locations
-YZ_SLICE_X = [0.327131]
-XY_SLICE_Z = [0.0127]
+#YZ_SLICE_X = [0.327131]
+#XY_SLICE_Z = [0.0127]
+
+# Full loop Slice positions
+YZ_SLICE_X = [0.327131, 0.395304, 0.4293905, 0.46552219, 0.47506641, 0.4839289, 0.49415485, 0.50369907, 0.51324329, 0.52210578, 0.53165, 0.622183744]   
+XY_SLICE_Z = [0.0127]  
+
+
 
 SCALAR_MAP = {
     "Pressure_Pa": {"zone1": "Pressure_Pa", "zone2": "zone2/Pressure_Pa"},
