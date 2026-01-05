@@ -14,12 +14,12 @@ OUTPUT_DIR = os.path.join(OUTPUT_ROOT, CASE)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # full loop Slice positions
-YZ_SLICE_X = [0.327131, 0.395304, 0.4293905, 0.46552219, 0.47506641, 0.4839289, 0.49415485, 0.50369907, 0.51324329, 0.52210578, 0.53165, 0.622183744]   
-XY_SLICE_Z = [0.0127]  
+#YZ_SLICE_X = [0.327131, 0.395304, 0.4293905, 0.46552219, 0.47506641, 0.4839289, 0.49415485, 0.50369907, 0.51324329, 0.52210578, 0.53165, 0.622183744]   
+#XY_SLICE_Z = [0.0127]  
 
 # Test Locations
-#Z_SLICE_X = [0.327131]
-#XY_SLICE_Z = [0.0127]
+YZ_SLICE_X = [0.327131]
+XY_SLICE_Z = [0.0127]
 
 SCALAR_MAP = {
     "Pressure_Pa": {"zone1": "Pressure_Pa", "zone2": "zone2/Pressure_Pa"},
@@ -34,6 +34,19 @@ SCALAR_MAP = {
     "greekt_greeksubyy_subsupt_sup": {"zone1": "greekt_greeksubyy_subsupt_sup", "zone2": "zone2/greekt_greeksubyy_subsupt_sup"},
     "greekt_greeksubyz_subsupt_sup": {"zone1": "greekt_greeksubyz_subsupt_sup", "zone2": "zone2/greekt_greeksubyz_subsupt_sup"},
     "greekt_greeksubzz_subsupt_sup": {"zone1": "greekt_greeksubzz_subsupt_sup", "zone2": "zone2/greekt_greeksubzz_subsupt_sup"},
+}
+
+# User-editable scalar bar titles
+SCALAR_TITLES = {
+    "Pressure_Pa": "Pressure [Pa]",
+    "U_velocity_m_s": "U Velocity [m/s]",
+    "Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup": "Turbulence Kinetic Energy [m²/s²]",
+    "greekt_greeksubxx_subsupt_sup": r"$\tau_{xx}$",
+    "greekt_greeksubxy_subsupt_sup": r"$\tau_{xy}$",
+    "greekt_greeksubxz_subsupt_sup": r"$\tau_{xz}$",
+    "greekt_greeksubyy_subsupt_sup": r"$\tau_{yy}$",
+    "greekt_greeksubyz_subsupt_sup": r"$\tau_{yz}$",
+    "greekt_greeksubzz_subsupt_sup": r"$\tau_{zz}$",
 }
 
 DENSITY_ZONE2 = "zone2/Density_kg_msup3_sup"
@@ -143,6 +156,7 @@ def apply_camera_and_colorbar(lut, preset, title):
     sb.Orientation = p["Colorbar"]["Orientation"]
     sb.Position = p["Colorbar"]["Position"]
     sb.ScalarBarLength = p["Colorbar"]["Length"]
+
     sb.Title = title
     sb.ComponentTitle = ""
     sb.TitleFontSize = 12
@@ -223,7 +237,9 @@ def render_overlay_slice(origin, normal, preset, fname, logical_scalar):
         pass
 
     if lut:
-        apply_camera_and_colorbar(lut, preset, logical_scalar)
+        title = SCALAR_TITLES.get(logical_scalar, logical_scalar)
+        apply_camera_and_colorbar(lut, preset, title)
+
 
     Render(view)
     SaveScreenshot(
