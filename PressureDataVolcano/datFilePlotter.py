@@ -60,7 +60,8 @@ def plot_and_save(time, probe_name, pressure, out_dir):
     plt.ylabel("Pressure")
     plt.title(f"Pressure vs Time – {probe_name}")
     plt.grid(True)
-    plt.ylim((20000,22000))
+    plt.ylim((20000,24000))
+    plt.xlim((0.1,0.2))
 
     out_path = os.path.join(out_dir, f"{probe_name}.jpg")
     plt.savefig(out_path, dpi=300, bbox_inches="tight")
