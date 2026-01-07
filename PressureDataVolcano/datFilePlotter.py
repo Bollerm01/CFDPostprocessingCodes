@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 # ===================== USER SETTINGS ========================
 # ============================================================
 
-INPUT_DAT_FILE = r"E:\Boller CFD\AVIATION CFD\PressureProbeData\floorLine.pressure.dat"
-OUTPUT_FOLDER  = r"E:\Boller CFD\AVIATION CFD\PressureProbeData\PressureOutput"
+INPUT_DAT_FILE = r"E:\Boller CFD\AVIATION CFD\PressureProbeData\rampLine.pressure.dat"
+OUTPUT_FOLDER  = r"E:\Boller CFD\AVIATION CFD\PressureProbeData\PressureOutput_Ramp"
 
 # ============================================================
 # ===================== FUNCTIONS ============================
@@ -60,7 +60,7 @@ def plot_and_save(time, probe_name, pressure, out_dir):
     plt.ylabel("Pressure")
     plt.title(f"Pressure vs Time – {probe_name}")
     plt.grid(True)
-    plt.ylim((20000,24000))
+    plt.ylim((17000,40000))
     plt.xlim((0.1,0.2))
 
     out_path = os.path.join(out_dir, f"{probe_name}.jpg")
