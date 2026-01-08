@@ -76,7 +76,7 @@ volcano = FileSeriesReader(
     registrationName='VolcanoData',
     FileNames=[VOLCANO_FILE]
 )
-volcano.PointArrayStatus = POINT_ARRAYS
+volcano.CellArrayStatus = POINT_ARRAYS
 
 
 # ============================================================
@@ -91,9 +91,9 @@ slice_z0.SliceNormal = [0.0, 0.0, 1.0]
 # ========== CELL DATA → POINT DATA (IMPORTANT) ==============
 # ============================================================
 
-cell_to_point = CellDatatoPointData(Input=slice_z0)
-cell_to_point.PassCellData = 1
-RenameSource("Slice_PointData", cell_to_point)
+#cell_to_point = CellDatatoPointData(Input=slice_z0)
+#cell_to_point.PassCellData = 1
+#RenameSource("Slice_PointData", cell_to_point)
 
 # ============================================================
 # =================== PROBE EXTRACTION =======================
@@ -104,7 +104,7 @@ for label, line_def in PROBE_LINES.items():
     print(f"Extracting {label}...")
 
     pol = PlotOverLine(
-        Input=cell_to_point
+        Input=slice_z0
     )
     pol.Point1 = line_def["start"]
     pol.Point2 = line_def["end"]
