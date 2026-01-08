@@ -29,7 +29,7 @@ LINE_RESOLUTION = 500
 # --- Probe line definitions ---
 # label : {start:[x,y,z], end:[x,y,z]}
 PROBE_LINES = {
-    "xL_-2": {
+    "xL_neg2": {
         "start": [2.01169, 0.01884, 0.0],
         "end":   [2.01169, 0.05603, 0.0],
     },
