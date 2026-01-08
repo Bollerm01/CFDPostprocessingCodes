@@ -65,7 +65,7 @@ def plot_and_save(time, probe_name, pressure_pa, out_dir):
     plt.plot(time, delta_p_psi)
     plt.xlabel("Time [s]")
     plt.ylabel("ΔP [PSI]")
-    plt.ylim((-1,1))
+    plt.ylim((-1,3))
     plt.xlim((0.1,0.2))
     plt.title(f"ΔP vs Time – {probe_name}, Avg Pressure: {REFERENCE_PRESSURE_PA} Pa")
     plt.grid(True)
