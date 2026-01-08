@@ -39,10 +39,11 @@ def run_conversion():
         return
 
     # --- Ask user for output file name ---
-    output_name = simpledialog.askstring(
-        "Output File Name",
-        "Enter output Excel file name (without extension):"
-    )
+    #output_name = simpledialog.askstring(
+        #"Output File Name",
+        #"Enter output Excel file name (without extension):"
+    #)
+    output_name = "CondensedProbeData"
 
     if not output_name:
         messagebox.showerror("Error", "No output file name provided.")
