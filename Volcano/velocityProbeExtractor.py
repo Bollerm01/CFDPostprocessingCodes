@@ -120,8 +120,7 @@ for label, line_def in PROBE_LINES.items():
     SaveData(
         output_file,
         proxy=pol,
-        FileType="CSV",
-        Precision=8
+        Precision=6
     )
 
     # Cleanup
