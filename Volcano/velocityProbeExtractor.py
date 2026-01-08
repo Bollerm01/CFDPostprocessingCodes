@@ -84,7 +84,6 @@ volcano.PointArrayStatus = POINT_ARRAYS
 # ============================================================
 
 slice_z0 = VolcanoSlice(registrationName="Z0_Slice", Input=volcano)
-slice_z0.SliceType = "Plane"
 slice_z0.SlicePoint = [0.0, 0.0, SLICE_Z]
 slice_z0.SliceNormal = [0.0, 0.0, 1.0]
 
