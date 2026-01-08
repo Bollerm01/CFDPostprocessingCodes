@@ -113,14 +113,14 @@ for label, line_def in PROBE_LINES.items():
     RenameSource(label, pol)
 
     output_file = os.path.join(
-        OUTPUT_DIR, f"{label}.xlsx"
+        OUTPUT_DIR, f"{label}.csv"
     )
 
     # Export to Excel
     SaveData(
         output_file,
         proxy=pol,
-        FileType="Excel",
+        FileType="CSV",
         Precision=8
     )
 
