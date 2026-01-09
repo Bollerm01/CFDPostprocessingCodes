@@ -2,7 +2,6 @@
 # Output: Format of "XXXDdataCombined.xlsx" from dataCombiner_fullRunV2.py
 # Input: VULCAN .plt file
 
-## TEMPLATE CODE - NEED TO CHANGE ##
 from paraview.simple import *
 import os
 import numpy as np
