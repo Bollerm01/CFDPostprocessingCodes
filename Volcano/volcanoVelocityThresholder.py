@@ -182,7 +182,20 @@ pd.DataFrame({
 # ============================================================
 # PROCESS SHEETS
 # ============================================================
-results = {(0.95, 0.05): [], (0.90, 0.10): []}
+# Map of normalized velocity columns to readable names for titles/files
+normalized_cols = {
+    "velocityx_norm": "Velocity X",
+    "velocityxavg_norm": "Velocity X Avg",
+    "velocitymag_norm": "Velocity Mag",
+    "velocitymagavg_norm": "Velocity Mag Avg"
+}
+
+# results dictionary: keys are (norm_col, (upper, lower))
+results = {}
+
+for norm_col in normalized_cols.keys():
+    for threshold in THRESHOLDS:
+        results[(norm_col, threshold)] = []
 
 for sheet in sheet_names:
     if sheet == "xL_neg2":
@@ -205,30 +218,31 @@ for sheet in sheet_names:
     df_clean["velocityxavg_norm"] = df_clean[VELXAVG_COL] / velocityxavg_fs
     df_clean["velocitymag_norm"] = df_clean[VELMAG_COL] / velocitymagavg_fs
     df_clean["velocitymagavg_norm"] = df_clean[VELMAGAVG_COL] / velocitymagavg_fs
-    
 
     # Write Excel sheet
     df_clean.to_excel(writer, sheet_name=sheet, index=False)
 
-    # Thickness calculations
-    vel_used = df_clean["velocitymagavg_norm"].to_numpy()
-    for upper, lower in THRESHOLDS:
-        thickness, lower_vel_for_dat = find_thickness_robust(y, vel_used, upper, lower)
-        results[(upper, lower)].append((xL, thickness, lower_vel_for_dat))
+    # Thickness calculations for all normalized columns
+    for norm_col, nice_name in normalized_cols.items():
+        vel_used = df_clean[norm_col].to_numpy()
+        for upper, lower in THRESHOLDS:
+            thickness, lower_vel_for_dat = find_thickness_robust(y, vel_used, upper, lower)
+            results[(norm_col, (upper, lower))].append((xL, thickness, lower_vel_for_dat))
 
 writer.close()
+
 
 # ============================================================
 # OUTPUT DAT FILES + PLOTS
 # ============================================================
-for (upper, lower), data in results.items():
+for (norm_col, (upper, lower)), data in results.items():
     data = np.array(sorted(data, key=lambda x: x[0]))  # sort by xL
+    nice_name = normalized_cols[norm_col]
 
+    # DAT file
     dat_path = os.path.join(
-        output_dir, f"thickness_{int(upper*100)}_{int(lower*100)}.dat"
+        output_dir, f"thickness_{norm_col}_{int(upper*100)}_{int(lower*100)}.dat"
     )
-
-    # Save xL, thickness, lower_vel_for_dat
     np.savetxt(
         dat_path,
         data,
@@ -236,22 +250,23 @@ for (upper, lower), data in results.items():
         comments=""
     )
 
+    # Plot
     plt.figure()
     plt.plot(data[:, 0], data[:, 1], marker="o")
     plt.xlabel("x/L")
     plt.ylabel("Shear Layer Thickness")
-    plt.title(f"{int(upper*100)}% / {int(lower*100)}% Thickness")
+    plt.title(f"{nice_name} - {int(upper*100)}% / {int(lower*100)}% Thickness")
     plt.grid(True)
+    plt.tight_layout()
 
     plt.savefig(
         os.path.join(
             output_dir,
-            f"thickness_{int(upper*100)}_{int(lower*100)}.png"
+            f"thickness_{norm_col}_{int(upper*100)}_{int(lower*100)}.png"
         ),
         dpi=300
     )
     plt.close()
-
 
 messagebox.showinfo(
     "Complete",
