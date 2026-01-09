@@ -16,15 +16,11 @@ excel_file = filedialog.askopenfilename(
     title="Select Input Excel Workbook",
     filetypes=[("Excel files", "*.xlsx")]
 )
-
 if not excel_file:
     messagebox.showerror("Error", "No Excel file selected.")
     raise SystemExit
 
-output_dir = filedialog.askdirectory(
-    title="Select Output Directory"
-)
-
+output_dir = filedialog.askdirectory(title="Select Output Directory")
 if not output_dir:
     messagebox.showerror("Error", "No output directory selected.")
     raise SystemExit
@@ -39,6 +35,13 @@ VELX_COL = "velocityx"
 VELXAVG_COL = "velocityxavg"
 VELMAG_COL = "velocitymag"
 VELMAGAVG_COL = "velocitymagavg"
+
+VELOCITY_COLS = [
+    VELX_COL,
+    VELXAVG_COL,
+    VELMAG_COL,
+    VELMAGAVG_COL
+]
 
 THRESHOLDS = [(0.95, 0.05), (0.90, 0.10)]
 
@@ -59,36 +62,60 @@ def parse_xL(sheet_name):
 
     raise ValueError(f"Could not parse xL from sheet name: {sheet_name}")
 
-def find_thickness(y, vel_norm, upper, lower):
+def clean_velocity_dataframe(df, y_col, velocity_cols, duplicate_ref_col):
     """
-    Compute shear layer thickness for monotonic increasing velocity profiles.
-
-    Thickness definition:
-        y(first U/Uinf > upper) - y(last U/Uinf < lower)
-
-    Assumes:
-        - y is sorted ascending
-        - vel_norm increases with y
+    Single-pass cleaning of entire velocity DataFrame.
     """
 
-    # Indices where velocity is below the lower threshold
-    idx_lower = np.where(vel_norm < lower)[0]
+    required_cols = [y_col] + velocity_cols
+    df_clean = df[required_cols].dropna()
+    df_clean = df_clean.sort_values(y_col)
 
-    # Indices where velocity exceeds the upper threshold
-    idx_upper = np.where(vel_norm > upper)[0]
+    # Remove duplicated rows using one velocity column
+    dup_mask = df_clean[duplicate_ref_col].duplicated(keep="first")
+    df_clean = df_clean.loc[~dup_mask]
 
-    # If thresholds are never crossed, thickness is undefined
-    if len(idx_lower) == 0 or len(idx_upper) == 0:
+    # Enforce monotonic increasing envelope (roll back)
+    #for col in velocity_cols:
+    #    df_clean[col] = np.maximum.accumulate(df_clean[col].to_numpy())
+
+    return df_clean.reset_index(drop=True)
+
+def find_thickness_robust(y, vel_norm, upper, lower, min_sep=1e-9):
+    y = np.asarray(y)
+    vel = np.asarray(vel_norm)
+
+    below = vel < lower
+    above = vel > upper
+
+    if not np.any(below) or not np.any(above):
         return np.nan
 
-    # Last low-velocity point (bottom of shear layer)
-    y_lower = y[idx_lower[-1]]
+    i_low = np.where(below)[0][-1]
+    i_up = np.where(above)[0][0]
 
-    # First freestream-like point (top of shear layer)
-    y_upper = y[idx_upper[0]]
+    if i_low >= len(vel) - 1 or i_up == 0:
+        return np.nan
 
-    return y_upper - y_lower
+    # Interpolate lower crossing
+    y1, y2 = y[i_low], y[i_low + 1]
+    v1, v2 = vel[i_low], vel[i_low + 1]
+    if v2 == v1:
+        return np.nan
+    y_lower = y1 + (lower - v1) * (y2 - y1) / (v2 - v1)
 
+    # Interpolate upper crossing
+    y1, y2 = y[i_up - 1], y[i_up]
+    v1, v2 = vel[i_up - 1], vel[i_up]
+    if v2 == v1:
+        return np.nan
+    y_upper = y1 + (upper - v1) * (y2 - y1) / (v2 - v1)
+
+    thickness = y_upper - y_lower
+    if thickness <= min_sep:
+        return np.nan
+
+    return thickness
 
 # ============================================================
 # LOAD WORKBOOK
@@ -97,76 +124,73 @@ xls = pd.ExcelFile(excel_file)
 sheet_names = xls.sheet_names
 
 # ============================================================
-# FREESTREAM CALCULATION
+# FREESTREAM CALCULATION (xL_neg2)
 # ============================================================
 if "xL_neg2" not in sheet_names:
-    raise RuntimeError("Sheet 'xL_neg2' not found in workbook.")
+    raise RuntimeError("Sheet 'xL_neg2' not found.")
 
 df_fs = pd.read_excel(excel_file, sheet_name="xL_neg2")
 df_fs = df_fs.sort_values(Y_COL)
 
-half_index = len(df_fs) // 2
-df_fs_tail = df_fs.iloc[half_index:]
-
+df_fs_tail = df_fs.iloc[len(df_fs) // 2 :]
 velocitymagavg_fs = df_fs_tail[VELMAGAVG_COL].mean()
 velocityxavg_fs = df_fs_tail[VELXAVG_COL].mean()
 
 print("========================================")
-print("Freestream Values (from xL_neg2)")
+print("Freestream values")
 print(f"velocitymagavg_fs = {velocitymagavg_fs:.6f}")
 print(f"velocityxavg_fs   = {velocityxavg_fs:.6f}")
 print("========================================")
 
 # ============================================================
-# OUTPUT WORKBOOK FOR NORMALIZED VELOCITIES
+# NORMALIZED XLSX OUTPUT
 # ============================================================
-norm_xlsx_path = os.path.join(output_dir, "normalized_velocity_profiles.xlsx")
-norm_writer = pd.ExcelWriter(norm_xlsx_path, engine="xlsxwriter")
+norm_xlsx = os.path.join(output_dir, "normalized_velocity_profiles.xlsx")
+writer = pd.ExcelWriter(norm_xlsx, engine="xlsxwriter")
 
-# Write freestream summary sheet
 pd.DataFrame({
     "quantity": ["velocitymagavg", "velocityxavg"],
     "value": [velocitymagavg_fs, velocityxavg_fs]
-}).to_excel(norm_writer, sheet_name="freestream", index=False)
+}).to_excel(writer, sheet_name="freestream", index=False)
 
 # ============================================================
-# PROCESS REMAINING SHEETS
+# PROCESS SHEETS
 # ============================================================
-results = {
-    (0.95, 0.05): [],
-    (0.90, 0.10): []
-}
+results = {(0.95, 0.05): [], (0.90, 0.10): []}
 
 for sheet in sheet_names:
     if sheet == "xL_neg2":
         continue
 
     df = pd.read_excel(excel_file, sheet_name=sheet)
-    df = df.sort_values(Y_COL)
-
     xL = parse_xL(sheet)
-    y = df[Y_COL].to_numpy()
 
-    # Normalized velocities
-    df_norm = pd.DataFrame({
-        "Y": df[Y_COL],
-        "velocityx_norm": df[VELX_COL] / velocityxavg_fs,
-        "velocityxavg_norm": df[VELXAVG_COL] / velocityxavg_fs,
-        "velocitymag_norm": df[VELMAG_COL] / velocitymagavg_fs,
-        "velocitymagavg_norm": df[VELMAGAVG_COL] / velocitymagavg_fs
-    })
+    df_clean = clean_velocity_dataframe(
+        df,
+        y_col=Y_COL,
+        velocity_cols=VELOCITY_COLS,
+        duplicate_ref_col=VELMAGAVG_COL
+    )
 
-    # Write normalized profile to workbook
-    df_norm.to_excel(norm_writer, sheet_name=sheet, index=False)
+    y = df_clean[Y_COL].to_numpy()
 
-    vel_used = df_norm["velocitymagavg_norm"].to_numpy()
+    # Normalize
+    df_clean["velocityx_norm"] = df_clean[VELX_COL] / velocityxavg_fs
+    df_clean["velocityxavg_norm"] = df_clean[VELXAVG_COL] / velocityxavg_fs
+    df_clean["velocitymag_norm"] = df_clean[VELMAG_COL] / velocitymagavg_fs
+    df_clean["velocitymagavg_norm"] = df_clean[VELMAGAVG_COL] / velocitymagavg_fs
+    
 
+    # Write Excel sheet
+    df_clean.to_excel(writer, sheet_name=sheet, index=False)
+
+    # Thickness calculations
+    vel_used = df_clean["velocitymagavg_norm"].to_numpy()
     for upper, lower in THRESHOLDS:
-        thickness = find_thickness(y, vel_used, upper, lower)
+        thickness = find_thickness_robust(y, vel_used, upper, lower)
         results[(upper, lower)].append((xL, thickness))
 
-# Close normalized workbook
-norm_writer.close()
+writer.close()
 
 # ============================================================
 # OUTPUT DAT FILES + PLOTS
@@ -175,10 +199,9 @@ for (upper, lower), data in results.items():
     data = np.array(sorted(data, key=lambda x: x[0]))
 
     dat_path = os.path.join(
-        output_dir,
-        f"thickness_{int(upper*100)}_{int(lower*100)}.dat"
+        output_dir, f"thickness_{int(upper*100)}_{int(lower*100)}.dat"
     )
-    np.savetxt(dat_path, data, header="xL  thickness", comments="")
+    np.savetxt(dat_path, data, header="xL thickness", comments="")
 
     plt.figure()
     plt.plot(data[:, 0], data[:, 1], marker="o")
@@ -187,17 +210,19 @@ for (upper, lower), data in results.items():
     plt.title(f"{int(upper*100)}% / {int(lower*100)}% Thickness")
     plt.grid(True)
 
-    plot_path = os.path.join(
-        output_dir,
-        f"thickness_{int(upper*100)}_{int(lower*100)}.png"
+    plt.savefig(
+        os.path.join(
+            output_dir,
+            f"thickness_{int(upper*100)}_{int(lower*100)}.png"
+        ),
+        dpi=300
     )
-    plt.savefig(plot_path, dpi=300)
     plt.close()
 
 messagebox.showinfo(
     "Complete",
     "Processing complete.\n"
-    "• Normalized velocity workbook written\n"
-    "• DAT files generated\n"
-    "• Plots saved"
+    "• Single-pass cleaned normalized workbook written\n"
+    "• Robust shear-layer thickness extracted\n"
+    "• DAT files and plots saved"
 )
