@@ -7,6 +7,7 @@ from paraview.simple import *
 import os
 import numpy as np
 import csv
+import pandas as pd
 
 # ---------------- USER SETTINGS ----------------
 INPUT_ROOT = r"E:\Boller CFD\VULCAN Data\SSWT"
@@ -94,7 +95,8 @@ PROBE_LINES = {
 
 
 # Zones to include
-ACTIVE_ZONES = ["zone1", "zone2"]
+#ACTIVE_ZONES = ["zone1", "zone2"]
+ACTIVE_ZONES = ["zone2"]
 
 # ---------------- LOAD Tecplot ----------------
 reader = VisItTecplotBinaryReader(
@@ -109,12 +111,19 @@ reader.UpdatePipeline()
 
 # ---------------- CALCULATES THE VELOCITY MAG --------------
 velocityVect = Calculator(registrationName='Velocity_Vect', Input=reader)
-velocityVect.Function = 'U_velocity_m_s*iHat + V_velocity_m_s*jHat +W_velocity_m_s*kHat'
+velocityVect.Function = '"zone2/U_velocity_m_s"*iHat + "zone2/V_velocity_m_s"*jHat +"zone2/W_velocity_m_s"*kHat'
+velocityVect.ResultArrayName = "Velocity_Vect"
 velocityVect.UpdatePipeline()
 
 velocityMag = Calculator(registrationName='Velocity_Mag', Input=velocityVect)
 velocityMag.Function = 'mag(Velocity_Vect)'
+velocityMag.ResultArrayName = "Velocity_Mag_m_s"
 velocityMag.UpdatePipeline()
+
+# ---------------- PULLS THE EXPORTED DATA ------------------
+pa = PassArrays(registrationName='ExportData', Input=velocityMag)
+pa.PointDataArrays = ['Velocity_Mag_m_s', 'Velocity_Vect', 'zone2/X', 'zone2/Y', 'zone2/Z']
+pa.UpdatePipeline()
 
 # ---------------- FUNCTION: LINE EXTRACTION ----------------
 def extract_line_filtered(input_proxy, line_def, label):
@@ -134,20 +143,20 @@ def extract_line_filtered(input_proxy, line_def, label):
         OUTPUT_DIR, f"{label}.csv"
     )
 
-     # Export to Excel
+    #Export to Excel
     SaveData(
         output_file,
         proxy=pol,
         Precision=6
     )
 
-    Delete(pol)
+    #Delete(pol)
 
 # ---------------- GENERATE CLEAN LINE PROFILES ----------------
 for label, line_def in PROBE_LINES.items():
-    extract_line_filtered(velocityMag, line_def, label)
+    extract_line_filtered(pa, line_def, label)
 
 print(f"\nClean velocity profiles extracted successfully.")
 print(f"   Zones used: {ACTIVE_ZONES}")
-print(f"   Variables: {POINT_ARRAYS}, {velocityMag.registrationName()}")
+print(f"   Variables: {pa.PointDataArrays}")
 print(f"   Output directory: {OUTPUT_DIR}")
