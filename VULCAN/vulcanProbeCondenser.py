@@ -1,7 +1,4 @@
-# Current workflow for condensing CSVs of probe lines from Volcano sims
-# Future improvements needed when running final sims with direct probe .DAT files (see Time SensitivityVolcano data combiner workflow)
-# Input: Folder of CSVs from Paraview
-# Output: Condensed XLSX workbook with sheets per xL location
+## CONDENSER FOR VULCAN PROBE DATA - NEEDS UPDATING FROM VOLCANO REFS ##
 
 import os
 import pandas as pd
