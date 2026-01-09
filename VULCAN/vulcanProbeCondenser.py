@@ -13,16 +13,17 @@ COLUMN_RENAME_MAP = {
     "Points:0": "X",
     "Points:1": "Y",
     "Points:2": "Z",
+    "Velocity_Vect:0": "Velocity_X",
+    "Velocity_Mag_m_s": "Velocity_Mag"
 }
 
 FINAL_COLUMNS = [
     "X",
     "Y",
     "Z",
-    "velocitymag",
-    "velocitymagavg",
-    "velocityx",
-    "velocityxavg",
+    "Velocity_X",
+    "Velocity_Mag"
+    
 ]
 
 # ============================================================
@@ -40,11 +41,6 @@ def run_conversion():
         messagebox.showerror("Error", "No CSV folder selected.")
         return
 
-    # --- Ask user for output file name ---
-    #output_name = simpledialog.askstring(
-        #"Output File Name",
-        #"Enter output Excel file name (without extension):"
-    #)
     output_name = "CondensedProbeData"
 
     if not output_name:

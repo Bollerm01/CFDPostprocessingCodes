@@ -43,11 +43,6 @@ def run_conversion():
         messagebox.showerror("Error", "No CSV folder selected.")
         return
 
-    # --- Ask user for output file name ---
-    #output_name = simpledialog.askstring(
-        #"Output File Name",
-        #"Enter output Excel file name (without extension):"
-    #)
     output_name = "CondensedProbeData"
 
     if not output_name:
