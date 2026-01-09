@@ -60,13 +60,35 @@ def parse_xL(sheet_name):
     raise ValueError(f"Could not parse xL from sheet name: {sheet_name}")
 
 def find_thickness(y, vel_norm, upper, lower):
-    idx_upper = np.where(vel_norm < upper)[0]
-    idx_lower = np.where(vel_norm <= lower)[0]
+    """
+    Compute shear layer thickness for monotonic increasing velocity profiles.
 
-    if len(idx_upper) == 0 or len(idx_lower) == 0:
+    Thickness definition:
+        y(first U/Uinf > upper) - y(last U/Uinf < lower)
+
+    Assumes:
+        - y is sorted ascending
+        - vel_norm increases with y
+    """
+
+    # Indices where velocity is below the lower threshold
+    idx_lower = np.where(vel_norm < lower)[0]
+
+    # Indices where velocity exceeds the upper threshold
+    idx_upper = np.where(vel_norm > upper)[0]
+
+    # If thresholds are never crossed, thickness is undefined
+    if len(idx_lower) == 0 or len(idx_upper) == 0:
         return np.nan
 
-    return abs(y[idx_lower[0]] - y[idx_upper[-1]])
+    # Last low-velocity point (bottom of shear layer)
+    y_lower = y[idx_lower[-1]]
+
+    # First freestream-like point (top of shear layer)
+    y_upper = y[idx_upper[0]]
+
+    return y_upper - y_lower
+
 
 # ============================================================
 # LOAD WORKBOOK
