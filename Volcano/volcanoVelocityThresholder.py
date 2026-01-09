@@ -82,40 +82,59 @@ def clean_velocity_dataframe(df, y_col, velocity_cols, duplicate_ref_col):
     return df_clean.reset_index(drop=True)
 
 def find_thickness_robust(y, vel_norm, upper, lower, min_sep=1e-9):
+    """
+    Robust thickness finder.
+    If no values below `lower` are found, takes the largest y-value's velocity closest to the lower limit.
+    Returns: thickness, lower_vel_for_dat (NaN if normal lower crossing was found)
+    """
     y = np.asarray(y)
     vel = np.asarray(vel_norm)
 
     below = vel < lower
     above = vel > upper
 
-    if not np.any(below) or not np.any(above):
-        return np.nan
+    lower_vel_for_dat = np.nan  # Default extra column
 
-    i_low = np.where(below)[0][-1]
+    # If no valid points below or above threshold
+    if not np.any(above):
+        return np.nan, np.nan
+
+    # Lower crossing
+    if np.any(below):
+        i_low = np.where(below)[0][-1]
+
+        if i_low >= len(vel) - 1:
+            return np.nan, np.nan
+
+        y1, y2 = y[i_low], y[i_low + 1]
+        v1, v2 = vel[i_low], vel[i_low + 1]
+        if v2 == v1:
+            return np.nan, np.nan
+        y_lower = y1 + (lower - v1) * (y2 - y1) / (v2 - v1)
+        lower_vel_for_dat = np.nan  # Found normal crossing
+    else:
+        # No point below threshold: take largest y closest to lower limit
+        i_low = np.argmax(y)
+        lower_vel_for_dat = vel[i_low]  # This will go to extra column
+        y_lower = y[i_low]  # Use y itself as crossing
+
+    # Upper crossing
     i_up = np.where(above)[0][0]
+    if i_up == 0:
+        return np.nan, lower_vel_for_dat
 
-    if i_low >= len(vel) - 1 or i_up == 0:
-        return np.nan
-
-    # Interpolate lower crossing
-    y1, y2 = y[i_low], y[i_low + 1]
-    v1, v2 = vel[i_low], vel[i_low + 1]
-    if v2 == v1:
-        return np.nan
-    y_lower = y1 + (lower - v1) * (y2 - y1) / (v2 - v1)
-
-    # Interpolate upper crossing
     y1, y2 = y[i_up - 1], y[i_up]
     v1, v2 = vel[i_up - 1], vel[i_up]
     if v2 == v1:
-        return np.nan
+        return np.nan, lower_vel_for_dat
     y_upper = y1 + (upper - v1) * (y2 - y1) / (v2 - v1)
 
     thickness = y_upper - y_lower
     if thickness <= min_sep:
-        return np.nan
+        return np.nan, lower_vel_for_dat
 
-    return thickness
+    return thickness, lower_vel_for_dat
+
 
 # ============================================================
 # LOAD WORKBOOK
@@ -187,8 +206,8 @@ for sheet in sheet_names:
     # Thickness calculations
     vel_used = df_clean["velocitymagavg_norm"].to_numpy()
     for upper, lower in THRESHOLDS:
-        thickness = find_thickness_robust(y, vel_used, upper, lower)
-        results[(upper, lower)].append((xL, thickness))
+        thickness, lower_vel_for_dat = find_thickness_robust(y, vel_used, upper, lower)
+        results[(upper, lower)].append((xL, thickness, lower_vel_for_dat))
 
 writer.close()
 
@@ -196,12 +215,19 @@ writer.close()
 # OUTPUT DAT FILES + PLOTS
 # ============================================================
 for (upper, lower), data in results.items():
-    data = np.array(sorted(data, key=lambda x: x[0]))
+    data = np.array(sorted(data, key=lambda x: x[0]))  # sort by xL
 
     dat_path = os.path.join(
         output_dir, f"thickness_{int(upper*100)}_{int(lower*100)}.dat"
     )
-    np.savetxt(dat_path, data, header="xL thickness", comments="")
+
+    # Save xL, thickness, lower_vel_for_dat
+    np.savetxt(
+        dat_path,
+        data,
+        header="xL thickness lower_vel_for_dat",
+        comments=""
+    )
 
     plt.figure()
     plt.plot(data[:, 0], data[:, 1], marker="o")
@@ -218,6 +244,7 @@ for (upper, lower), data in results.items():
         dpi=300
     )
     plt.close()
+
 
 messagebox.showinfo(
     "Complete",
