@@ -27,6 +27,15 @@ if not output_dir:
 
 os.makedirs(output_dir, exist_ok=True)
 
+# Create subfolders
+dat_dir = os.path.join(output_dir, "DAT_Files")
+plots_dir = os.path.join(output_dir, "Plots")
+
+os.makedirs(dat_dir, exist_ok=True)
+os.makedirs(plots_dir, exist_ok=True)
+
+
+
 # ============================================================
 # COLUMN NAMES (EDIT IF NEEDED)
 # ============================================================
@@ -239,9 +248,9 @@ for (norm_col, (upper, lower)), data in results.items():
     data = np.array(sorted(data, key=lambda x: x[0]))  # sort by xL
     nice_name = normalized_cols[norm_col]
 
-    # DAT file
+    # DAT file path in subfolder
     dat_path = os.path.join(
-        output_dir, f"thickness_{norm_col}_{int(upper*100)}_{int(lower*100)}.dat"
+        dat_dir, f"thickness_{norm_col}_{int(upper*100)}_{int(lower*100)}.dat"
     )
     np.savetxt(
         dat_path,
@@ -250,7 +259,7 @@ for (norm_col, (upper, lower)), data in results.items():
         comments=""
     )
 
-    # Plot
+    # Plot path in subfolder
     plt.figure()
     plt.plot(data[:, 0], data[:, 1], marker="o")
     plt.xlabel("x/L")
@@ -259,14 +268,12 @@ for (norm_col, (upper, lower)), data in results.items():
     plt.grid(True)
     plt.tight_layout()
 
-    plt.savefig(
-        os.path.join(
-            output_dir,
-            f"thickness_{norm_col}_{int(upper*100)}_{int(lower*100)}.png"
-        ),
-        dpi=300
+    plot_path = os.path.join(
+        plots_dir, f"thickness_{norm_col}_{int(upper*100)}_{int(lower*100)}.png"
     )
+    plt.savefig(plot_path, dpi=300)
     plt.close()
+
 
 messagebox.showinfo(
     "Complete",
