@@ -84,7 +84,8 @@ def clean_velocity_dataframe(df, y_col, velocity_cols, duplicate_ref_col):
 def find_thickness_robust(y, vel_norm, upper, lower, min_sep=1e-9):
     """
     Robust thickness finder.
-    If no values below `lower` are found, takes the largest y-value's velocity closest to the lower limit.
+    If no values below `lower` are found, takes the last occurrence of the lowest velocity
+    (skipping the first 5 points) as the lower crossing.
     Returns: thickness, lower_vel_for_dat (NaN if normal lower crossing was found)
     """
     y = np.asarray(y)
@@ -95,14 +96,13 @@ def find_thickness_robust(y, vel_norm, upper, lower, min_sep=1e-9):
 
     lower_vel_for_dat = np.nan  # Default extra column
 
-    # If no valid points below or above threshold
+    # Upper crossing must exist
     if not np.any(above):
         return np.nan, np.nan
 
     # Lower crossing
     if np.any(below):
-        i_low = np.where(below)[0][-1]
-
+        i_low = np.where(below)[0][-1]  # Last index below threshold
         if i_low >= len(vel) - 1:
             return np.nan, np.nan
 
@@ -111,12 +111,18 @@ def find_thickness_robust(y, vel_norm, upper, lower, min_sep=1e-9):
         if v2 == v1:
             return np.nan, np.nan
         y_lower = y1 + (lower - v1) * (y2 - y1) / (v2 - v1)
-        lower_vel_for_dat = np.nan  # Found normal crossing
+        lower_vel_for_dat = np.nan  # Normal crossing found
     else:
-        # No point below threshold: take largest y closest to lower limit
-        i_low = np.argmax(y)
-        lower_vel_for_dat = vel[i_low]  # This will go to extra column
-        y_lower = y[i_low]  # Use y itself as crossing
+        # No point below threshold: find last occurrence of min velocity (skip first 5 points)
+        if len(vel) <= 5:
+            return np.nan, np.nan  # Not enough points
+
+        vel_tail = vel[5:]  # Skip first 5 points
+        i_min = np.where(vel_tail == vel_tail.min())[0][-1] + 5  # Adjust index back
+        i_low = i_min
+
+        y_lower = y[i_low]
+        lower_vel_for_dat = vel[i_low]
 
     # Upper crossing
     i_up = np.where(above)[0][0]
@@ -134,6 +140,7 @@ def find_thickness_robust(y, vel_norm, upper, lower, min_sep=1e-9):
         return np.nan, lower_vel_for_dat
 
     return thickness, lower_vel_for_dat
+
 
 
 # ============================================================
