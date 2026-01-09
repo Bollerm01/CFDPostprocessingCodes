@@ -9,42 +9,92 @@ import numpy as np
 import csv
 
 # ---------------- USER SETTINGS ----------------
-INPUT_FILE = r"D:\BollerCFD\AVIATION CFD\CAV_MIX_act_RC19_3d_no_inject\iteration-006\Plot_files\RC19_full_width_domain.plt"
-OUTPUT_DIR = r"D:\BollerCFD\AVIATION CFD\output"
+INPUT_ROOT = r"E:\Boller CFD\VULCAN Data\SSWT"
+CASE = "CAVmix_SSWT_r0p5_noinject"
+INPUT_FILE = rf"{INPUT_ROOT}\{CASE}\iteration-009\Plot_files\vulcan_solution.plt"
 
-# X-locations for line extraction
-X_LOCATIONS_FOR_LINE = [0.255919, 0.274087, 0.303022, 0.32119]
+OUTPUT_ROOT = r"E:\Boller CFD\AVIATION CFD\output\VulcanProcessingOutput\probeData"
+OUTPUT_DIR = os.path.join(OUTPUT_ROOT, CASE)
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-# Y and Z bounds for line extraction
-Y_MIN = -0.025
-Y_MAX = 0.005
-Z_PLANE = 0.0762
+# --- Variables to load from the VULCAN file ---
+POINT_ARRAYS = ['U_velocity_m_s', 
+                'V_velocity_m_s', 
+                'W_velocity_m_s', 
+                'X', 
+                'Y', 
+                'Z', 
+                'zone2/U_velocity_m_s', 
+                'zone2/V_velocity_m_s', 
+                'zone2/W_velocity_m_s', 
+                'zone2/X', 
+                'zone2/Y', 
+                'zone2/Z']
 
-# Line sampling resolution
-LINE_RESOLUTION = 1000
+# --- Z-plane slice location ---
+SLICE_Z = 0.0
 
-# ---------------- VARIABLES ----------------
-# Reynolds stress and TKE variable names per zone
-REY_XY_ZONE1 = "Reynolds_stress_xy"
-REY_YZ_ZONE1 = "Reynolds_stress_yz"
-REY_XZ_ZONE1 = "Reynolds_stress_xz"
-TKE_ZONE1    = "Turbulent_kinetic_energy"
+# --- Line resolution ---
+LINE_RESOLUTION = 500
 
-REY_XY_ZONE2 = "zone2/Reynolds_stress_xy"
-REY_YZ_ZONE2 = "zone2/Reynolds_stress_yz"
-REY_XZ_ZONE2 = "zone2/Reynolds_stress_xz"
-TKE_ZONE2    = "zone2/Turbulent_kinetic_energy"
+# --- Probe line definitions ---
+# label : {start:[x,y,z], end:[x,y,z]}
+PROBE_LINES = {
+    "xL_neg2": {
+        "start": [0.327131, 0.0, 0.0127],
+        "end":   [0.327131, 0.037186, 0.0127],
+    },
+    "xL_neg1": {
+        "start": [0.395304, -0.00035, 0.0127],
+        "end":   [0.395304, 0.036839, 0.0127],
+    },
+    "xL_neg0p5": {
+        "start": [0.429391, -0.00184, 0.0127],
+        "end":   [0.429391, 0.03535, 0.0127],
+    },
+    "xL_0p03": {
+        "start": [0.465522, -0.0218, 0.0127],
+        "end":   [0.465522, 0.015387, 0.0127],
+    },
+    "xL_0p17": {
+        "start": [0.475066, -0.02222, 0.0127],
+        "end":   [0.475066, 0.01497, 0.0127],
+    },
+    "xL_0p3": {
+        "start": [0.483929, -0.0226, 0.0127],
+        "end":   [0.483929, 0.014583, 0.0127],
+    },
+    "xL_0p45": {
+        "start": [0.494155, -0.02305, 0.0127],
+        "end":   [0.494155, 0.014136, 0.0127],
+    },
+    "xL_0p59": {
+        "start": [0.503699, -0.02347, 0.0127],
+        "end":   [0.503699, 0.01372, 0.0127],
+    },
+    "xL_0p73": {
+        "start": [0.513243, -0.022, 0.0127],
+        "end":   [0.513243, 0.015182, 0.0127],
+    },
+    "xL_0p86": {
+        "start": [0.522106, -0.01878, 0.0127],
+        "end":   [0.522106, 0.018408, 0.0127],
+    },
+    "xL_1": {
+        "start": [0.53165, -0.0153, 0.0127],
+        "end":   [0.53165, 0.021882, 0.0127],
+    },
+    "xL_2": {
+        "start": [0.622184, -0.01025, 0.0127],
+        "end":   [0.622184, 0.026933, 0.0127],
+    }
+}
 
-STRESS_NAMES = [
-    REY_XY_ZONE1, REY_YZ_ZONE1, REY_XZ_ZONE1, TKE_ZONE1,
-    REY_XY_ZONE2, REY_YZ_ZONE2, REY_XZ_ZONE2, TKE_ZONE2
-]
+
+
 
 # Zones to include
 ACTIVE_ZONES = ["zone1", "zone2"]
-
-# Ensure output directory exists
-os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # ---------------- LOAD Tecplot ----------------
 reader = VisItTecplotBinaryReader(
@@ -53,63 +103,51 @@ reader = VisItTecplotBinaryReader(
 )
 reader.Set(
     MeshStatus=ACTIVE_ZONES,
-    PointArrayStatus=STRESS_NAMES
+    PointArrayStatus=POINT_ARRAYS
 )
 reader.UpdatePipeline()
 
+# ---------------- CALCULATES THE VELOCITY MAG --------------
+velocityVect = Calculator(registrationName='Velocity_Vect', Input=reader)
+velocityVect.Function = 'U_velocity_m_s*iHat + V_velocity_m_s*jHat +W_velocity_m_s*kHat'
+velocityVect.UpdatePipeline()
+
+velocityMag = Calculator(registrationName='Velocity_Mag', Input=velocityVect)
+velocityMag.Function = 'mag(Velocity_Vect)'
+velocityMag.UpdatePipeline()
+
 # ---------------- FUNCTION: LINE EXTRACTION ----------------
-def extract_line_filtered(input_proxy, xloc, y_min, y_max, z_plane, filename):
+def extract_line_filtered(input_proxy, line_def, label):
     """
     Extracts line data along Y at fixed X,Z and removes rows
     where both zones have NaN for all Reynolds stresses and TKE.
     """
-    line = PlotOverLine(Input=input_proxy)
-    line.Point1 = [xloc, y_min, z_plane]
-    line.Point2 = [xloc, y_max, z_plane]
-    line.Resolution = LINE_RESOLUTION
-    line.UpdatePipeline()
+    pol = PlotOverLine(Input=input_proxy)
+    pol.Point1 = line_def["start"]
+    pol.Point2 = line_def["end"]
+    pol.Resolution = LINE_RESOLUTION
+    RenameSource(label, pol)
 
-    data = servermanager.Fetch(line)
-    pd = data.GetPointData()
+    pol.UpdatePipeline()
 
-    y_coords = np.array([data.GetPoint(i)[1] for i in range(data.GetNumberOfPoints())])
+    output_file = os.path.join(
+        OUTPUT_DIR, f"{label}.csv"
+    )
 
-    # Helper to safely get array values
-    def get_array_values(array_name):
-        arr = pd.GetArray(array_name)
-        if not arr:
-            return np.full(len(y_coords), np.nan)
-        return np.array([arr.GetValue(i) if not np.isnan(arr.GetValue(i)) else np.nan for i in range(len(y_coords))])
+     # Export to Excel
+    SaveData(
+        output_file,
+        proxy=pol,
+        Precision=6
+    )
 
-    # Retrieve each variable
-    vars_dict = {name: get_array_values(name) for name in STRESS_NAMES}
-
-    # Mask: keep rows where at least one zone has valid data
-    mask = np.zeros(len(y_coords), dtype=bool)
-    for v in vars_dict.values():
-        mask |= ~np.isnan(v)
-    y_filtered = y_coords[mask]
-
-    # Apply mask to each variable
-    vars_filtered = {k: v[mask] for k, v in vars_dict.items()}
-
-    # Write CSV
-    output_path = os.path.join(OUTPUT_DIR, filename)
-    with open(output_path, "w", newline="") as f:
-        writer = csv.writer(f)
-        writer.writerow(["Y"] + STRESS_NAMES)
-        for i in range(len(y_filtered)):
-            row = [y_filtered[i]] + [vars_filtered[name][i] for name in STRESS_NAMES]
-            writer.writerow(row)
-
-    Delete(line)
+    Delete(pol)
 
 # ---------------- GENERATE CLEAN LINE PROFILES ----------------
-for x in X_LOCATIONS_FOR_LINE:
-    output_name = f"ReStress_TKE_vs_y_x{x:+0.5f}_z{Z_PLANE:+0.5f}_filtered.csv"
-    extract_line_filtered(reader, x, Y_MIN, Y_MAX, Z_PLANE, output_name)
+for label, line_def in PROBE_LINES.items():
+    extract_line_filtered(velocityMag, line_def, label)
 
-print(f"\n✅ Clean Reynolds stresses and TKE profiles extracted successfully.")
+print(f"\nClean velocity profiles extracted successfully.")
 print(f"   Zones used: {ACTIVE_ZONES}")
-print(f"   Variables: {STRESS_NAMES}")
+print(f"   Variables: {POINT_ARRAYS}, {velocityMag.registrationName()}")
 print(f"   Output directory: {OUTPUT_DIR}")
