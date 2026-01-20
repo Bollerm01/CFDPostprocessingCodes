@@ -22,10 +22,8 @@ if not excel_file:
     messagebox.showerror("Error", "No Excel file selected.")
     raise SystemExit
 
-output_dir = filedialog.askdirectory(title="Select Output Directory")
-if not output_dir:
-    messagebox.showerror("Error", "No output directory selected.")
-    raise SystemExit
+# Uses the same directory as the workbook
+output_dir = os.path.join(os.path.dirname(excel_file), "ShearResults")
 
 os.makedirs(output_dir, exist_ok=True)
 

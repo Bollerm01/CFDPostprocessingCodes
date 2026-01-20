@@ -46,6 +46,14 @@ FINAL_COLUMNS = [
 ]
 
 # ============================================================
+# ============== Y NORMALIZATION PARAMETERS =================
+# ============================================================
+
+Y_REFERENCE = -0.003324  # Y-location of zero point
+Y_DEPTH = 0.018369       # Normalization depth (must be non-zero)
+
+
+# ============================================================
 # ===================== MAIN PROCESS =========================
 # ============================================================
 
@@ -60,15 +68,14 @@ def run_conversion():
         messagebox.showerror("Error", "No CSV folder selected.")
         return
 
-    output_name = "CondensedProbeData"
-
-    if not output_name:
-        messagebox.showerror("Error", "No output file name provided.")
+    if Y_DEPTH == 0.0:
+        messagebox.showerror(
+            "Configuration Error",
+            "Y_DEPTH cannot be zero."
+        )
         return
 
-    if not output_name.lower().endswith(".xlsx"):
-        output_name += ".xlsx"
-
+    output_name = "CondensedProbeData.xlsx"
     output_excel = os.path.join(csv_folder, output_name)
 
     # --- Find CSV files ---
@@ -99,6 +106,12 @@ def run_conversion():
                 # Keep only desired columns that exist
                 existing_cols = [c for c in FINAL_COLUMNS if c in df.columns]
                 df = df[existing_cols]
+
+                # --- Normalize Y-coordinate ---
+                if "Y" in df.columns:
+                    df["Y_norm"] = (df["Y"] - Y_REFERENCE) / Y_DEPTH
+                else:
+                    df["Y_norm"] = pd.NA
 
                 # Excel sheet name (31 char limit)
                 sheet_name = os.path.splitext(csv_file)[0][:31]
