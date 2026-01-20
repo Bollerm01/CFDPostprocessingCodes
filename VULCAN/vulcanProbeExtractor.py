@@ -134,7 +134,19 @@ velocityMag.UpdatePipeline()
 
 # ---------------- PULLS THE EXPORTED DATA ------------------
 pa = PassArrays(registrationName='ExportData', Input=velocityMag)
-pa.PointDataArrays = ['Velocity_Mag_m_s', 'Velocity_Vect', 'zone2/X', 'zone2/Y', 'zone2/Z']
+pa.PointDataArrays = ['Velocity_Mag_m_s', 
+                      'Velocity_Vect', 
+                      'zone2/X', 
+                      'zone2/Y', 
+                      'zone2/Z',
+                      'zone2/Pressure_Pa',
+                      'zone2/Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup',
+                      'zone2/greekt_greeksubxx_subsupt_sup',
+                      'zone2/greekt_greeksubxy_subsupt_sup',
+                      'zone2/greekt_greeksubxz_subsupt_sup',
+                      'zone2/greekt_greeksubyy_subsupt_sup',
+                      'zone2/greekt_greeksubyz_subsupt_sup',
+                      'zone2/greekt_greeksubzz_subsupt_sup',]
 pa.UpdatePipeline()
 
 # ---------------- FUNCTION: LINE EXTRACTION ----------------
@@ -168,7 +180,7 @@ def extract_line_filtered(input_proxy, line_def, label):
 for label, line_def in PROBE_LINES.items():
     extract_line_filtered(pa, line_def, label)
 
-print(f"\nClean velocity profiles extracted successfully.")
+print(f"\nClean profiles extracted successfully.")
 print(f"   Zones used: {ACTIVE_ZONES}")
 print(f"   Variables: {pa.PointDataArrays}")
 print(f"   Output directory: {OUTPUT_DIR}")
