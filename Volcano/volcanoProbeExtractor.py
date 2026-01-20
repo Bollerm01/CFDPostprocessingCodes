@@ -6,6 +6,7 @@ import os
 # ============================================================
 
 # --- Input volcano file ---
+#EDIT WHEN ITERATING THROUGH
 VOLCANO_FILE = r"/home/bollerma/LESdata/SSWT/fullCav/meshStudy/test5/test5M2SSWT_001/latest.volcano"
 
 # --- Output directory ---
@@ -100,14 +101,6 @@ volcano.CellArrayStatus = POINT_ARRAYS
 slice_z0 = VolcanoSlice(registrationName="Z0_Slice", Input=volcano)
 slice_z0.SlicePoint = [0.0, 0.0, SLICE_Z]
 slice_z0.SliceNormal = [0.0, 0.0, 1.0]
-
-# ============================================================
-# ========== CELL DATA → POINT DATA (IMPORTANT) ==============
-# ============================================================
-
-#cell_to_point = CellDatatoPointData(Input=slice_z0)
-#cell_to_point.PassCellData = 1
-#RenameSource("Slice_PointData", cell_to_point)
 
 # ============================================================
 # =================== PROBE EXTRACTION =======================
