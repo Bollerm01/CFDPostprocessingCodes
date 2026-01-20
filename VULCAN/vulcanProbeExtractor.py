@@ -112,7 +112,7 @@ ACTIVE_ZONES = ["zone2"]
 
 # ---------------- LOAD Tecplot ----------------
 reader = VisItTecplotBinaryReader(
-    registrationName='RC19_full_width_domain.plt',
+    registrationName=CASE,
     FileName=[INPUT_FILE]
 )
 reader.Set(
