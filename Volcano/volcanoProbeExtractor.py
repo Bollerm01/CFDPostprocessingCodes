@@ -18,6 +18,20 @@ POINT_ARRAYS = [
     "velocitymagavg",
     "velocityx",
     "velocityxavg",
+    "velocityy",
+    "velocityyavg",
+    "velocityz",
+    "velocityzavg",
+    "pressure",
+    "pressureavg",
+    "qcriterion",
+    "reynoldsstressxx",
+    "reynoldsstressxy",
+    "reynoldsstressxz",
+    "reynoldsstressyy",
+    "reynoldsstressyz",
+    "reynoldsstresszz",
+    "tke"
 ]
 
 # --- Z-plane slice location ---
