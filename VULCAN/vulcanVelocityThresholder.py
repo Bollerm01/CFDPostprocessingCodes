@@ -55,14 +55,29 @@ THRESHOLDS = [(0.95, 0.05), (0.90, 0.10)]
 # ============================================================
 # HELPER FUNCTIONS
 # ============================================================
+import re
+
 def parse_xL(sheet_name):
+    # Explicit special case
     if sheet_name == "xL_1":
         return 1.0
 
+    # Negative decimal: xL_neg0p5
+    match = re.search(r"xL_neg([0-9]+)p([0-9]+)", sheet_name)
+    if match:
+        return -float(f"{match.group(1)}.{match.group(2)}")
+
+    # Negative integer: xL_neg1
+    match = re.search(r"xL_neg([0-9]+)", sheet_name)
+    if match:
+        return -float(match.group(1))
+
+    # Positive decimal: xL_0p25
     match = re.search(r"xL_([0-9]+)p([0-9]+)", sheet_name)
     if match:
         return float(f"{match.group(1)}.{match.group(2)}")
 
+    # Positive integer: xL_2
     match = re.search(r"xL_([0-9]+)", sheet_name)
     if match:
         return float(match.group(1))
