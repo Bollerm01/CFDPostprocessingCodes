@@ -37,12 +37,12 @@ FINAL_COLUMNS = [
     "Velocity_Mag",
     "Pressure",
     "TKE",
-    r"$\tau_{xx}$", 
-    r"$\tau_{xy}$",
-    r"$\tau_{xz}$",
-    r"$\tau_{yy}$",
-    r"$\tau_{yz}$",
-    r"$\tau_{zz}$"    
+    "Rxx",
+    "Rxy",
+    "Rxz",
+    "Ryy",
+    "Ryz",
+    "Rzz"    
 ]
 
 # ============================================================
