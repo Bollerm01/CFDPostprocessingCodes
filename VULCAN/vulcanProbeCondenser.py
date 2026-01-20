@@ -19,12 +19,12 @@ COLUMN_RENAME_MAP = {
     "Velocity_Mag_m_s": "Velocity_Mag",
     'zone2/Pressure_Pa': "Pressure",
     'zone2/Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup': "TKE",
-    'zone2/greekt_greeksubxx_subsupt_sup': r"$\tau_{xx}$",
-    'zone2/greekt_greeksubxy_subsupt_sup': r"$\tau_{xy}$",
-    'zone2/greekt_greeksubxz_subsupt_sup': r"$\tau_{xz}$",
-    'zone2/greekt_greeksubyy_subsupt_sup': r"$\tau_{yy}$",
-    'zone2/greekt_greeksubyz_subsupt_sup': r"$\tau_{yz}$",
-    'zone2/greekt_greeksubzz_subsupt_sup': r"$\tau_{zz}$"
+    'zone2/greekt_greeksubxx_subsupt_sup': "Rxx",
+    'zone2/greekt_greeksubxy_subsupt_sup': "Rxy",
+    'zone2/greekt_greeksubxz_subsupt_sup': "Rxz",
+    'zone2/greekt_greeksubyy_subsupt_sup': "Ryy",
+    'zone2/greekt_greeksubyz_subsupt_sup': "Ryz",
+    'zone2/greekt_greeksubzz_subsupt_sup': "Rzz"
 }
 
 FINAL_COLUMNS = [
