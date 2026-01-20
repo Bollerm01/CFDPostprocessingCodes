@@ -42,16 +42,12 @@ os.makedirs(plots_dir, exist_ok=True)
 # COLUMN NAMES (EDIT IF NEEDED)
 # ============================================================
 Y_COL = "Y"
-VELX_COL = "velocityx"
-VELXAVG_COL = "velocityxavg"
-VELMAG_COL = "velocitymag"
-VELMAGAVG_COL = "velocitymagavg"
+VELX_COL = "Velocity_X"
+VELMAG_COL = "Velocity_Mag"
 
 VELOCITY_COLS = [
     VELX_COL,
-    VELXAVG_COL,
-    VELMAG_COL,
-    VELMAGAVG_COL
+    VELMAG_COL
 ]
 
 THRESHOLDS = [(0.95, 0.05), (0.90, 0.10)]
@@ -170,13 +166,13 @@ df_fs = pd.read_excel(excel_file, sheet_name="xL_neg2")
 df_fs = df_fs.sort_values(Y_COL)
 
 df_fs_tail = df_fs.iloc[len(df_fs) // 2 :]
-velocitymagavg_fs = df_fs_tail[VELMAGAVG_COL].mean()
-velocityxavg_fs = df_fs_tail[VELXAVG_COL].mean()
+velocitymag_fs = df_fs_tail[VELMAG_COL].mean()
+velocityx_fs = df_fs_tail[VELX_COL].mean()
 
 print("========================================")
 print("Freestream values")
-print(f"velocitymagavg_fs = {velocitymagavg_fs:.6f}")
-print(f"velocityxavg_fs   = {velocityxavg_fs:.6f}")
+print(f"velocitymag_fs = {velocitymag_fs:.6f}")
+print(f"velocityx_fs   = {velocityx_fs:.6f}")
 print("========================================")
 
 # ============================================================
@@ -186,8 +182,8 @@ norm_xlsx = os.path.join(output_dir, "normalized_velocity_profiles.xlsx")
 writer = pd.ExcelWriter(norm_xlsx, engine="xlsxwriter")
 
 pd.DataFrame({
-    "quantity": ["velocitymagavg", "velocityxavg"],
-    "value": [velocitymagavg_fs, velocityxavg_fs]
+    "quantity": ["Velocity_Mag", "Velocity_X"],
+    "value": [velocitymag_fs, velocityx_fs]
 }).to_excel(writer, sheet_name="freestream", index=False)
 
 # ============================================================
@@ -196,9 +192,7 @@ pd.DataFrame({
 # Map of normalized velocity columns to readable names for titles/files
 normalized_cols = {
     "velocityx_norm": "Velocity X",
-    "velocityxavg_norm": "Velocity X Avg",
-    "velocitymag_norm": "Velocity Mag",
-    "velocitymagavg_norm": "Velocity Mag Avg"
+    "velocitymag_norm": "Velocity Mag"
 }
 
 # results dictionary: keys are (norm_col, (upper, lower))
@@ -219,16 +213,15 @@ for sheet in sheet_names:
         df,
         y_col=Y_COL,
         velocity_cols=VELOCITY_COLS,
-        duplicate_ref_col=VELMAGAVG_COL
+        duplicate_ref_col=VELMAG_COL
     )
 
     y = df_clean[Y_COL].to_numpy()
 
     # Normalize
-    df_clean["velocityx_norm"] = df_clean[VELX_COL] / velocityxavg_fs
-    df_clean["velocityxavg_norm"] = df_clean[VELXAVG_COL] / velocityxavg_fs
-    df_clean["velocitymag_norm"] = df_clean[VELMAG_COL] / velocitymagavg_fs
-    df_clean["velocitymagavg_norm"] = df_clean[VELMAGAVG_COL] / velocitymagavg_fs
+    df_clean["velocityx_norm"] = df_clean[VELX_COL] / velocityx_fs
+    df_clean["velocitymag_norm"] = df_clean[VELMAG_COL] / velocitymag_fs
+
 
     # Write Excel sheet
     df_clean.to_excel(writer, sheet_name=sheet, index=False)

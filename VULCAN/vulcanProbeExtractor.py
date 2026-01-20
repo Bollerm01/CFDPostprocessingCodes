@@ -20,13 +20,29 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 # --- Variables to load from the VULCAN file ---
 POINT_ARRAYS = ['U_velocity_m_s', 
                 'V_velocity_m_s', 
-                'W_velocity_m_s', 
+                'W_velocity_m_s',
+                'Pressure_Pa',
+                'Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup',
+                'greekt_greeksubxx_subsupt_sup',
+                'greekt_greeksubxy_subsupt_sup',
+                'greekt_greeksubxz_subsupt_sup',
+                'greekt_greeksubyy_subsupt_sup',
+                'greekt_greeksubyz_subsupt_sup',
+                'greekt_greeksubzz_subsupt_sup',
                 'X', 
                 'Y', 
                 'Z', 
                 'zone2/U_velocity_m_s', 
                 'zone2/V_velocity_m_s', 
                 'zone2/W_velocity_m_s', 
+                'zone2/Pressure_Pa',
+                'zone2/Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup',
+                'zone2/greekt_greeksubxx_subsupt_sup',
+                'zone2/greekt_greeksubxy_subsupt_sup',
+                'zone2/greekt_greeksubxz_subsupt_sup',
+                'zone2/greekt_greeksubyy_subsupt_sup',
+                'zone2/greekt_greeksubyz_subsupt_sup',
+                'zone2/greekt_greeksubzz_subsupt_sup',
                 'zone2/X', 
                 'zone2/Y', 
                 'zone2/Z']
@@ -89,9 +105,6 @@ PROBE_LINES = {
         "end":   [0.622184, 0.026933, 0.0127],
     }
 }
-
-
-
 
 # Zones to include
 #ACTIVE_ZONES = ["zone1", "zone2"]
