@@ -146,7 +146,7 @@ pa.PointDataArrays = ['Velocity_Mag_m_s',
                       'zone2/greekt_greeksubxz_subsupt_sup',
                       'zone2/greekt_greeksubyy_subsupt_sup',
                       'zone2/greekt_greeksubyz_subsupt_sup',
-                      'zone2/greekt_greeksubzz_subsupt_sup',]
+                      'zone2/greekt_greeksubzz_subsupt_sup']
 pa.UpdatePipeline()
 
 # ---------------- FUNCTION: LINE EXTRACTION ----------------

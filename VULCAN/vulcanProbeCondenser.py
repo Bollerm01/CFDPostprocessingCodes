@@ -14,7 +14,17 @@ COLUMN_RENAME_MAP = {
     "Points:1": "Y",
     "Points:2": "Z",
     "Velocity_Vect:0": "Velocity_X",
-    "Velocity_Mag_m_s": "Velocity_Mag"
+    "Velocity_Vect:1": "Velocity_Y",
+    "Velocity_Vect:2": "Velocity_Z",
+    "Velocity_Mag_m_s": "Velocity_Mag",
+    'zone2/Pressure_Pa': "Pressure",
+    'zone2/Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup': "TKE",
+    'zone2/greekt_greeksubxx_subsupt_sup': r"$\tau_{xx}$",
+    'zone2/greekt_greeksubxy_subsupt_sup': r"$\tau_{xy}$",
+    'zone2/greekt_greeksubxz_subsupt_sup': r"$\tau_{xz}$",
+    'zone2/greekt_greeksubyy_subsupt_sup': r"$\tau_{yy}$",
+    'zone2/greekt_greeksubyz_subsupt_sup': r"$\tau_{yz}$",
+    'zone2/greekt_greeksubzz_subsupt_sup': r"$\tau_{zz}$"
 }
 
 FINAL_COLUMNS = [
@@ -22,8 +32,17 @@ FINAL_COLUMNS = [
     "Y",
     "Z",
     "Velocity_X",
-    "Velocity_Mag"
-    
+    "Velocity_Y",
+    "Velocity_Z",
+    "Velocity_Mag",
+    "Pressure",
+    "TKE",
+    r"$\tau_{xx}$", 
+    r"$\tau_{xy}$",
+    r"$\tau_{xz}$",
+    r"$\tau_{yy}$",
+    r"$\tau_{yz}$",
+    r"$\tau_{zz}$"    
 ]
 
 # ============================================================
