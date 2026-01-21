@@ -4,22 +4,35 @@
 % Column 1  : time [s]
 % Columns 2–26 : pressure probes probe00000 ... probe00024
 %
-% Purpose:
-% - Identify shear-layer (KH) modes
-% - Identify Rossiter-type cavity modes
-% - Examine spectral evolution along the shear layer
+% Features:
+% - GUI-based .DAT file selection
+% - Welch PSD (robust for shear-layer flows)
+% - Strouhal scaling
+% - Rossiter mode prediction
+% - Shear-layer spectral evolution
 %
 % ---------------------------------------------------------
 
 clear; clc; close all;
 
-%% ===================== USER INPUTS =======================
-filename  = 'pressure_probes.dat';   % Tab-delimited .DAT file
+%% ===================== FILE SELECTION GUI =================
+[fileName, filePath] = uigetfile( ...
+    {'*.dat;*.DAT','CFD Probe Files (*.dat, *.DAT)'}, ...
+    'Select Pressure Probe Data File');
+
+if isequal(fileName,0)
+    error('No file selected. Script terminated.');
+end
+
+filename = fullfile(filePath, fileName);
+fprintf('Selected file: %s\n', filename);
+
+%% ===================== USER INPUTS ========================
 numProbes = 25;
 
-% --- Flow / Geometry Parameters (EDIT THESE) ---
-L     = 0.05;        % cavity length [m]
-Uinf  = 1200.0;      % freestream velocity [m/s]
+% --- Flow / Geometry Parameters ---
+L     = 0.068418;        % SSWT cavity length [m]
+Uinf  = 695.0;      % freestream velocity [m/s]
 Minf  = 2.0;         % freestream Mach number
 
 % Rossiter model constants
@@ -63,7 +76,7 @@ end
 
 PSD_mean = mean(PSD, 2);
 
-%% ===================== STRouhal Scaling ==================
+%% ===================== STROUHAL SCALING ==================
 St = f * L / Uinf;
 
 %% ===================== ROSSITER MODES ====================
