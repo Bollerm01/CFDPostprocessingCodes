@@ -36,17 +36,17 @@ Uinf  = 695.0;      % freestream velocity [m/s]
 Minf  = 2.0;         % freestream Mach number
 
 % Rossiter constants
-alpha = 0.25;
-kappa = 0.57;
-nRoss = 4;
+alpha = 0.25; % canonical value for acoustic wave arrival at L.E. and growth of shear-layer instability
+kappa = 0.57; % U_c/U_inf, convective to freestream V - slightly more than half from avg of stagnant and freestream
+nRoss = 4; % first 4 Rossiter tonal frequencies
 
 % Welch PSD parameters
-blockFraction = 8;
-overlapFrac   = 0.5;
+blockFraction = 8; % compromize between frequency resolution and convergence
+overlapFrac   = 0.5; % max variance reduction
 
 % ---- Bulk PSD integration limits (Strouhal) ----
-St_min = 0.02;
-St_max = 1.0;
+St_min = 0.02; % Excludes very low freq cavity breathing; focus is on shear layer
+St_max = 1.0; %captures KH roll-up and early breakdown w/o small scale turb and noise
 
 %% ===================== LOAD DATA ==========================
 data = readmatrix(filename, 'FileType', 'text');
@@ -65,9 +65,9 @@ p = detrend(p, 'constant');
 
 %% ===================== WELCH PSD ==========================
 windowLength = floor(Nt / blockFraction);
-window       = hann(windowLength);
+window       = hann(windowLength); % smooth taper for window, good for broadband turbulence
 noverlap     = floor(overlapFrac * windowLength);
-nfft         = max(2048, 2^nextpow2(windowLength));
+nfft         = max(2048, 2^nextpow2(windowLength)); % ensures smooth spectra, good for log scale plotting
 
 PSD = zeros(nfft/2+1, numProbes);
 
@@ -77,7 +77,7 @@ end
 
 PSD_mean = mean(PSD, 2);
 
-%% ===================== STRouHAL SCALING ===================
+%% ===================== STROUHAL SCALING ===================
 St = f * L / Uinf;
 
 %% ===================== ROSSITER MODES =====================
