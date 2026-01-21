@@ -35,18 +35,20 @@ L     = 0.068418;        % SSWT cavity length [m]
 Uinf  = 695.0;      % freestream velocity [m/s]
 Minf  = 2.0;         % freestream Mach number
 
-% Rossiter model constants
+% Rossiter constants
 alpha = 0.25;
 kappa = 0.57;
-
-% Number of Rossiter modes to plot
 nRoss = 4;
 
-% Welch PSD parameters (recommended for cavity flows)
-blockFraction = 8;   % Nt / blockFraction = window length
-overlapFrac   = 0.5; % 50% overlap
+% Welch PSD parameters
+blockFraction = 8;
+overlapFrac   = 0.5;
 
-%% ===================== LOAD DATA =========================
+% ---- Bulk PSD integration limits (Strouhal) ----
+St_min = 0.02;
+St_max = 1.0;
+
+%% ===================== LOAD DATA ==========================
 data = readmatrix(filename, 'FileType', 'text');
 
 time = data(:,1);
@@ -56,13 +58,12 @@ Nt = length(time);
 dt = mean(diff(time));
 Fs = 1/dt;
 
-fprintf('Samples: %d | dt = %.3e s | Fs = %.1f Hz\n', Nt, dt, Fs);
+fprintf('Samples: %d | Fs = %.1f Hz\n', Nt, Fs);
 
-%% ===================== PREPROCESS ========================
-% Remove mean (essential for cavity FFTs)
+%% ===================== PREPROCESS =========================
 p = detrend(p, 'constant');
 
-%% ===================== WELCH PSD =========================
+%% ===================== WELCH PSD ==========================
 windowLength = floor(Nt / blockFraction);
 window       = hann(windowLength);
 noverlap     = floor(overlapFrac * windowLength);
@@ -76,73 +77,80 @@ end
 
 PSD_mean = mean(PSD, 2);
 
-%% ===================== STROUHAL SCALING ==================
+%% ===================== STRouHAL SCALING ===================
 St = f * L / Uinf;
 
-%% ===================== ROSSITER MODES ====================
-fRoss  = zeros(nRoss,1);
+%% ===================== ROSSITER MODES =====================
 StRoss = zeros(nRoss,1);
-
 for n = 1:nRoss
-    fRoss(n)  = (Uinf/L) * (n - alpha) / (1/kappa + Minf);
-    StRoss(n) = fRoss(n) * L / Uinf;
+    StRoss(n) = (n - alpha) / (1/kappa + Minf);
 end
 
-%% ===================== DOMINANT PEAKS ====================
-numPeaks = 5;
+%% ===================== BULK PSD PER PROBE =================
+% Integrate PSD over selected Strouhal range
+idxSt = (St >= St_min) & (St <= St_max);
 
-[pkVals, pkLocs] = findpeaks(PSD_mean, St, ...
-    'SortStr','descend', 'NPeaks', numPeaks);
-
-fprintf('\nDominant Strouhal Numbers:\n');
-for i = 1:length(pkLocs)
-    fprintf('  St = %.3f\n', pkLocs(i));
+bulkPSD = zeros(numProbes,1);
+for k = 1:numProbes
+    bulkPSD(k) = trapz(St(idxSt), PSD(idxSt,k));
 end
 
-%% ===================== PLOTS =============================
+% Identify top 5 probes
+[bulkPSD_sorted, idx_sorted] = sort(bulkPSD, 'descend');
+top5 = idx_sorted(1:5);
 
-% ---- Mean PSD (Strouhal-scaled) ----
+fprintf('\nTop 5 Probes by Bulk PSD Energy (St = %.2f–%.2f):\n', ...
+        St_min, St_max);
+for i = 1:5
+    fprintf('  %d) probe%05d  |  Bulk PSD = %.3e\n', ...
+        i, top5(i)-1, bulkPSD_sorted(i));
+end
+
+%% ===================== PLOTS ==============================
+
+% ---- Mean PSD ----
 figure;
 semilogx(St, PSD_mean, 'k', 'LineWidth', 2); hold on;
-semilogx(pkLocs, pkVals, 'ro', 'MarkerSize', 7, 'LineWidth', 1.2);
-
 for n = 1:nRoss
     xline(StRoss(n),'b--','LineWidth',1.2);
 end
-
-grid on;
-xlabel('Strouhal Number  St = fL/U_\infty');
-ylabel('PSD  [p^2/Hz]');
-title('Mean Pressure PSD – Scramjet Cavity');
-legend('Mean PSD','Dominant Peaks','Rossiter Modes','Location','best');
-
-% ---- Single Probe PSD (Upstream Shear Layer) ----
-probeID = 1;  % probe00000
-
-figure;
-semilogx(St, PSD(:,probeID), 'LineWidth', 1.5);
 grid on;
 xlabel('Strouhal Number');
-ylabel('PSD  [p^2/Hz]');
-title(sprintf('PSD – Probe %02d', probeID-1));
+ylabel('PSD');
+title('Mean Pressure PSD – Scramjet Cavity');
+legend('Mean PSD','Rossiter Modes','Location','best');
 
-% ---- Spectral Evolution Along Shear Layer ----
+% ---- Spectral Evolution Map ----
 figure;
 imagesc(St, 1:numProbes, log10(PSD'));
 set(gca,'YDir','normal');
 colorbar;
 xlabel('Strouhal Number');
-ylabel('Probe Index (Upstream → Downstream)');
+ylabel('Probe Index');
 title('Shear-Layer Spectral Energy Evolution');
 
-% ---- All Probes (Optional Diagnostic) ----
+% ---- Highlight Top 5 Probes ----
 figure; hold on;
+
+% Plot all probes in gray
 for k = 1:numProbes
-    semilogx(St, PSD(:,k));
+    semilogx(St, PSD(:,k), 'Color', [0.7 0.7 0.7]);
 end
+
+% Highlight top 5
+colors = lines(5);
+for i = 1:5
+    k = top5(i);
+    semilogx(St, PSD(:,k), 'LineWidth', 2.5, 'Color', colors(i,:));
+end
+
 grid on;
 xlabel('Strouhal Number');
 ylabel('PSD');
-title('PSD – All Probes');
+title('Top 5 Probes by Bulk PSD Energy');
 
-%% ===================== END SCRIPT ========================
+legendStrings = arrayfun(@(x) ...
+    sprintf('probe%05d', x-1), top5, 'UniformOutput', false);
+legend(legendStrings, 'Location','best');
+
+%% ===================== END SCRIPT =========================
