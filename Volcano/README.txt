@@ -4,4 +4,5 @@ Workflow of Volcano ScaLES postprocessing
 3) Sort raw data using "volcanoProbeCondenser.py" using folder of raw .csv's on Windows machine
 4) Generate shear layer thickness final data and figures using "volcanoVelocityThresholder.py" on Windows machine
 5) Cross plot the final data across cases using "XXX.m" (NEEDS WRITTEN AS OF 1/9/26)
-6) Process Kulite and temporal pressure probe data using [NEED SET OF CODES FOR FFT] (See "PressureDataVolcano" folder)
+6) Process temporal pressure probe data using "FFT_PSD.m" (See "PressureDataVolcano" folder)
+7) Process Kulite data using "XXX.m" (See "PressureDataVolcano" folder)
