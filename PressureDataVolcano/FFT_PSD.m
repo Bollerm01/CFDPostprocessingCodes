@@ -110,7 +110,8 @@ end
 
 % ---- Mean PSD ----
 figure;
-semilogx(St, PSD_mean, 'k', 'LineWidth', 2); hold on;
+%loglog(St, PSD_mean, 'k', 'LineWidth', 2); hold on;
+loglog(f, PSD_mean, 'k', 'LineWidth', 2); hold on;
 for n = 1:nRoss
     xline(StRoss(n),'b--','LineWidth',1.2);
 end
