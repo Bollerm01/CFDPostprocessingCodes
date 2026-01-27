@@ -27,10 +27,10 @@ def extract_test_suffix(dir_path):
 def select_folders_gui(subdirs):
     """Show a checkbox GUI so the user can pick exactly 4 directories."""
     sel_win = tk.Toplevel()
-    sel_win.title("Select 4 Test Directories")
+    sel_win.title("Select 5 Test Directories")
     sel_win.geometry("400x400")
 
-    tk.Label(sel_win, text="Select exactly 4 directories:", font=("Arial", 12)).pack(pady=5)
+    tk.Label(sel_win, text="Select exactly 5 directories:", font=("Arial", 12)).pack(pady=5)
 
     vars_list = []
     for d in subdirs:
@@ -43,8 +43,8 @@ def select_folders_gui(subdirs):
 
     def confirm():
         checked = [d for var, d in vars_list if var.get()]
-        if len(checked) != 4:
-            messagebox.showerror("Error", "You must select exactly 4 directories.")
+        if len(checked) != 5:
+            messagebox.showerror("Error", "You must select exactly 5 directories.")
             return
         selected_dirs.extend(checked)
         sel_win.destroy()
@@ -66,7 +66,7 @@ def main():
 
     # Pick parent directory
     parent_dir = filedialog.askdirectory(
-        title="Select Parent Folder Containing the 4 Test Directories"
+        title="Select Parent Folder Containing the 5 Test Directories"
     )
     if not parent_dir:
         messagebox.showerror("Error", "No directory selected.")
@@ -78,13 +78,13 @@ def main():
         if os.path.isdir(os.path.join(parent_dir, d))
     ]
 
-    if len(subdirs) < 4:
-        messagebox.showerror("Error", "Parent folder must contain at least 4 subdirectories.")
+    if len(subdirs) < 5:
+        messagebox.showerror("Error", "Parent folder must contain at least 5 subdirectories.")
         return
 
-    # GUI selection of the 4 folders
+    # GUI selection of the 5 folders
     source_dirs = select_folders_gui(subdirs)
-    if len(source_dirs) != 4:
+    if len(source_dirs) != 5:
         return
 
     # Select output folder
