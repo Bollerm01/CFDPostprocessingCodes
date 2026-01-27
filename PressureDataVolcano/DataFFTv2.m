@@ -1,12 +1,12 @@
 %% Standalone RAW FFT Processing Script
-% Experimental aeroacoustic pressure data
+% Experimental aeroacoustic data
 % Columns: time | probe0000 ... probe0024
 
 clear; clc; close all;
 
 %% ---------------- USER SETTINGS ----------------
-nmics = 25;          % Number of probes
-N     = 4096;        % Samples per FFT block
+nmics = 25;            % Number of probes
+df_desired = 50;       % <<< DESIRED Hz PER BIN <<<
 
 %% ---------------- LOAD DATA ----------------
 [file, path] = uigetfile('*.dat', 'Select pressure data file');
@@ -22,42 +22,52 @@ pt   = data{:,2:1+nmics};
 nsamp = length(time);
 
 %% ---------------- COMPUTE SAMPLING FREQUENCY ----------------
-dt = mean(diff(time));   % Mean time step
-fs = 1/dt;               % Sampling frequency [Hz]
+dt = mean(diff(time));
+fs = 1/dt;
 
 fprintf('Computed sampling frequency: %.3f Hz\n', fs);
 
+%% ---------------- FFT LENGTH FROM BIN WIDTH ----------------
+Nfft = round(fs / df_desired);
+
+% Force Nfft to be even (clean Nyquist handling)
+if mod(Nfft,2) ~= 0
+    Nfft = Nfft + 1;
+end
+
+df_actual = fs / Nfft;
+
+fprintf('Requested bin width: %.3f Hz\n', df_desired);
+fprintf('Actual bin width:    %.3f Hz\n', df_actual);
+fprintf('FFT length used:     %d samples\n', Nfft);
+
 %% ---------------- PREALLOCATE ----------------
-Xfsave = zeros(N, nmics);
-NB     = zeros(N, nmics);
+Xfsave = zeros(Nfft, nmics);
+NB     = zeros(Nfft, nmics);
 
 %% ---------------- FFT SETUP ----------------
-h  = 1/fs;
-T  = h*N;
-df = 1/T;
+f = (0:Nfft-1).' * df_actual;
 
-f = (0:df:fs-df)';
-
-nwin   = hanning(N);
-blocks = floor(nsamp/N);
+nwin   = hanning(Nfft);
+blocks = floor(nsamp / Nfft);
 
 %% ---------------- MAIN LOOP ----------------
 for k = 1:nmics
 
-    Xf = zeros(N, blocks-1);
+    Xf = zeros(Nfft, blocks-1);
 
     pt_finish = 0;
     for n = 1:blocks-1
 
         pt_start  = pt_finish + 1;
-        pt_finish = n * N;
+        pt_finish = n * Nfft;
 
         x = pt(pt_start:pt_finish, k);
 
         X = fft(x .* nwin);
 
-        % Raw pressure amplitude spectrum
-        Xf(:,n) = 2 * abs(X) / N;
+        % Raw amplitude spectrum
+        Xf(:,n) = 2 * abs(X) / Nfft;
 
     end
 
@@ -71,8 +81,8 @@ end
 
 %% ---------------- PLOTS ----------------
 figure;
-plot(f(1:N/2), NB(1:N/2,:));
+plot(f(1:Nfft/2), NB(1:Nfft/2,:));
 grid on;
 xlabel('Frequency [Hz]');
 ylabel('SPL [dB re 20 \muPa]');
-title('Raw Narrowband SPL – All Probes');
+title('Raw Narrowband SPL – User-Specified Bin Width');
