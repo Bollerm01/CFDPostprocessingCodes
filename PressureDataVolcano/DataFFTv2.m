@@ -5,11 +5,14 @@
 clear; clc; close all;
 
 %% ---------------- USER SETTINGS ----------------
-nmics = 25;            % Number of probes
-df_desired = 50;       % <<< DESIRED Hz PER BIN <<<
+nmics        = 25;                 % Total number of probes
+df_desired   = 50;                 % Hz per FFT bin
+plot_probes  = 0:4;      % <<< PROBES TO OVERLAY <<<
 
 %% ---------------- LOAD DATA ----------------
-[file, path] = uigetfile('*.dat', 'Select pressure data file');
+%[file, path] = uigetfile('*.dat', 'Select pressure data file');
+file = 'rampLine.pressure.dat';
+path = 'E:\Boller CFD\AVIATION CFD\PressureProbeData\';
 if isequal(file,0)
     error('No file selected.');
 end
@@ -29,8 +32,6 @@ fprintf('Computed sampling frequency: %.3f Hz\n', fs);
 
 %% ---------------- FFT LENGTH FROM BIN WIDTH ----------------
 Nfft = round(fs / df_desired);
-
-% Force Nfft to be even (clean Nyquist handling)
 if mod(Nfft,2) ~= 0
     Nfft = Nfft + 1;
 end
@@ -51,7 +52,7 @@ f = (0:Nfft-1).' * df_actual;
 nwin   = hanning(Nfft);
 blocks = floor(nsamp / Nfft);
 
-%% ---------------- MAIN LOOP ----------------
+%% ---------------- MAIN FFT LOOP ----------------
 for k = 1:nmics
 
     Xf = zeros(Nfft, blocks-1);
@@ -71,18 +72,24 @@ for k = 1:nmics
 
     end
 
-    % Block-averaged FFT
     Xfsave(:,k) = mean(Xf, 2);
-
-    % Narrowband SPL (re 20 µPa)
-    NB(:,k) = 20 * log10(Xfsave(:,k) / 20e-6);
+    NB(:,k)     = 20 * log10(Xfsave(:,k) / 20e-6);
 
 end
 
-%% ---------------- PLOTS ----------------
-figure;
-plot(f(1:Nfft/2), NB(1:Nfft/2,:));
-grid on;
+%% ---------------- PLOT SELECTED PROBES ----------------
+figure; hold on; grid on;
+
+for i = 1:length(plot_probes)
+    pidx = plot_probes(i) + 1;   % convert probe number → MATLAB index
+
+    semilogx(f(1:Nfft/2), NB(1:Nfft/2, pidx), ...
+        'DisplayName', sprintf('Probe %02d', plot_probes(i)));
+end
+
 xlabel('Frequency [Hz]');
 ylabel('SPL [dB re 20 \muPa]');
-title('Raw Narrowband SPL – User-Specified Bin Width');
+title('Raw Narrowband SPL – Selected Probes');
+legend('show');
+set(gca,'XScale','log');
+% xlim([df_actual fs/2]);
