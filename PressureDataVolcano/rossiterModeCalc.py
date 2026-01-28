@@ -5,13 +5,14 @@ import numpy as np
 # ==========================================================
 
 # Freestream Mach number (INPUT)
-Mach = 3.75
+Mach = 3.65
+
 
 # Number of Rossiter modes to calculate
 n_modes = 5
 
 # Flow properties
-a = 340.0               # Speed of sound [m/s]
+a = 343.0               # Speed of sound [m/s]
 
 # Cavity properties
 L = 0.068               # Cavity length [m]
