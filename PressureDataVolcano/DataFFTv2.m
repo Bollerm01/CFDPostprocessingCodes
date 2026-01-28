@@ -2,17 +2,17 @@
 % Experimental aeroacoustic data
 % Columns: time | probe0000 ... probe0024
 
-clear; clc; close all;
+clear; clc; %close all;
 
 %% ---------------- USER SETTINGS ----------------
 nmics        = 25;                 % Total number of probes
-df_desired   = 50;                 % Hz per FFT bin
-plot_probes  = 0:4;      % <<< PROBES TO OVERLAY <<<
+df_desired   = 25;                 % Hz per FFT bin
+plot_probes  = [1 10];      % <<< PROBES TO OVERLAY <<<
 
 %% ---------------- LOAD DATA ----------------
-%[file, path] = uigetfile('*.dat', 'Select pressure data file');
-file = 'rampLine.pressure.dat';
-path = 'E:\Boller CFD\AVIATION CFD\PressureProbeData\';
+[file, path] = uigetfile('*.dat', 'Select pressure data file');
+% file = 'rampLine.pressure.dat';
+% path = 'E:\Boller CFD\AVIATION CFD\PressureProbeData\';
 if isequal(file,0)
     error('No file selected.');
 end
@@ -78,7 +78,7 @@ for k = 1:nmics
 end
 
 %% ---------------- PLOT SELECTED PROBES ----------------
-figure; hold on; grid on;
+figure(1); hold on; grid on;
 
 for i = 1:length(plot_probes)
     pidx = plot_probes(i) + 1;   % convert probe number → MATLAB index
