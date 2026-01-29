@@ -1,3 +1,7 @@
+# Function to sort the combined run Excel files into folders based on location
+# Input: Run directories with pre-combined .XLSX files
+# Output: Folder that contains subfolders of locations, each of which contain the combined .XLSX from the runs
+
 import os
 import shutil
 import re
@@ -25,17 +29,26 @@ def extract_test_suffix(dir_path):
 # ---------------------------------------------------------------
 
 def select_folders_gui(subdirs):
-    """Show a checkbox GUI so the user can pick exactly 4 directories."""
+    """Show a checkbox GUI so the user can pick any number of directories."""
     sel_win = tk.Toplevel()
-    sel_win.title("Select 5 Test Directories")
+    sel_win.title("Select Test Directories")
     sel_win.geometry("400x400")
 
-    tk.Label(sel_win, text="Select exactly 5 directories:", font=("Arial", 12)).pack(pady=5)
+    tk.Label(
+        sel_win,
+        text="Select one or more directories:",
+        font=("Arial", 12)
+    ).pack(pady=5)
 
     vars_list = []
     for d in subdirs:
         var = tk.BooleanVar()
-        cb = tk.Checkbutton(sel_win, text=os.path.basename(d), variable=var, anchor="w")
+        cb = tk.Checkbutton(
+            sel_win,
+            text=os.path.basename(d),
+            variable=var,
+            anchor="w"
+        )
         cb.pack(fill="x", padx=20)
         vars_list.append((var, d))
 
@@ -43,15 +56,22 @@ def select_folders_gui(subdirs):
 
     def confirm():
         checked = [d for var, d in vars_list if var.get()]
-        if len(checked) != 5:
-            messagebox.showerror("Error", "You must select exactly 5 directories.")
+        if len(checked) == 0:
+            messagebox.showerror(
+                "Error",
+                "You must select at least one directory."
+            )
             return
         selected_dirs.extend(checked)
         sel_win.destroy()
 
-    tk.Button(sel_win, text="Confirm Selection", command=confirm).pack(pady=10)
+    tk.Button(
+        sel_win,
+        text="Confirm Selection",
+        command=confirm
+    ).pack(pady=10)
 
-    sel_win.grab_set()  # make it modal
+    sel_win.grab_set()   # modal
     sel_win.wait_window()
 
     return selected_dirs
@@ -66,7 +86,7 @@ def main():
 
     # Pick parent directory
     parent_dir = filedialog.askdirectory(
-        title="Select Parent Folder Containing the 5 Test Directories"
+        title="Select Parent Folder Containing Test Directories"
     )
     if not parent_dir:
         messagebox.showerror("Error", "No directory selected.")
@@ -78,17 +98,22 @@ def main():
         if os.path.isdir(os.path.join(parent_dir, d))
     ]
 
-    if len(subdirs) < 5:
-        messagebox.showerror("Error", "Parent folder must contain at least 5 subdirectories.")
+    if len(subdirs) < 1:
+        messagebox.showerror(
+            "Error",
+            "Parent folder must contain at least one subdirectory."
+        )
         return
 
-    # GUI selection of the 5 folders
+    # GUI selection of folders
     source_dirs = select_folders_gui(subdirs)
-    if len(source_dirs) != 5:
+    if not source_dirs:
         return
 
     # Select output folder
-    output_root = filedialog.askdirectory(title="Select Output Folder")
+    output_root = filedialog.askdirectory(
+        title="Select Output Folder"
+    )
     if not output_root:
         messagebox.showerror("Error", "No output folder selected.")
         return
@@ -100,8 +125,12 @@ def main():
             if f.lower().endswith(".xlsx"):
                 prefixes.add(extract_prefix(f))
 
-    if len(prefixes) != 6:
-        messagebox.showwarning("Warning", f"Expected 6 prefixes but found {prefixes}")
+    if not prefixes:
+        messagebox.showerror(
+            "Error",
+            "No Excel files found in selected directories."
+        )
+        return
 
     # Create prefix subfolders
     output_subfolders = {}
@@ -131,7 +160,10 @@ def main():
 
             shutil.copy2(src, dst)
 
-    messagebox.showinfo("Done", f"Files successfully sorted into:\n{output_root}")
+    messagebox.showinfo(
+        "Done",
+        f"Files successfully sorted into:\n{output_root}"
+    )
 
 # ---------------------------------------------------------------
 if __name__ == "__main__":

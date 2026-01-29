@@ -1,4 +1,5 @@
-Workflow of Volcano ScaLES postprocessing
+Workflow of Volcano ScaLES postprocessing for SSWT
+See "VolcanoSlicingCoords.xlsx" for slicing coordinates in the domain
 1) Generate screenshot slices of mid- and crossplanes using "volcanoShearProcessorV3.py" (run on Linux)
 2) If necessary: Use "volcanoProbeExtractor.py" to extract cavity line probe data as .CSV's from a Volcano File (run on Linux)
 3) Sort raw data using "volcanoProbeCondenser.py" using folder of raw .csv's on Windows machine
