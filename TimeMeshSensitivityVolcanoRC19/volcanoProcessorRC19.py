@@ -5,6 +5,11 @@
 from paraview.simple import *
 import os
 
+# TO DO #
+# 1. Make .step files of the shifted domain
+# 2. Copy and update a .yaml file with the new geometry and slicing coordinates
+# 3. Run a quick simulation to develop this code
+
 # ============================================================
 # ======================= USER INPUT =========================
 # ============================================================
