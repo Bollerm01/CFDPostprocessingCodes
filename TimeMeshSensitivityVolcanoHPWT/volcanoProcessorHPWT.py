@@ -7,9 +7,10 @@ import os
 
 # TO DO #
 # 1. Create the CAD flow domain from nozzle -> outlet
-# 2. Make .step files of the domain
-# 3. Copy and update a .yaml file with the new geometry and slicing coordinates
-# 4. Run a quick simulation to develop this code
+# 2. Go through and create the coordinates .xlsx file
+# 3. Make .step files of the domain
+# 4. Copy and update a .yaml file with the new geometry and slicing coordinates
+# 5. Run a quick simulation to develop this code
 
 # ============================================================
 # ======================= USER INPUT =========================
