@@ -14,7 +14,7 @@ import os
 # ============================================================
 
 # --- Input volcano file ---
-VOLCANO_FILE = r"/home/bollerma/LESdata/SSWT/fullCav/meshStudy/test8/test8M2SSWT_000/latest.volcano"
+VOLCANO_FILE = r"/home/bollerma/LESdata/SSWT/fullCav/meshStudy/test10/test10M2SSWT_000/latest.volcano"
 
 # --- Output directory ---
 OUTPUT_DIR = r"/home/bollerma/LESdata/SSWT/fullCav/meshStudy/bulkProbeOutput"
