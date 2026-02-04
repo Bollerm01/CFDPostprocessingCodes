@@ -1,7 +1,6 @@
 function import_and_plot_condensed_xlsx()
 
     %% --- Select test case XLSX files ---
-    cd("E:\Boller CFD\AVIATION CFD\MeshSensitivityData");
     [files, path] = uigetfile('*.xlsx', ...
         'Select condensed XLSX test cases (test6, test8, ...)', ...
         'MultiSelect','on');
@@ -29,7 +28,7 @@ function import_and_plot_condensed_xlsx()
 
     %% --- Quantities to plot ---
     quantities = { ...
-        'pressureavg',    'Pressure Avg vs x',    'pressure'; ...
+        'pressurexavg',    'Pressure_x Avg vs x',    'pressurex'; ...
         'velocitymagavg',  'Velocity Mag Avg vs x',  'velocitymag'; ...
         'velocityxavg',    'Velocity_x Avg vs x',    'velocityx' };
 
@@ -74,34 +73,9 @@ function import_and_plot_condensed_xlsx()
 
         fprintf('Sheet "%s" completed.\n', sheetName);
     end
-    
-    cd("E:\Boller CFD\GitHub\CFDPostprocessingCodes\TimeMeshSensitivityVolcanoSSWT");
+
     disp('=============================================');
     disp('All line locations processed. Plots saved.');
     disp('=============================================');
 
-end
-
-function save_overlay_x(xData, yData, files, saveFolder, yLabel, titleText, tag)
-
-    fig = figure('Visible','on');
-    hold on; grid on;
-
-    for k = 1:numel(yData)
-        plot(xData{k}, yData{k}, 'LineWidth', 2);
-    end
-
-    xlabel('x (m)');
-    ylabel(yLabel);
-    title(titleText, 'Interpreter','none');
-    legend(files, 'Interpreter','none', 'Location','best');
-
-    % Save FIG
-    saveas(fig, fullfile(saveFolder, sprintf('%s.fig', tag)));
-
-    % Save JPEG
-    print(fig, fullfile(saveFolder, sprintf('%s.jpg', tag)), ...
-        '-djpeg','-r300');
-
-    close(fig);
 end
