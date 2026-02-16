@@ -17,12 +17,10 @@ def extract_prefix(filename):
     return filename.split("_")[0]
 
 def extract_test_suffix(dir_path):
-    """Extract test number (test1, test10, test12, etc)."""
-    folder = os.path.basename(os.path.normpath(dir_path)).lower()
-    match = re.match(r"(test\d+)", folder)
-    if match:
-        return match.group(1)
-    return folder  # fallback
+    folder = os.path.basename(os.path.normpath(dir_path))
+    return folder
+
+
 
 # ---------------------------------------------------------------
 # GUI Checkbox Selector

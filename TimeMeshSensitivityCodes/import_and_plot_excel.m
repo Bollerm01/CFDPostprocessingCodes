@@ -112,8 +112,6 @@ function import_and_plot_excel()
 end
 
 
-
-
 %%                 Helper Function (Subfunction)
 function save_overlay(xData, yData, files, savePrefix, saveFolder, xLabel, titleText, tag)
 
@@ -121,15 +119,33 @@ function save_overlay(xData, yData, files, savePrefix, saveFolder, xLabel, title
     hold on; grid on;
 
     nCurves = numel(xData);
+    legendLabels = cell(1,nCurves);
 
     for k = 1:nCurves
         plot(xData{k}, yData{k}, 'LineWidth', 2);
+
+        % --- Get filename without extension ---
+        [~, nameOnly] = fileparts(files{k});
+
+        % --- Split by underscore ---
+        parts = split(string(nameOnly), "_");
+
+        firstString = parts(1);  % first token before "_"
+
+        % --- Extract testXX ---
+        match = regexp(nameOnly, 'test\d+', 'match');
+
+        if ~isempty(match)
+            legendLabels{k} = firstString + "_" + match{1};
+        else
+            legendLabels{k} = firstString;  % fallback
+        end
     end
 
     xlabel(xLabel);
     ylabel('y (m)');
     title(titleText, 'Interpreter','none');
-    legend(files, 'Interpreter','none', 'Location','northwest');
+    legend(legendLabels, 'Interpreter','none', 'Location','northwest');
 
     % Save FIG
     saveas(fig, fullfile(saveFolder, sprintf('%s_%s.fig', savePrefix, tag)), 'fig');
@@ -140,6 +156,8 @@ function save_overlay(xData, yData, files, savePrefix, saveFolder, xLabel, title
 
     close(fig);
 end
+
+
 
 
 
