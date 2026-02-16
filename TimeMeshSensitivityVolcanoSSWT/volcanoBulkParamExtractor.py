@@ -14,7 +14,7 @@ import os
 # ============================================================
 
 # --- Input volcano file ---
-VOLCANO_FILE = r"/home/bollerma/LESdata/SSWT/fullCav/meshStudy/test15/checkpoint.1262687.volcano"
+VOLCANO_FILE = r"/home/bollerma/LESdata/SSWT/fullCav/meshStudy/test15/test15M2SSWT_000/checkpoint.1262687.volcano"
 #VOLCANO_FILE = r"E:\Boller CFD\AVIATION CFD\MeshSensitivityData\test14M2SSWT_000\checkpoint.1193017.volcano"
 
 # --- Output directory ---
