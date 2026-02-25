@@ -31,6 +31,35 @@ root_dir = filedialog.askdirectory(title="Select the root directory containing a
 if not root_dir:
     raise SystemExit("No root directory selected. Exiting.")
 
+def is_valid_data_file(fname: str) -> bool:
+    """
+    Return True if this.dat file should be processed.
+    Rules:
+      - Must contain one of: _MP, _z25, _z75
+      - Must NOT contain: _mid, _zWp25, _zWp75
+      - Must NOT contain: 'rampLine', 'floorLine'
+      - Must NOT contain: 'k' followed by a number (kX where X is a digit)
+    """
+    # Work on basename only
+    name = os.path.basename(fname)
+
+    # Allowed markers (must contain at least one)
+    allow_markers = ["_MP", "_z25", "_z75"]
+    if not any(m in name for m in allow_markers):
+        return False
+
+    # Blocked markers / substrings
+    block_markers = ["_mid", "_zWp25", "_zWp75", "rampLine", "floorLine"]
+    if any(m in name for m in block_markers):
+        return False
+
+    # Block kX where X is a number (e.g., k1, k2, k10)
+    # This looks for 'k' followed immediately by at least one digit.
+    if re.search(r"k\d+", name):
+        return False
+
+    return True
+
 # ---------------------------------------------------------------
 # Auto-detect files in directory
 # ---------------------------------------------------------------
@@ -43,12 +72,10 @@ all_dat_files = [
 # Coords files match pattern: XX.coords.dat
 coords_files = [f for f in all_dat_files if re.match(r".+\.coords\.dat$", os.path.basename(f))]
 
-# Only keep data files that have _MP, _z25, or _z75 in the filename
-allowed_markers = ["_MP", "_z25", "_z75"]
+# Data files: apply robust filtering with is_valid_data_file(...)
 data_files = [
     f for f in all_dat_files
-    if f not in coords_files
-    and any(marker in os.path.basename(f) for marker in allowed_markers)
+    if f not in coords_files and is_valid_data_file(f)
 ]
 
 if not coords_files:
@@ -89,6 +116,11 @@ output_file = os.path.join(root_dir, f"{parent_folder}_combinedFullProfiles.xlsx
 # ---------------------------------------------------------------
 with pd.ExcelWriter(output_file, engine="openpyxl") as writer:
     for prefix in coords_groups.keys():
+       # Skip this coords file if there are no valid data files for this prefix
+        if not data_groups.get(prefix):  # empty list or None → skip
+            print(f"Skipping prefix group '{prefix}' (no valid data files).")
+            continue
+
         print(f"\nProcessing prefix group: {prefix}")
 
         # Expect exactly one coords file per group
@@ -137,21 +169,6 @@ with pd.ExcelWriter(output_file, engine="openpyxl") as writer:
 
             # Write the values into coords
             coords[variable_name] = pd.Series(last_row.values, index=probe_nums)
-
-        # --- Normalize x-velocity (velocityxavg) ---
-        if "velocityxavg" in coords.columns and V_REF != 0:
-            coords["velocityxavg_norm"] = coords["velocityxavg"] / V_REF
-        else:
-            coords["velocityxavg_norm"] = pd.NA
-
-        # --- RMS velocity from reynoldsstressxx and density ---
-        # velocityRMS = sqrt(reynoldsstressxx / density)
-        if "reynoldsstressxx" in coords.columns and "density" in coords.columns:
-            # Avoid division by zero: where density is 0, set result to NaN
-            with pd.option_context("mode.use_inf_as_na", True):
-                coords["velocityxRMS"] = (coords["reynoldsstressxx"] / coords["density"]) ** 0.5
-        else:
-            coords["velocityxRMS"] = pd.NA
 
         # Sort by probe number to ensure order
         coords.sort_index(inplace=True)
