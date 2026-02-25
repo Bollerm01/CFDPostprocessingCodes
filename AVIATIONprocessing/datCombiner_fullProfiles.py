@@ -78,7 +78,11 @@ for f in data_files:
 # ---------------------------------------------------------------
 # Output Excel filename (single workbook for all prefixes)
 # ---------------------------------------------------------------
-output_file = os.path.join(root_dir, "_combinedFullProfiles.xlsx")
+# Get just the parent folder name from root_dir
+parent_folder = os.path.basename(os.path.normpath(root_dir))
+
+# Save in root_dir, but filename is based on the parent folder name
+output_file = os.path.join(root_dir, f"{parent_folder}_combinedFullProfiles.xlsx")
 
 # ---------------------------------------------------------------
 # Process each prefix group and write each to its own sheet
