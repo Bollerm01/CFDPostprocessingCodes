@@ -21,7 +21,10 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 POINT_ARRAYS = ['U_velocity_m_s', 
                 'V_velocity_m_s', 
                 'W_velocity_m_s',
+                'Mach_Number',
                 'Pressure_Pa',
+                'Temperature_K',
+                'Density_kg_msup3_sup',
                 'Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup',
                 'greekt_greeksubxx_subsupt_sup',
                 'greekt_greeksubxy_subsupt_sup',
@@ -34,8 +37,11 @@ POINT_ARRAYS = ['U_velocity_m_s',
                 'Z', 
                 'zone2/U_velocity_m_s', 
                 'zone2/V_velocity_m_s', 
-                'zone2/W_velocity_m_s', 
+                'zone2/W_velocity_m_s',
+                'zone2/Mach_Number',
                 'zone2/Pressure_Pa',
+                'zone2/Temperature_K',
+                'zone2/Density_kg_msup3_sup',
                 'zone2/Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup',
                 'zone2/greekt_greeksubxx_subsupt_sup',
                 'zone2/greekt_greeksubxy_subsupt_sup',
@@ -112,7 +118,7 @@ PROBE_LINES = {
 
 # Zones to include
 #ACTIVE_ZONES = ["zone1", "zone2"]
-ACTIVE_ZONES = ["zone2"]
+ACTIVE_ZONES = ["zone2"] # volume mesh solution only
 
 # ---------------- LOAD Tecplot ----------------
 reader = VisItTecplotBinaryReader(
@@ -136,10 +142,24 @@ velocityMag.Function = 'mag(Velocity_Vect)'
 velocityMag.ResultArrayName = "Velocity_Mag_m_s"
 velocityMag.UpdatePipeline()
 
+# ---------------- CALCULATES THE NORMALIZED U_X AND U_RMS --------------
+velocityVect = Calculator(registrationName='U_velocity_norm', Input=reader)
+velocityVect.Function = '"zone2/U_velocity_m_s" / 694.0' # Update if the V_REF changes 
+velocityVect.ResultArrayName = "U_velocity_norm"
+velocityVect.UpdatePipeline()
+
+velocityMag = Calculator(registrationName='U_velocity_rms', Input=velocityVect)
+velocityMag.Function = 'sqrt(-1*"zone2/greekt_greeksubxx_subsupt_sup"/"zone2/Density_kg_msup3_sup")'
+velocityMag.ResultArrayName = "U_velocity_rms"
+velocityMag.UpdatePipeline()
+
+
 # ---------------- PULLS THE EXPORTED DATA ------------------
 pa = PassArrays(registrationName='ExportData', Input=velocityMag)
 pa.PointDataArrays = ['Velocity_Mag_m_s', 
-                      'Velocity_Vect', 
+                      'Velocity_Vect',
+                      'U_velocity_norm',
+                      'U_velocity_rms',                    
                       'zone2/X', 
                       'zone2/Y', 
                       'zone2/Z',
