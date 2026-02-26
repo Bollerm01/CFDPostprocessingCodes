@@ -186,6 +186,7 @@ print("------------------------------------------")
 # Additional functionality to take in and merge extracted probe data
 # ---------------------------------------------------------------
 
+# NEED TO UPDATE - INNER JOIN NEEDS FIXED
 # Columns to add from the CSV files
 csv_columns_to_add = [
     "velocityxavg",
