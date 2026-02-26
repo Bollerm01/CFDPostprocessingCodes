@@ -147,7 +147,7 @@ for slice_tag, slice_obj, z_val in SLICES:
         p2[2] = z_val
 
         pol = PlotOverLine(
-            Input=slice_z0
+            Input=slice_obj
         )
         pol.Point1 = p1
         pol.Point2 = p2
