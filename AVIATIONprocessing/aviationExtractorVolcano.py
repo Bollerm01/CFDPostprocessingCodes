@@ -42,7 +42,7 @@ SLICE_Z25 = 0.0381
 SLICE_Z75 = -0.0381
 
 # --- Line resolution ---
-LINE_RESOLUTION = 500
+LINE_RESOLUTION = 499
 
 # --- Probe line definitions ---
 # label : {start:[x,y,z], end:[x,y,z]}
