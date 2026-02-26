@@ -121,7 +121,7 @@ slice_z75.SliceNormal = [0.0, 0.0, 1.0]
 
 # collects slices to loop
 SLICES = [
-    ("z0", slice_z0, SLICE_Z0),
+    ("MP", slice_z0, SLICE_Z0),
     ("z25", slice_z25, SLICE_Z25),
     ("z75", slice_z75, SLICE_Z75),
 ]
