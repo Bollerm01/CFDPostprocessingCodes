@@ -274,9 +274,9 @@ for sheet_name in xls.sheet_names:
     sheet_df = sheet_df.copy()
     csv_subset = csv_subset.copy()
 
-    # Round y and Points:1 to 6 decimal places
-    sheet_df["y_round"] = sheet_df["y"].round(6)
-    csv_subset["y_round"] = csv_subset["Points:1"].round(6)
+    # Round y and Points:1 to 5 decimal places
+    sheet_df["y_round"] = sheet_df["y"].round(5)
+    csv_subset["y_round"] = csv_subset["Points:1"].round(5)
 
     # Perform inner join on 'y_round'
     merged = pd.merge(sheet_df, csv_subset.drop(columns=["Points:1"]), on="y_round", how="inner")
