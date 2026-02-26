@@ -1,5 +1,5 @@
 Workflow for AVIATION figure processing
-1) Run "aviationExtractorVolcano.py" on volparaview to pull the time averaged and additional data directly from the latest volcano file (NEED TO CREATE)
+1) Run "aviationExtractorVolcano.py" on volparaview to pull the time averaged and additional data directly from the latest volcano file
 2) Copy the test data into folders on the processing machine (if not already there)
 3) Run "dataCombiner_fullProfiles.py" to pull all the data from the average line probes into one singular .xlsx file (each sheet is a different profile) (NEED TO UPDATE FOR ADD. PROBES)
 4) Run "dataCombiner_highFreqProfiles.py" to pull all the data from the 500 kHz shear one singular .xlsx file FOR EACH LINE (each sheet is a different point over time) (NEEDS UPDATED)
