@@ -83,6 +83,10 @@ PROBE_LINES = {
     "xL_1": {
         "start": [2.21695, 0.0093, 0.0],
         "end":   [2.21695, 0.04648, 0.0],
+    },
+    "xL_1p2": {
+        "start": [2.230629, 0.024791, -0.0381],
+        "end":   [2.230629, 0.014965, -0.0381],
     }
 }
 
@@ -99,60 +103,72 @@ volcano.CellArrayStatus = POINT_ARRAYS
 
 
 # ============================================================
-# ====================== Z=0 SLICE ===========================
+# ====================== SLICES ===========================
 # ============================================================
 
+# ====================== MIDPLANE SLICE ====================
 slice_z0 = VolcanoSlice(registrationName="Z0_Slice", Input=volcano)
 slice_z0.SlicePoint = [0.0, 0.0, SLICE_Z0]
 slice_z0.SliceNormal = [0.0, 0.0, 1.0]
 
-
-# ============================================================
 # ====================== Z/w = 0.25 SLICE ====================
-# ============================================================
 
 slice_z25 = VolcanoSlice(registrationName="Z25_Slice", Input=volcano)
 slice_z25.SlicePoint = [0.0, 0.0, SLICE_Z25]
 slice_z25.SliceNormal = [0.0, 0.0, 1.0]
 
-# ============================================================
+
 # ====================== Z/w = 0.75 SLICE ====================
-# ============================================================
 
 slice_z75 = VolcanoSlice(registrationName="Z75_Slice", Input=volcano)
 slice_z75.SlicePoint = [0.0, 0.0, SLICE_Z75]
 slice_z75.SliceNormal = [0.0, 0.0, 1.0]
 
+# collects slices to loop
+SLICES = [
+    ("z0", slice_z0, SLICE_Z0),
+    ("z25", slice_z25, SLICE_Z25),
+    ("z75", slice_z75, SLICE_Z75),
+]
 # ============================================================
 # =================== PROBE EXTRACTION =======================
 # ============================================================
 
-##### FIX TO ADD LOOP THROUGH SLICES #####
-for label, line_def in PROBE_LINES.items():
+for slice_tag, slice_obj, z_val in SLICES:
+    print(f"Processing slice {slice_tag} at z = {z_val}")
 
-    print(f"Extracting {label}...")
+    for label, line_def in PROBE_LINES.items():
 
-    pol = PlotOverLine(
-        Input=slice_z0
-    )
-    pol.Point1 = line_def["start"]
-    pol.Point2 = line_def["end"]
-    pol.Resolution = LINE_RESOLUTION
+        print(f"Extracting {label} pn {slice_tag}...")
 
-    RenameSource(label, pol)
+        # copies endpoints and sets z to current slice z
+        p1 = list(line_def["start"])
+        p2 = list(line_def["end"])
+        p1[2] = z_val
+        p2[2] = z_val
 
-    output_file = os.path.join(
-        OUTPUT_DIR, f"{label}.csv"
-    )
+        pol = PlotOverLine(
+            Input=slice_z0
+        )
+        pol.Point1 = p1
+        pol.Point2 = p2
+        pol.Resolution = LINE_RESOLUTION
 
-    # Export to Excel
-    SaveData(
-        output_file,
-        proxy=pol,
-        Precision=6
-    )
+        line_name = f"{label}_{slice_tag}"
+        RenameSource(line_name, pol)
 
-    # Cleanup
-    Delete(pol)
+        output_file = os.path.join(
+            OUTPUT_DIR, f"{line_name}.csv"
+        )
 
-print("All probe lines extracted successfully.")
+        # Export to Excel
+        SaveData(
+            output_file,
+            proxy=pol,
+            Precision=6
+        )
+
+        # Cleanup
+        Delete(pol)
+
+print("All probe lines extracted successfully for all slices.")
