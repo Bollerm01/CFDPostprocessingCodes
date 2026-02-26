@@ -134,7 +134,7 @@ for slice_tag, slice_obj, z_val in SLICES:
 
     for label, line_def in PROBE_LINES.items():
 
-        print(f"Extracting {label} pn {slice_tag}...")
+        print(f"Extracting {label} on {slice_tag}...")
 
         # copies endpoints and sets z to current slice z
         p1 = list(line_def["start"])
