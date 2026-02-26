@@ -267,18 +267,28 @@ for sheet_name in xls.sheet_names:
         continue
 
     csv_subset = csv_df[["Points:1"] + available_cols].copy()
-    # Rename 'Points:1' = 'y' for merging
-    csv_subset.rename(columns={"Points:1": "y"}, inplace=True)
 
-    # Perform inner join on 'y'
-    merged = pd.merge(sheet_df, csv_subset, on="y", how="inner")
+    # --- Round to 6 decimal places for matching ---
+    # Create helper columns with rounded values
+    # Use copy to avoid SettingWithCopy warnings
+    sheet_df = sheet_df.copy()
+    csv_subset = csv_subset.copy()
+
+    # Round y and Points:1 to 6 decimal places
+    sheet_df["y_round"] = sheet_df["y"].round(6)
+    csv_subset["y_round"] = csv_subset["Points:1"].round(6)
+
+    # Perform inner join on 'y_round'
+    merged = pd.merge(sheet_df, csv_subset.drop(columns=["Points:1"]), on="y_round", how="inner")
 
     if merged.empty:
-        print(f"  Join unsuccessful for sheet '{sheet_name}': no matching 'y' values between sheet and CSV.")
+        print(f"  Join unsuccessful for sheet '{sheet_name}': no matching y values (to 6 decimal places) between sheet and CSV.")
         continue
     else:
-        # Optional: show how many rows were matched
-        print(f"  Join successful for sheet '{sheet_name}': {len(merged)} rows after inner join.")
+        print(f"  Join successful for sheet '{sheet_name}': {len(merged)} rows after inner join on rounded y.")
+
+    # Drop helper column 'y_round'
+    merged.drop(columns=["y_round"], inplace=True)
 
     # Store merged DataFrame to write back later
     updated_sheets[sheet_name] = merged
@@ -299,5 +309,4 @@ if updated_sheets:
     print("\nCSV merge step completed successfully.")
     print(f"Updated workbook saved at: {output_file}")
 else:
-    print("\nNo sheets were updated with CSV data (no successful joins). The original file is unchanged")
-
+    print("\nNo sheets were updated with CSV data (no successful joins). The original workbook remains unchanged.")
