@@ -5,12 +5,11 @@ import os
 # ====================== USER SETTINGS =======================
 # ============================================================
 
-# --- Input volcano file ---
-#EDIT WHEN ITERATING THROUGH
-VOLCANO_FILE = r"/home/bollerma/LESdata/SSWT/fullCav/meshStudy/test5/test5M2SSWT_001/latest.volcano"
+# --- Input volcano file (Edit prior to executing) ---
+VOLCANO_FILE = r"/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD00/RD00_004/latest.volcano"
 
 # --- Output directory ---
-OUTPUT_DIR = r"/home/bollerma/LESdata/SSWT/fullCav/meshStudy/probeOutput"
+OUTPUT_DIR = r"/home/bollerma/LESdata/SSWT/fullCav/RDsteps/testOutput"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # --- Variables to load from the volcano file ---
