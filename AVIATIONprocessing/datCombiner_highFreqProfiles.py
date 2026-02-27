@@ -1,30 +1,44 @@
-# File to combine all of the extracted .DAT files set up in the Volcano simulation for the full cavity profiles (validation data)
-# Input: Root directory with subdirectories full of .DAT files for each run 
-# Output: Single .XSLX file for each run with columns for each field of data. This will also combine a full runs worth of profiles in 1 workbook with multiple sheets
+# File to combine all of the extracted.DAT files set up in the Volcano simulation
+# for the shear layer high freq data, organized by plane, line, and Kulite probes.
+#
+# Input:
+#   Root directory with.DAT files:
+#     - Plane data: multiple lines in 3 planes (_mid, _zWp25, _zWp75),
+#       each with probes probe00000–probe00004.
+#     - Kulite data: files whose names start with k1–k6.
+#
+# Output:
+#   - For each plane (mid, zWp25, zWp75):
+#       - One folder per plane under the root directory
+#       - Within that folder, one XLSX workbook per line
+#         - Each workbook has 5 sheets (probe00000–probe00004)
+#         - Each sheet: time history (merged) of all variables (all relevant.DAT files)
+#           for that line in that plane.
+#   - One Kulite workbook "Kulite_HighFreq.xlsx" in the root directory:
+#       - Sheets: k1, k2,..., k6
+#       - Each sheet: time history merged from all Kulite files for that probe.
 
 import pandas as pd
 import re
 import os
 from tkinter import Tk, filedialog
+from collections import defaultdict
 
 # ---------------------------------------------------------------
-# Normalization constants
+# Normalization constants (used only if coords file is present)
 # ---------------------------------------------------------------
-Y_REFERENCE = 0.018593   # Y-location of zero point
-Y_DEPTH     = 0.018593   # Normalization depth (must be non-zero)
-V_REF       = 694.0      # Reference velocity for normalization
+Y_REFERENCE = 0.018593
+Y_DEPTH     = 0.018593
+V_REF       = 694.0
 
 # ---------------------------------------------------------------
-# Utility: extract probe name from column strings like "probe00000"
+# Utilities for probes
 # ---------------------------------------------------------------
 def extract_probe_name(col):
     match = re.search(r'(probe0*\d+)', str(col))
     return match.group(1) if match else None
 
 def extract_probe_number_from_name(probe_name):
-    """
-    Convert 'probe00003' -> 3 (int), used to match against coords probe_num.
-    """
     match = re.search(r'probe0*(\d+)', str(probe_name))
     return int(match.group(1)) if match else None
 
@@ -38,7 +52,91 @@ if not root_dir:
     raise SystemExit("No root directory selected. Exiting.")
 
 # ---------------------------------------------------------------
-# Auto-detect files in directory
+# Plane / Kulite naming helpers
+# ---------------------------------------------------------------
+PLANE_MARKERS = {
+    "_mid":   "mid",
+    "_zWp25": "zWp25",
+    "_zWp75": "zWp75",
+}
+
+# markers / substrings that must be excluded
+BLOCK_MARKERS = [
+    "_MP", "_zp25", "_zp75", "_z25", "_z75",
+]
+BLOCK_SUBSTRINGS = [
+    "rampLine", "floorLine",
+]
+
+def is_blocked_name(fname: str) -> bool:
+    """Return True if this file should be excluded based on blocked markers."""
+    name = os.path.basename(fname)
+    if any(b in name for b in BLOCK_MARKERS):
+        return True
+    if any(s in name for s in BLOCK_SUBSTRINGS):
+        return True
+    return False
+
+def detect_plane_from_name(fname: str):
+    """
+    Return the allowed plane marker (e.g. '_mid', '_zWp25') if present and not blocked,
+    else None.
+    """
+    name = os.path.basename(fname)
+    # Exclude blocked names first
+    if is_blocked_name(name):
+        return None
+    for marker in PLANE_MARKERS.keys():
+        if marker in name:
+            return marker
+    return None
+
+def is_kulite_file(fname: str) -> bool:
+    """Kulite: basename starts with k1–k6."""
+    base = os.path.basename(fname)
+    # Do not treat blocked names as Kulite either (defensive)
+    if is_blocked_name(base):
+        return False
+    return re.match(r'^k[1-6]\.', base) is not None
+
+def get_line_name(fname: str) -> str:
+    """
+    Line name = substring before first underscore.
+    Example: 'xL0p59_zWp25.density.dat' -> 'xL0p59'
+    """
+    base = os.path.splitext(os.path.basename(fname))[0]
+    return base.split("_")[0]
+
+def get_plane_variable_name(fname: str, plane_marker: str) -> str:
+    """
+    From 'xL0p59_zWp25.density.dat' with plane_marker '_zWp25'
+    -> 'density'
+    """
+    base = os.path.splitext(os.path.basename(fname))[0]  # xL0p59_zWp25.density
+    parts = base.split(plane_marker, maxsplit=1)
+    if len(parts) < 2:
+        return base
+    remainder = parts[1]  # '.density'
+    remainder = remainder.lstrip(".")
+    var = remainder.split(".")[0] if "." in remainder else remainder
+    return var
+
+def get_kulite_probe_and_var(fname: str):
+    """
+    From 'k1.velocityx.dat' -> ('k1', 'velocityx')
+    """
+    base = os.path.basename(fname)
+    stem = os.path.splitext(base)[0]         # k1.velocityx
+    parts = stem.split(".")
+    if len(parts) >= 2:
+        return parts[0], parts[1]
+    elif len(parts) == 1:
+        return parts[0], "value"
+    else:
+        return "unknown", "value"
+
+# ---------------------------------------------------------------
+# Auto-detect all.dat files in root_dir
 # ---------------------------------------------------------------
 all_dat_files = [
     os.path.join(root_dir, f)
@@ -47,7 +145,7 @@ all_dat_files = [
 ]
 
 # ---------------------------------------------------------------
-# Load coords file and compute Y_norm (probe-based normalization)
+# Locate coords file (optional normalization)
 # ---------------------------------------------------------------
 coords_files = [
     f for f in all_dat_files
@@ -71,41 +169,52 @@ if coords_files:
     )
     coords.set_index("probe_num", inplace=True)
 
-    # --- Normalize Y-coordinate (based on coords 'y' column) ---
     if "y" in coords.columns and Y_DEPTH != 0:
         coords["Y_norm"] = (coords["y"] - Y_REFERENCE) / Y_DEPTH
     else:
         coords["Y_norm"] = pd.NA
-
 else:
-    print("No coords file found; Y_norm and velocityxavg_norm will be omitted.")
+    print("No coords file found; Y_norm column will be set to NaN in outputs.")
     coords = None
 
+# Remove coords files from further processing
+data_candidate_files = [f for f in all_dat_files if f not in coords_files]
+
 # ---------------------------------------------------------------
-# Search for only high-freq markers
+# Separate plane data files and Kulite data files,
+# applying exclusion rules
 # ---------------------------------------------------------------
-allowed_markers = ["_mid", "_zWp25", "_zWp75"]
+plane_files = []
+kulite_files = []
 
-data_files = [
-    f for f in all_dat_files
-    if any(marker in os.path.basename(f) for marker in allowed_markers)
-]
+for f in data_candidate_files:
+    base = os.path.basename(f)
+    # Skip any blocked names outright
+    if is_blocked_name(base):
+        continue
 
-if not data_files:
-    raise SystemExit("No probe data files found matching _mid, _zWp25, or _zWp75.")
+    if is_kulite_file(base):
+        kulite_files.append(f)
+    else:
+        plane_marker = detect_plane_from_name(base)
+        if plane_marker is not None:
+            plane_files.append(f)
+        else:
+            # Not Kulite, not allowed plane -> ignore
+            pass
 
-print(f"Found {len(data_files)} data files (filtered by _mid, _zWp25, _zWp75).")
+print(f"Found {len(plane_files)} plane-related data files (after filtering).")
+print(f"Found {len(kulite_files)} Kulite data files (after filtering).")
+
+if not plane_files and not kulite_files:
+    raise SystemExit("No valid plane or Kulite data files found after filtering. Exiting.")
 
 # ---------------------------------------------------------------
 # Helper: read one DAT file into a DataFrame
-#   - First line is header (with #)
-#   - Remaining lines are data
 # ---------------------------------------------------------------
 def read_dat_file(path):
-    # Read header line manually
     with open(path, "r") as f:
         header_line = f.readline().strip()
-
     header_cols = header_line.lstrip("#").split()
 
     df = pd.read_csv(
@@ -113,139 +222,163 @@ def read_dat_file(path):
         sep=r"\s+",
         comment="#",
         header=None,
-        skiprows=1  # we manually consumed header_line
+        skiprows=1
     )
     df.columns = header_cols
     return df
 
 # ---------------------------------------------------------------
-# If coords exists, recover velocityxavg from the velocityxavg*.dat
-# files (using the last time step), then compute velocityxavg_norm.
+# Organize plane files:
+#   plane_line_files[plane_marker][line_name] = list of file paths
 # ---------------------------------------------------------------
-if coords is not None:
-    coords["velocityxavg"] = pd.NA
+plane_line_files = defaultdict(lambda: defaultdict(list))
 
-    for fpath in data_files:
-        filename = os.path.basename(fpath)
-        parts = filename.split(".")
-        # Expected pattern: prefix.variable_name.something.dat
-        variable_name = parts[1] if len(parts) > 2 else None
-
-        if variable_name == "velocityxavg":
-            print(f"Using {filename} to compute velocityxavg and velocityxavg_norm (last timestep).")
-            df_var = read_dat_file(fpath)
-
-            # Last time step row; skip column 0 (time)
-            last_row = df_var.iloc[-1, 1:]
-
-            # Columns should be probe00000, probe00001, etc.
-            probe_nums = [extract_probe_number_from_name(col) for col in last_row.index]
-
-            # Store into coords["velocityxavg"]
-            for pn, val in zip(probe_nums, last_row.values):
-                if pn in coords.index:
-                    coords.at[pn, "velocityxavg"] = val
-
-    # --- Normalize x-velocity (velocityxavg) ---
-    if "velocityxavg" in coords.columns and V_REF != 0:
-        coords["velocityxavg_norm"] = coords["velocityxavg"].astype(float) / V_REF
-    else:
-        coords["velocityxavg_norm"] = pd.NA
-else:
-    print("No coords; skipping velocityxavg_norm.")
+for f in plane_files:
+    plane_marker = detect_plane_from_name(f)
+    if plane_marker is None:
+        continue
+    line_name = get_line_name(f)
+    plane_line_files[plane_marker][line_name].append(f)
 
 # ---------------------------------------------------------------
-# Build one Excel workbook with 5 sheets:
-#    probe00000, probe00001,..., probe00004
-# For each sheet:
-#   - "time" column
-#   - one column per DAT file (matching on time)
-#   - Y_norm and velocityxavg_norm from coords as extra columns
+# Probes for plane data
 # ---------------------------------------------------------------
-output_file = os.path.join(root_dir, "_combinedHighFreq.xlsx")
-
-# Define the probes we care about
 probe_names = [f"probe{str(i).zfill(5)}" for i in range(5)]
 
-with pd.ExcelWriter(output_file, engine="openpyxl") as writer:
-    for probe in probe_names:
-        print(f"\nBuilding sheet for {probe}")
+# ---------------------------------------------------------------
+# Process plane data:
+#   For each plane -> folder
+#   For each line in that plane -> XLSX workbook
+#   For each probe -> sheet with merged time history of all variables
+# ---------------------------------------------------------------
+for plane_marker, lines_dict in plane_line_files.items():
+    plane_label = PLANE_MARKERS[plane_marker]  # 'mid', 'zWp25', 'zWp75'
 
-        probe_df = None  # will hold the merged result for this probe
+    # Create output folder for this plane
+    plane_output_dir = os.path.join(root_dir, f"{plane_label}_plane")
+    os.makedirs(plane_output_dir, exist_ok=True)
+    print(f"\nProcessing plane '{plane_label}' -> folder '{plane_output_dir}'")
 
-        for fpath in sorted(data_files):
-            filename = os.path.basename(fpath)
+    for line_name, files_for_line in sorted(lines_dict.items()):
+        output_file = os.path.join(plane_output_dir, f"{line_name}_{plane_label}.xlsx")
+        print(f"  Line '{line_name}': writing to workbook '{output_file}'")
 
-            # Use something descriptive from the filename for the column name
-            # e.g., "US.velocityxavg_mid.dat" -> "velocityxavg_mid"
-            base_name = os.path.splitext(filename)[0]
-            parts = base_name.split(".")
-            if len(parts) > 2:
-                var_name = parts[1]
-                suffix = parts[2]
-                col_label = f"{var_name}_{suffix}"
-            else:
-                # Fallback: use base_name if pattern doesn't match
-                col_label = base_name
+        with pd.ExcelWriter(output_file, engine="openpyxl") as writer:
+            for probe in probe_names:
+                print(f"    Building sheet for {probe}")
+                probe_df = None  # merged result for this probe
 
-            df = read_dat_file(fpath)
+                for fpath in sorted(files_for_line):
+                    filename = os.path.basename(fpath)
+                    df = read_dat_file(fpath)
 
-            # Ensure required columns exist
-            if "time" not in df.columns or probe not in df.columns:
-                print(f"  Skipping {filename}: missing 'time' or '{probe}' column.")
+                    if "time" not in df.columns or probe not in df.columns:
+                        print(f"      Skipping {filename}: missing 'time' or '{probe}' column.")
+                        continue
+
+                    # Column label: the variable name from the filename
+                    var_name = get_plane_variable_name(filename, plane_marker)
+
+                    df_probe = df[["time", probe]].copy()
+                    df_probe.rename(columns={probe: var_name}, inplace=True)
+
+                    if probe_df is None:
+                        probe_df = df_probe
+                    else:
+                        probe_df = pd.merge(
+                            probe_df,
+                            df_probe,
+                            on="time",
+                            how="inner",
+                            sort=True
+                        )
+
+                if probe_df is None:
+                    print(f"      No data found for {probe} in line '{line_name}', skipping sheet.")
+                    continue
+
+                # Attach Y_norm if coords are available
+                if coords is not None:
+                    probe_num = extract_probe_number_from_name(probe)
+                    if probe_num in coords.index:
+                        y_norm_value = coords.loc[probe_num].get("Y_norm", pd.NA)
+                        probe_df["Y_norm"] = y_norm_value
+                    else:
+                        print(f"      Probe number {probe_num} not in coords; Y_norm set to NaN.")
+                        probe_df["Y_norm"] = pd.NA
+                else:
+                    probe_df["Y_norm"] = pd.NA
+
+                probe_df.sort_values("time", inplace=True)
+                sheet_name = probe[:31]  # Excel sheet name limit
+                probe_df.to_excel(writer, sheet_name=sheet_name, index=False)
+                print(f"      -> Written sheet '{sheet_name}'")
+
+        print(f"  Finished workbook '{output_file}'")
+
+# ---------------------------------------------------------------
+# Process Kulite data:
+#   One XLSX workbook with a sheet per Kulite probe (k1–k6)
+# ---------------------------------------------------------------
+if kulite_files:
+    kulite_groups = defaultdict(list)  # kulite_groups['k1'] = [files]
+
+    for f in kulite_files:
+        k_probe, _ = get_kulite_probe_and_var(f)
+        kulite_groups[k_probe].append(f)
+
+    kulite_output_file = os.path.join(root_dir, "Kulite_HighFreq.xlsx")
+    print(f"\nProcessing Kulite data -> workbook '{kulite_output_file}'")
+
+    with pd.ExcelWriter(kulite_output_file, engine="openpyxl") as writer:
+        for k_probe, files_for_k in sorted(kulite_groups.items()):
+            print(f"  Building sheet for Kulite probe '{k_probe}'")
+            merged_df = None
+
+            for fpath in sorted(files_for_k):
+                filename = os.path.basename(fpath)
+                df = read_dat_file(fpath)
+
+                if "time" not in df.columns:
+                    print(f"    Skipping {filename}: missing 'time' column.")
+                    continue
+
+                _, var_name = get_kulite_probe_and_var(filename)
+
+                data_cols = [c for c in df.columns if c != "time"]
+                if not data_cols:
+                    print(f"    Skipping {filename}: no data columns.")
+                    continue
+
+                df_sub = df[["time"] + data_cols].copy()
+                rename_map = {c: f"{var_name}" if len(data_cols) == 1 else f"{var_name}_{c}"
+                              for c in data_cols}
+                df_sub.rename(columns=rename_map, inplace=True)
+
+                if merged_df is None:
+                    merged_df = df_sub
+                else:
+                    merged_df = pd.merge(
+                        merged_df,
+                        df_sub,
+                        on="time",
+                        how="inner",
+                        sort=True
+                    )
+
+            if merged_df is None:
+                print(f"  No data found for Kulite probe '{k_probe}', skipping sheet.")
                 continue
 
-            # Subset to time + this probe
-            df_probe = df[["time", probe]].copy()
-            df_probe.rename(columns={probe: col_label}, inplace=True)
+            merged_df.sort_values("time", inplace=True)
+            sheet_name = k_probe[:31]
+            merged_df.to_excel(writer, sheet_name=sheet_name, index=False)
+            print(f"  -> Written Kulite sheet '{sheet_name}'")
 
-            if probe_df is None:
-                # First file: establish time base
-                probe_df = df_probe
-            else:
-                # Subsequent files: merge on time
-                probe_df = pd.merge(
-                    probe_df,
-                    df_probe,
-                    on="time",
-                    how="outer",  # keep all times; use "inner" if only common times
-                    sort=True
-                )
-
-        if probe_df is None:
-            # No usable data for this probe
-            print(f"  No data found for {probe}, skipping sheet.")
-            continue
-
-        # -------------------------------------------------------
-        # Attach normalized columns from coords (Y_norm and velocityxavg_norm)
-        # -------------------------------------------------------
-        if coords is not None:
-            probe_num = extract_probe_number_from_name(probe)
-            if probe_num in coords.index:
-                y_norm_value = coords.loc[probe_num].get("Y_norm", pd.NA)
-                vx_norm_value = coords.loc[probe_num].get("velocityxavg_norm", pd.NA)
-
-                # Add as constant columns (same value for all time rows)
-                probe_df["Y_norm"] = y_norm_value
-                probe_df["velocityxavg_norm"] = vx_norm_value
-            else:
-                print(f"  Probe number {probe_num} not found in coords; norms set to NaN.")
-                probe_df["Y_norm"] = pd.NA
-                probe_df["velocityxavg_norm"] = pd.NA
-        else:
-            # No coords -> no normalization
-            probe_df["Y_norm"] = pd.NA
-            probe_df["velocityxavg_norm"] = pd.NA
-
-        # Sort by time just to be tidy
-        probe_df.sort_values("time", inplace=True)
-
-        # Write this probe's DataFrame to its own sheet
-        sheet_name = probe[:31]  # Excel limit
-        probe_df.to_excel(writer, sheet_name=sheet_name, index=False)
-        print(f"  -> Written to workbook '{os.path.basename(output_file)}', sheet '{sheet_name}'")
+    print(f"Finished Kulite workbook '{kulite_output_file}'")
+else:
+    print("\nNo Kulite files found; skipping Kulite workbook.")
 
 print("\n------------------------------------------")
-print(f"All probes processed successfully into {output_file}.")
+print("All plane lines and Kulite probes processed successfully (with filtering).")
 print("------------------------------------------")
