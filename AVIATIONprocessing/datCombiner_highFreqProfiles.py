@@ -251,11 +251,16 @@ probe_names = [f"probe{str(i).zfill(5)}" for i in range(5)]
 #   For each line in that plane -> XLSX workbook
 #   For each probe -> sheet with merged time history of all variables
 # ---------------------------------------------------------------
+
+# Creates main high-frequency output folder
+high_freq_output_folder = os.path.join(root_dir, "highFreqOutput")
+os.makedirs(high_freq_output_folder, exist_ok=True)
+
 for plane_marker, lines_dict in plane_line_files.items():
     plane_label = PLANE_MARKERS[plane_marker]  # 'mid', 'zWp25', 'zWp75'
 
     # Create output folder for this plane
-    plane_output_dir = os.path.join(root_dir, f"{plane_label}_plane")
+    plane_output_dir = os.path.join(high_freq_output_folder, f"{plane_label}_plane")
     os.makedirs(plane_output_dir, exist_ok=True)
     print(f"\nProcessing plane '{plane_label}' -> folder '{plane_output_dir}'")
 
@@ -327,7 +332,7 @@ if kulite_files:
         k_probe, _ = get_kulite_probe_and_var(f)
         kulite_groups[k_probe].append(f)
 
-    kulite_output_file = os.path.join(root_dir, "Kulite_HighFreq.xlsx")
+    kulite_output_file = os.path.join(high_freq_output_folder, "Kulite_HighFreq.xlsx")
     print(f"\nProcessing Kulite data -> workbook '{kulite_output_file}'")
 
     with pd.ExcelWriter(kulite_output_file, engine="openpyxl") as writer:
