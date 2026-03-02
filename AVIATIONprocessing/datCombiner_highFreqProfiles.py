@@ -286,7 +286,8 @@ for plane_marker, lines_dict in plane_line_files.items():
 
                     df_probe = df[["time", probe]].copy()
                     df_probe.rename(columns={probe: var_name}, inplace=True)
-
+                    
+                    
                     if probe_df is None:
                         probe_df = df_probe
                     else:
@@ -297,6 +298,7 @@ for plane_marker, lines_dict in plane_line_files.items():
                             how="inner",
                             sort=True
                         )
+                        print(f"Variable {var_name} properly merged")
 
                 if probe_df is None:
                     print(f"      No data found for {probe} in line '{line_name}', skipping sheet.")
@@ -370,6 +372,7 @@ if kulite_files:
                         how="inner",
                         sort=True
                     )
+                    print(f"Variable {var_name} properly merged")
 
             if merged_df is None:
                 print(f"  No data found for Kulite probe '{k_probe}', skipping sheet.")
