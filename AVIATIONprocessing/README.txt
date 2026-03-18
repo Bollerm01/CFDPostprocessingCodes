@@ -4,8 +4,8 @@ Workflow for AVIATION figure processing
 3) Run "dataCombiner_fullProfiles.py" to pull all the data from the average line probes into one singular .xlsx file (each sheet is a different profile)
 4) Run "Vx_RMS.py" to calculate the velocityx RMS velocity fluctuations with the 5 CTUs of 50kHz sampling for 4 lines (Fureby Comparison) (EDIT WHEN DATA AVAIL)
 5) Run "dataCombiner_highFreqProfiles.py" to pull all the data from the 500 kHz shear one singular .xlsx file FOR EACH LINE (each sheet is a different point over time)
-**6) Change file paths, and run "BoundaryLayerProbeExtractor.py" to pull the BL thickness information at the SSWT BL probe location (3.375" US of injector)
+6) Change file paths, and run "BoundaryLayerProbeExtractor.py" to pull the BL thickness information at the SSWT BL probe location (3.375" US of injector)
 7) Run "Volcano/volcanoShearProcessorV3.py" to get visual profiles from Paraview (ADAPT IF NEEDED)
-8) Run "velocity_validation_plotter.m" in MATLAB to cross-plot VULCAN, Volcano, Tuttle, Fureby (currently just digitized) normalized data (NEEDS UPDATED)
+**8) Run "velocity_validation_plotter.m" in MATLAB to cross-plot VULCAN, Volcano, Tuttle, Fureby (currently just digitized) normalized data (NEEDS UPDATED)
 9) [INSERT MATLAB CODE FOR NORMALIZED Rxij/TKE PLOTTING]
 10) [INSERT CODE TO PROCESS THE SHEAR GROWTH BEHAVIOR]
