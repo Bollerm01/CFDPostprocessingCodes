@@ -8,10 +8,14 @@ import os
 # --- Input volcano file (Edit prior to executing) ---
 VOLCANO_FILE = r"/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD00/RD00_004/latest.volcano"
 
-# --- Output directory ---
+# --- Output directory (Edit prior to executing) ---
 OUTPUT_DIR = r"/home/bollerma/LESdata/SSWT/fullCav/RDsteps/testOutput"
-os.makedirs(OUTPUT_DIR, exist_ok=True)
 
+# ============================================================
+# ============================================================
+# ============================================================
+
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 # --- Variables to load from the volcano file ---
 POINT_ARRAYS = [
     "velocityxavg",

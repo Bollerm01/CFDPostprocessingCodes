@@ -8,6 +8,8 @@ import os
 from tkinter import Tk, filedialog
 from collections import defaultdict
 
+# 1) Takes in the extracted probe data for the full, 500-pt, low-frequency data
+
 # ---------------------------------------------------------------
 # Normalization constants
 # ---------------------------------------------------------------
@@ -182,11 +184,13 @@ print("\n------------------------------------------")
 print(f"All prefix groups processed successfully into {output_file}.")
 print("------------------------------------------")
 
+
+# 2) Merges additional, 500-pt, low-frequency data s.a. TKE, Rij that couldnt be probed as line data during run
 # ---------------------------------------------------------------
 # Additional functionality to take in and merge extracted probe data
 # ---------------------------------------------------------------
 
-# NEED TO UPDATE - INNER JOIN NEEDS FIXED
+
 # Columns to add from the CSV files
 csv_columns_to_add = [
     "velocityxavg",
