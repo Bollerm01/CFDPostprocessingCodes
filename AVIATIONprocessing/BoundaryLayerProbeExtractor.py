@@ -43,8 +43,8 @@ POINT_ARRAYS = [
     "tke"
 ]
 
-# --- Z-plane slice location ---
-SLICE_Z = 0.0
+# --- X-plane slice location ---
+SLICE_X = 2.031503
 
 # --- Line resolution ---
 LINE_RESOLUTION = 1000
@@ -62,7 +62,7 @@ PROBE_LINES = {
         "start": [2.031503, 0.018671, 0.0254], 
         "end":   [2.031503, 0.177397, 0.0254], 
     },
-    # 1 Injector closer to farwall in CFD 
+    # 1 Injector closer to farwall in CFD (ACTUAL PROBE LOC)
     "xL_BL_inj4": {
         "start": [2.031503, 0.018671, -0.0254], 
         "end":   [2.031503, 0.177397, -0.0254], 
@@ -85,9 +85,9 @@ volcano.CellArrayStatus = POINT_ARRAYS
 # ====================== Z=0 SLICE ===========================
 # ============================================================
 
-slice_z0 = VolcanoSlice(registrationName="Z0_Slice", Input=volcano)
-slice_z0.SlicePoint = [0.0, 0.0, SLICE_Z]
-slice_z0.SliceNormal = [0.0, 0.0, 1.0]
+slice_x0 = VolcanoSlice(registrationName="X0_Slice", Input=volcano)
+slice_x0.SlicePoint = [SLICE_X, 0.0, 0.0]
+slice_x0.SliceNormal = [1.0, 0.0, 0.0]
 
 # ============================================================
 # =================== PROBE EXTRACTION =======================
@@ -98,7 +98,7 @@ for label, line_def in PROBE_LINES.items():
     print(f"Extracting {label}...")
 
     pol = PlotOverLine(
-        Input=slice_z0
+        Input=slice_x0
     )
     pol.Point1 = line_def["start"]
     pol.Point2 = line_def["end"]
@@ -120,4 +120,4 @@ for label, line_def in PROBE_LINES.items():
     # Cleanup
     Delete(pol)
 
-print("All probe lines extracted successfully.")
+print(f"All probe lines extracted successfully and saved in: {OUTPUT_DIR}.")
