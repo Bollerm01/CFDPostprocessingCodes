@@ -6,10 +6,11 @@ import os
 # ============================================================
 
 # --- Input volcano file (Edit prior to executing) ---
+CASE = "RD00"
 VOLCANO_FILE = r"/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD00/RD00_004/latest.volcano"
 
 # --- Output directory (Edit prior to executing) ---
-OUTPUT_DIR = r"/home/bollerma/LESdata/SSWT/fullCav/RDsteps/testOutput"
+OUTPUT_DIR = rf"/home/bollerma/LESdata/SSWT/fullCav/RDsteps/testOutput/{CASE}output"
 
 # ============================================================
 # ============================================================
