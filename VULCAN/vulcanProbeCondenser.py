@@ -6,7 +6,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, simpledialog
 
 # ========= File Header (Update Prior to Running) ============
-FILE_IDENTIFIER = "RD52"
+FILE_IDENTIFIER = "RD00"
 
 # ============================================================
 # ================= COLUMN DEFINITIONS =======================
@@ -23,6 +23,7 @@ COLUMN_RENAME_MAP = {
     "U_velocity_norm" : "Velocity_X_Norm",
     "U_velocity_rms" : "Velocity_X_RMS", 
     'zone2/Pressure_Pa': "Pressure",
+    'zone2/Density_kg_msup3_sup' : "Density",
     'zone2/Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup': "TKE",
     'zone2/greekt_greeksubxx_subsupt_sup': "Rxx",
     'zone2/greekt_greeksubxy_subsupt_sup': "Rxy",
@@ -43,6 +44,7 @@ FINAL_COLUMNS = [
     "Velocity_X_Norm",
     "Velocity_X_RMS", 
     "Pressure",
+    "Density",
     "TKE",
     "Rxx",
     "Rxy",
