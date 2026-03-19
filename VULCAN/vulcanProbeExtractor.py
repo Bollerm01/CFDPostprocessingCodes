@@ -10,7 +10,7 @@ import pandas as pd
 
 # ---------------- USER SETTINGS ----------------
 INPUT_ROOT = r"E:\Boller CFD\VULCAN Data\SSWT"
-CASE = "CAVmix_SSWT_r0_noinject"
+CASE = "CAVmix_SSWT_r3_noinject"
 INPUT_FILE = rf"{INPUT_ROOT}\{CASE}\iteration-009\Plot_files\vulcan_solution.plt"
 
 OUTPUT_ROOT = r"E:\Boller CFD\AVIATION CFD\Paper Results\finalData\VULCAN"
