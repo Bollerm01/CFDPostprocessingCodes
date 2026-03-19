@@ -84,7 +84,7 @@ def run_conversion():
         )
         return
 
-    output_name = f"CondensedProbeData_{FILE_IDENTIFIER}.xlsx"
+    output_name = f"VULCANCondensedProbeData_{FILE_IDENTIFIER}.xlsx"
     output_excel = os.path.join(csv_folder, output_name)
 
     # --- Find CSV files ---
