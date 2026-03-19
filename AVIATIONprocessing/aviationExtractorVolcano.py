@@ -171,4 +171,4 @@ for slice_tag, slice_obj, z_val in SLICES:
         # Cleanup
         Delete(pol)
 
-print("All probe lines extracted successfully for all slices.")
+print(f"All probe lines extracted successfully for all slices. Output stored in: {OUTPUT_DIR}")
