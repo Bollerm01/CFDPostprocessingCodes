@@ -6,8 +6,8 @@ import os
 # ============================================================
 
 # --- Input volcano file (Edit prior to executing) ---
-CASE = "RD17"
-VOLCANO_FILE = r"/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD17/RD17_022/latest.volcano"
+CASE = "RD52"
+VOLCANO_FILE = r"/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD52/RD52_057/latest.volcano"
 
 # --- Output directory (Edit prior to executing) ---
 OUTPUT_DIR = rf"/home/bollerma/LESdata/SSWT/fullCav/RDsteps/testOutput/{CASE}probeData"
