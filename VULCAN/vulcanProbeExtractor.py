@@ -10,10 +10,10 @@ import pandas as pd
 
 # ---------------- USER SETTINGS ----------------
 INPUT_ROOT = r"E:\Boller CFD\VULCAN Data\SSWT"
-CASE = "CAVmix_SSWT_r0p5_noinject"
+CASE = "CAVmix_SSWT_r0_noinject"
 INPUT_FILE = rf"{INPUT_ROOT}\{CASE}\iteration-009\Plot_files\vulcan_solution.plt"
 
-OUTPUT_ROOT = r"E:\Boller CFD\AVIATION CFD\output\VulcanProcessingOutput\probeData"
+OUTPUT_ROOT = r"E:\Boller CFD\AVIATION CFD\Paper Results\finalData\VULCAN"
 OUTPUT_DIR = os.path.join(OUTPUT_ROOT, CASE)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 

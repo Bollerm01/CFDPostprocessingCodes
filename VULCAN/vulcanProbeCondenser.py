@@ -5,6 +5,9 @@ import pandas as pd
 import tkinter as tk
 from tkinter import filedialog, messagebox, simpledialog
 
+# ========= File Header (Update Prior to Running) ============
+FILE_IDENTIFIER = "RD00"
+
 # ============================================================
 # ================= COLUMN DEFINITIONS =======================
 # ============================================================
@@ -79,7 +82,7 @@ def run_conversion():
         )
         return
 
-    output_name = "CondensedProbeData.xlsx"
+    output_name = f"CondensedProbeData_{FILE_IDENTIFIER}.xlsx"
     output_excel = os.path.join(csv_folder, output_name)
 
     # --- Find CSV files ---

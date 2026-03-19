@@ -1,0 +1,104 @@
+% MATLAB Script: velocity_validation_script.m
+% Purpose: Plot 4 overlayed y/d vs U/Uinf graphs (one per sheet)
+% Author: Matt Boller
+% Date: 11/5/2025
+% -------------------------------------------------------------------------
+clear all; close all; clc;
+% === USER SETTINGS ===
+filename = 'RC19_UxValidation_FigureData.xlsx';  % Excel file name
+mainTitle = 'Normalized Cavity Depth vs. Normalized X-Velocity';        % <-- Change this title
+
+% Define legend entries for the overlaid curves (edit as needed)
+legendEntries = { ...
+    'Volcano', ...
+    'ANSYS', ...
+    'VULCAN 3D', ...
+    'Tuttle et. al.' ...
+};
+
+% Output image filename (change as desired)
+outputFile = 'RC19_UXValidation_Figure.jpg';  % <-- Change output name here
+outputDPI  = 300;                             % Resolution in DPI
+
+% === READ SHEETS ===
+[~, sheetNames] = xlsfinfo(filename);
+numSheets = numel(sheetNames);
+
+% Create figure and tiled layout (1x4)
+fig = figure('Name', 'Overlayed y/d vs U/Uinf', 'NumberTitle', 'off');
+tiledlayout(fig, 1, numSheets, 'TileSpacing', 'compact', 'Padding', 'compact');
+
+allLineHandles = []; % For shared legend
+
+for i = 1:numSheets
+    % Read data
+    data = readtable(filename, 'Sheet', sheetNames{i});
+    
+    % Remove completely empty columns
+    data = data(:, any(~ismissing(data)));
+
+    % Compute number of y/U pairs
+    numCols = width(data);
+    numPairs = floor(numCols / 2);
+
+    % Select next tile
+    nexttile;
+    hold on; grid on; box on;
+
+    % Plot each pair of columns
+    localLineHandles = gobjects(1, numPairs);
+    for j = 1:numPairs
+        UOverUinf = data{:, 2*j - 1};
+        yOverd = data{:, 2*j};
+
+        % Use circles for 4th dataset, lines otherwise
+        if j == 4
+            localLineHandles(j) = plot(UOverUinf, yOverd, 'o', 'LineWidth', 1.2, 'MarkerSize', 6);
+        else
+            localLineHandles(j) = plot(UOverUinf, yOverd, 'LineWidth', 1.5);
+        end
+    end
+
+    % Save handles from first subplot for legend
+    if i == 1
+        allLineHandles = localLineHandles;
+    end
+
+    % Axis and labels
+    xlim([-0.2, 1.1]);   % Extended x-bounds
+    ylim([-1, 1]);
+    xlabel('U / U_{\infty}');
+    ylabel('y / d');
+
+    % Title with “xL” → “x/L”
+    title(strrep(sheetNames{i}, 'xL', 'x/L'), 'Interpreter', 'none');
+
+    hold off;
+end
+
+% Shared legend (based on first subplot’s handles)
+if ~isempty(allLineHandles)
+    numPairs = length(allLineHandles);
+    if length(legendEntries) >= numPairs
+        lg = legend(allLineHandles, legendEntries(1:numPairs), ...
+                    'Orientation', 'horizontal', 'Box', 'off');
+    else
+        lg = legend(allLineHandles, ...
+                    arrayfun(@(x) sprintf('Dataset %d', x), 1:numPairs, 'UniformOutput', false), ...
+                    'Orientation', 'horizontal', 'Box', 'off');
+    end
+
+    % Position legend below all subplots
+    lg.Layout.Tile = 'south';
+    lg.FontSize = 12;  % <-- Enlarged legend font
+end
+
+% Add shared main title
+sgtitle(mainTitle, 'FontSize', 14, 'FontWeight', 'bold');
+
+
+% === SAVE HIGH-RES JPG ===
+set(fig, 'PaperPositionMode', 'auto');  % Ensure proper sizing
+exportgraphics(fig, outputFile, 'Resolution', outputDPI);
+
+fprintf('Figure saved as "%s" at %d DPI.\n', outputFile, outputDPI);
