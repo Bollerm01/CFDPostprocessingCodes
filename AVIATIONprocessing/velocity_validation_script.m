@@ -5,19 +5,19 @@
 % -------------------------------------------------------------------------
 clear all; close all; clc;
 % === USER SETTINGS ===
-filename = 'RC19_UxValidation_FigureData.xlsx';  % Excel file name
+filename = 'SSWT_UxValidation_FigureData.xlsx';  % Excel file name
 mainTitle = 'Normalized Cavity Depth vs. Normalized X-Velocity';        % <-- Change this title
 
 % Define legend entries for the overlaid curves (edit as needed)
 legendEntries = { ...
     'Volcano', ...
-    'ANSYS', ...
+    'Fureby et. al.', ...
     'VULCAN 3D', ...
     'Tuttle et. al.' ...
 };
 
 % Output image filename (change as desired)
-outputFile = 'RC19_UXValidation_Figure.jpg';  % <-- Change output name here
+outputFile = 'SSWT_UXValidation_Figure.jpg';  % <-- Change output name here
 outputDPI  = 300;                             % Resolution in DPI
 
 % === READ SHEETS ===
