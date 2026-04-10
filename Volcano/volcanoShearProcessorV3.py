@@ -26,6 +26,7 @@ DENSITY_NAME = "density"
 # full loop
 YZ_SLICE_X = [2.011691, 2.080109, 2.114318, 2.15057954, 2.16015806, 2.1690524, 2.1793151, 2.18889362, 2.19847214, 2.20736648, 2.216945, 2.223063, 2.307804104]
 XY_SLICE_Z = [-0.0381, 0.00, 0.0381]
+XZ_SLICE_Y = [0.0182, 0.0093, 0.003]
 
 IMG_RES = [1920, 1080]
 COLORMAP_PRESET = "Cool to Warm (Extended)"
@@ -70,6 +71,18 @@ CAMERA_PRESETS = {
             "Position":    [0.80, 0.38],
             "Length":      0.5,
         }
+    },
+    "XZ": {
+        "CameraPosition":   [2.19626, 5.25954, -0.0137621],
+        "CameraFocalPoint": [2.19626, 0.240491, -0.0137621],
+        "CameraViewUp":     [-1, 0, 0],
+        "ParallelScale":    0.10, 
+        "InteractionMode":  "3D",
+        "Colorbar": {
+            "Orientation": "Vertical",
+            "Position":    [0.80, 0.38],
+            "Length":      0.5,
+        }
     }
 }
 
@@ -81,7 +94,7 @@ src = OpenDataFile(INPUT_FILE)
 src.CellArrayStatus = SCALARS + [DENSITY_NAME]
 
 view = GetActiveViewOrCreate("RenderView")
-view.Background = [1,1,1]
+view.Background = [0, 0, 0]
 view.CameraParallelProjection = 1
 
 # ============================================================
@@ -113,7 +126,6 @@ def apply_camera_and_colorbar(lut, preset, array_name):
     view.CameraFocalPoint    = p["CameraFocalPoint"]
     view.CameraViewUp        = p["CameraViewUp"]
     view.CameraParallelScale = p["ParallelScale"]
-    view.background          = [0.0, 0.0, 0.0]
 
     if "InteractionMode" in p:
         view.InteractionMode = p["InteractionMode"]
@@ -237,10 +249,13 @@ def create_slice(origin, normal, preset, fname, scalar, schlieren=False):
 for s in SCALARS:
     for x in YZ_SLICE_X:
         create_slice([x,0,0], [1,0,0], "YZ", f"YZ_x{x:+0.5f}", s)
+    
+    for y in XZ_SLICE_Y:
+        create_slice([0,y,0], [0,1,0], "XZ", f"XZ_y{y:+0.5f}", s)
 
     for z in XY_SLICE_Z:
         create_slice([0,0,z], [0,0,1], "XY_NEAR", f"XY_near_z{z:+0.5f}", s)
-        create_slice([0,0,z], [0,0,1], "XY_FAR",  f"XY_far_z{z:+0.5f}",  s)
+        # create_slice([0,0,z], [0,0,1], "XY_FAR",  f"XY_far_z{z:+0.5f}",  s) # ADD BACK IF WANTING FAR SHOTS 
 
 if ENABLE_SCHLIEREN:
     for z in XY_SLICE_Z:
