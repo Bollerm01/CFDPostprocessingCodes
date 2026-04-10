@@ -309,7 +309,8 @@ def make_3D_slice_view(slices, preset, fname, scalar):
     # Show and color all slices by the same scalar
     lut = GetColorTransferFunction(scalar)
     for sl in slices:
-        GetSource(sl)
+        currentSlice = FindSource(sl)
+        SetActiveSource(currentSlice)
         disp = Show(sl, view)
         loc = array_location(sl, scalar)
         ColorBy(disp, (loc, scalar))
