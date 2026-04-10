@@ -8,13 +8,15 @@ import os
 INPUT_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD00/RD00_004/latest.volcano"
 OUTPUT_DIR = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/testOutput/paraviewImgs"
 
-SCALARS = [
-    "reynoldsstressxx", "reynoldsstressyy", "reynoldsstresszz",
-    "reynoldsstressxy", "reynoldsstressxz", "reynoldsstressyz",
-    "velocityx", "velocityxavg", "tke", "pressureavg"
-]
+# SCALARS = [
+#     "reynoldsstressxx", "reynoldsstressyy", "reynoldsstresszz",
+#     "reynoldsstressxy", "reynoldsstressxz", "reynoldsstressyz",
+#     "velocityx", "velocityxavg", "tke", "pressureavg"
+# ]
 
-ENABLE_SCHLIEREN = True
+# Debugging scalars
+SCALARS = ["velocityx"]
+ENABLE_SCHLIEREN = False # Change to true if desired
 DENSITY_NAME = "density"
 
 # Debugging loop
@@ -22,7 +24,7 @@ DENSITY_NAME = "density"
 #XY_SLICE_Z = [0.0]
 
 # full loop
-YZ_SLICE_X = [2.011691, 2.080109, 2.114318, 2.15057954, 2.16015806, 2.1690524, 2.1793151, 2.18889362, 2.19847214, 2.20736648, 2.216945, 2.307804104]
+YZ_SLICE_X = [2.011691, 2.080109, 2.114318, 2.15057954, 2.16015806, 2.1690524, 2.1793151, 2.18889362, 2.19847214, 2.20736648, 2.216945, 2.223063, 2.307804104]
 XY_SLICE_Z = [-0.0381, 0.00, 0.0381]
 
 IMG_RES = [1920, 1080]
@@ -111,6 +113,7 @@ def apply_camera_and_colorbar(lut, preset, array_name):
     view.CameraFocalPoint    = p["CameraFocalPoint"]
     view.CameraViewUp        = p["CameraViewUp"]
     view.CameraParallelScale = p["ParallelScale"]
+    view.background          = [0.0, 0.0, 0.0]
 
     if "InteractionMode" in p:
         view.InteractionMode = p["InteractionMode"]
