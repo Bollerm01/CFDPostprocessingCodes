@@ -76,7 +76,7 @@ CAMERA_PRESETS = {
         "CameraPosition":   [2.19626, 5.25954, -0.0137621],
         "CameraFocalPoint": [2.19626, 0.240491, -0.0137621],
         "CameraViewUp":     [-1, 0, 0],
-        "ParallelScale":    0.10, 
+        "ParallelScale":    0.065, 
         "InteractionMode":  "3D",
         "Colorbar": {
             "Orientation": "Vertical",
