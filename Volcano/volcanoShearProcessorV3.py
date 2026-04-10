@@ -26,7 +26,12 @@ DENSITY_NAME = "density"
 # full loop
 YZ_SLICE_X = [2.011691, 2.080109, 2.114318, 2.15057954, 2.16015806, 2.1690524, 2.1793151, 2.18889362, 2.19847214, 2.20736648, 2.216945, 2.223063, 2.307804104]
 XY_SLICE_Z = [-0.0381, 0.00, 0.0381]
-XZ_SLICE_Y = [0.0182, 0.0093, 0.003]
+XZ_SLICE_Y = [0.0182, 0.0093, 0.003, 0.001]
+
+# 3D slices group
+YZ_SLICE_X_3D = [2.15057954, 2.1793151, 2.216945]
+XY_SLICE_Z_3D = [0.0381]
+XZ_SLICE_Y_3D = [0.0093]
 
 IMG_RES = [1920, 1080]
 COLORMAP_PRESET = "Cool to Warm (Extended)"
@@ -83,6 +88,30 @@ CAMERA_PRESETS = {
             "Position":    [0.80, 0.38],
             "Length":      0.5,
         }
+    },
+    "3D_Near": {
+        "CameraPosition":   [3.88543, 0.657277, 4.35785],
+        "CameraFocalPoint": [2.07626, -0.03555, -0.272],
+        "CameraViewUp":     [-0.0564687, 0.9904, -0.126141],
+        "ParallelScale":    0.065,  # May need to fix 
+        "InteractionMode":  "3D",
+        "Colorbar": {
+            "Orientation": "Horizontal",
+            "Position":    [0.174555, 0.0997015],
+            "Length":      0.5,
+        }
+    },
+    "3D_Top": {
+        "CameraPosition":   [4.50317, 2.18599, 3.42866],
+        "CameraFocalPoint": [2.01636, -0.171346, -0.238507],
+        "CameraViewUp":     [-10.247616, 0.882667, -0.399482],
+        "ParallelScale":    0.065, # may need to change 
+        "InteractionMode":  "3D",
+        "Colorbar": {
+            "Orientation": "Horizontal",
+            "Position":    [0.174555, 0.0997015],
+            "Length":      0.5,
+        }
     }
 }
 
@@ -107,6 +136,22 @@ def hide_scalar_bar_for_array(array_name):
         HideScalarBarIfNotNeeded(lut, view)
     except:
         pass
+
+def make_slice_group(xySlices, xzSlices, yzSlices):
+    group = []
+    if not xySlices:
+        for z in xySlices:
+            name = f"XY_near_z{z:+0.5f}"
+            group.append(name)
+    if not xzSlices:
+        for y in xzSlices:
+            name = f"XZ_y{y:+0.5f}"
+            group.append(name)
+    if not yzSlices:
+        for x in yzSlices:
+            name = f"YZ_x{x:+0.5f}"
+            group.append(name)
+    return group
 
 def array_location(source, name):
     pd = source.GetPointDataInformation()
@@ -242,6 +287,47 @@ def create_slice(origin, normal, preset, fname, scalar, schlieren=False):
 
     Hide(sl, view)
 
+def make_3D_slice_view(slices, preset, fname, scalar):
+    """
+    Parameters
+    ----------
+    slices : list
+        List of preexisting slice proxies (e.g., VolcanoSlice outputs).
+        Typically length 4 for a 4-slice composite.
+    preset : str
+        Name of the camera preset to apply (key in CAMERA_PRESETS).
+    fname : str
+        Output file name (no directory), e.g. 'four_YZ_slices_velocityx.png'.
+    scalar : str
+        Name of the scalar field to color by.
+    """
+    displays = []
+
+    # Show and color all slices by the same scalar
+    lut = GetColorTransferFunction(scalar)
+    for sl in slices:
+        disp = Show(sl, view)
+        loc = array_location(sl, scalar)
+        ColorBy(disp, (loc, scalar))
+        displays.append(disp)
+
+    # Configure shared LUT
+    lut.RescaleTransferFunctionToDataRange()
+    lut.ApplyPreset(COLORMAP_PRESET, True)
+
+    # Apply camera + colorbar
+    apply_camera_and_colorbar(lut, preset, scalar)
+
+    # Render and save a single screenshot containing all visible slices
+    Render(view)
+    SaveScreenshot(os.path.join(OUTPUT_DIR, f"{fname}_{scalar}.png"),
+                       view, ImageResolution=IMG_RES)
+
+    # Optionally hide slices afterwards
+    for sl in slices:
+        Hide(sl, view)
+
+
 # ============================================================
 # ===================== EXECUTION ============================
 # ============================================================
@@ -256,6 +342,12 @@ for s in SCALARS:
     for z in XY_SLICE_Z:
         create_slice([0,0,z], [0,0,1], "XY_NEAR", f"XY_near_z{z:+0.5f}", s)
         # create_slice([0,0,z], [0,0,1], "XY_FAR",  f"XY_far_z{z:+0.5f}",  s) # ADD BACK IF WANTING FAR SHOTS 
+
+    # 3D figs - Near 3D
+    sliceGroup = make_slice_group(XY_SLICE_Z_3D, XZ_SLICE_Y_3D, YZ_SLICE_X_3D)
+    outputFileName = f"3D_Near_Group_{s}.png"
+    make_3D_slice_view(sliceGroup, '3D_Near', outputFileName, s)
+    
 
 if ENABLE_SCHLIEREN:
     for z in XY_SLICE_Z:
