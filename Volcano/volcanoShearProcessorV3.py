@@ -5,8 +5,8 @@ import os
 # ======================= USER INPUT =========================
 # ============================================================
 
-INPUT_FILE = "/home/bollerma/LESdata/SSWT/fullCav/timeSensitivityStudy/test1t/test1tM2SSWT_000/latest.volcano"
-OUTPUT_DIR = "/home/bollerma/LESdata/SSWT/fullCav/timeSensitivityStudy/test1t/OUTPUT"
+INPUT_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD00/RD00_004/latest.volcano"
+OUTPUT_DIR = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/testOutput/paraviewImgs"
 
 SCALARS = [
     "reynoldsstressxx", "reynoldsstressyy", "reynoldsstresszz",
