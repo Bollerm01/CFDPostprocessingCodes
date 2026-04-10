@@ -1,4 +1,4 @@
-% EDIT TO ALSO INCLUDE THE TIME AVGD DATA IN THE FINAL 2D OUTPUT
+% EDIT TO ALSO INCLUDE THE TIME AVGD DATA IN THE FINAL 
 
 function process_500kHz_folder()
     %% USER: Select folder containing the.dat files

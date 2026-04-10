@@ -1,0 +1,299 @@
+%% Clear on runtime
+clc; clear; close all;
+
+%% Simple Data Visualization and BL Sweep Processing for SSWT (Multi-file, Overlay)
+% - BL Pstatic vs Y-location
+% - Stagnation, Static, Manifold pressures vs normalized Time
+
+headers1 = [...
+    "Stagnation Pressure",...
+    "Static Pressure",...
+    "Stagnation Temperature",...
+    "Manifold Pressure",...
+    "Tank Pressure",...
+    "Mach Number",...
+    "Velocity",...
+    "Static Temperature",...
+    "Mass Flow",...
+    "Static Density",...
+    "Reynold's Number",...
+    "BL Pstatic",...
+    "Time",...
+    "X",...
+    "Y"...
+];
+
+headers2 = {...
+    "psia",...      % Stagnation Pressure
+    "psia",...      % Static Pressure
+    "degF",...      % Stagnation Temperature
+    "psig",...      % Manifold Pressure
+    "psig",...      % Tank Pressure
+    "N/A",...       % Mach Number
+    "m/s",...       % Velocity
+    "degF",...      % Static Temperature
+    "kg/s",...      % Mass Flow
+    "kg/m^3",...    % Static Density
+    "N/A",...       % Reynold's Number
+    "psig",...      % BL Pstatic
+    "sec",...       % Time
+    "in",...        % X
+    "in"...         % Y
+};
+
+%% --------- Multi-File Select ---------
+[txtFileNames, txtPath] = uigetfile('*.txt', 'Select one or more data files', 'MultiSelect', 'on');
+
+if isequal(txtFileNames,0)
+    error('No files selected. Script aborted.');
+end
+
+% Normalize to cell array of names
+if ischar(txtFileNames)
+    txtFileNames = {txtFileNames};
+end
+
+nFiles = numel(txtFileNames);
+
+%% --------- Get legend identifiers ---------
+fileIDs = cell(nFiles,1);
+fprintf('You selected %d files. Enter a legend identifier for each:\n', nFiles);
+for f = 1:nFiles
+    prompt = sprintf('Identifier for file %d (%s): ', f, txtFileNames{f});
+    fileIDs{f} = input(prompt, 's');
+    if isempty(fileIDs{f})
+        % Fallback to filename
+        fileIDs{f} = txtFileNames{f};
+    end
+end
+
+% Ask for processing parameters once (applied to all files)
+N0 = input('Enter number of latest samples at X=0, Y=0 to KEEP: '); % Default ~15
+Ntrim = input(['Enter number of lines to trim at earliest and latest'...
+               ' time at EACH location: ']); % Default = 2
+
+%% --------- Prepare figures for overlay ---------
+% BL Pstatic vs Y-location
+figBLP   = figure; hold on; grid on; box on;
+xlabel('Y Location (in)'); ylabel('BL Pstatic (psig)');
+title('BL Pstatic vs Y-location');
+
+% Pressures vs normalized Time
+figStagTime = figure; hold on; grid on; box on;
+xlabel('Time (s)'); ylabel('Stagnation Pressure (psia)');
+title('Stagnation Pressure vs Normalized Time');
+
+figStaticTime = figure; hold on; grid on; box on;
+xlabel('Time (s)'); ylabel('Static Pressure (psia)');
+title('Static Pressure vs Normalized Time');
+
+figManifTime = figure; hold on; grid on; box on;
+xlabel('Time (s)'); ylabel('Manifold Pressure (psig)');
+title('Manifold Pressure vs Normalized Time');
+
+colors = lines(nFiles);      % Distinct colors for up to nFiles
+
+%% --------- Loop over each selected file ---------
+for f = 1:nFiles
+    thisFile = fullfile(txtPath, txtFileNames{f});
+
+    fprintf('\nProcessing file %d of %d: %s (ID: %s)\n',...
+        f, nFiles, thisFile, fileIDs{f});
+
+    %% --------- Read Data for this file ---------
+    fid = fopen(thisFile,'r');
+    a = findFirstLineOfData(fid);
+    fclose(fid);
+
+    T = readtable(thisFile,"NumHeaderLines",a,"ReadVariableNames",false);
+    T.Properties.VariableNames = headers1;
+
+    % Convert to arrays
+    t = T.("Time");
+    x = T.("X");
+    y = T.("Y");
+
+    %% --------- Sort by Time ---------
+    [~, tOrder] = sort(t);
+    T = T(tOrder, :);
+    t = T.("Time");
+    x = T.("X");
+    y = T.("Y");
+
+    %% --------- Ignore all data after last Y == 1.00 (traversing to home) ---------
+    yCutoff = 1.00;
+    lastIdx = find(T.("Y") == yCutoff, 1, 'last');
+
+    if ~isempty(lastIdx)
+        T = T(1:lastIdx, :);
+        t = T.("Time");
+        x = T.("X");
+        y = T.("Y");
+    else
+        warning('No samples found with Y == %.2f; processing full file.', yCutoff);
+    end
+
+    %% --------- Identify Unique (X,Y) Locations ---------
+    tol = 1e-6;
+    xr = round(x / tol) * tol;
+    yr = round(y / tol) * tol;
+
+    XY = [xr, yr];
+    [XYuniq, ~, locID] = unique(XY, 'rows');
+    nLoc = size(XYuniq, 1);
+
+    %% --------- Allocate Storage (averaged BL vs Y) ---------
+    avgY      = nan(nLoc, 1);
+    avgBLP    = nan(nLoc, 1);
+
+    %% --------- Logical mask of rows to keep for time-series ---------
+    keepRow = false(height(T),1);
+
+    %% --------- Process Each Location ---------
+    for k = 1:nLoc
+        idx = find(locID == k);  % row indices of T belonging to this (X,Y)
+
+        t_k      = t(idx);
+        y_k      = y(idx);
+        stag_k   = T.("Stagnation Pressure")(idx);
+        static_k = T.("Static Pressure")(idx);
+        manif_k  = T.("Manifold Pressure")(idx);
+        blp_k    = T.("BL Pstatic")(idx);
+
+        % Sort by time within this location (should already be sorted)
+        [t_k, sIdx] = sort(t_k);
+        idx    = idx(  sIdx);
+        y_k    = y_k(  sIdx);
+        stag_k = stag_k(sIdx);
+        static_k = static_k(sIdx);
+        manif_k  = manif_k(sIdx);
+        blp_k    = blp_k(sIdx);
+
+        isZeroLoc = abs(XYuniq(k,1)) < tol && abs(XYuniq(k,2)) < tol;
+
+        % Keep only last N0 at (0,0)
+        if isZeroLoc
+            if numel(t_k) > N0
+                keepIdxZero = (numel(t_k)-N0+1):numel(t_k);
+            else
+                keepIdxZero = 1:numel(t_k);
+            end
+        else
+            keepIdxZero = 1:numel(t_k);
+        end
+
+        idx    = idx(   keepIdxZero);
+        t_k    = t_k(   keepIdxZero);
+        y_k    = y_k(   keepIdxZero);
+        stag_k = stag_k(keepIdxZero);
+        static_k = static_k(keepIdxZero);
+        manif_k  = manif_k(keepIdxZero);
+        blp_k    = blp_k(keepIdxZero);
+
+        % Trim Ntrim samples at start and end
+        nSamples = numel(t_k);
+        if nSamples <= 2*Ntrim
+            continue;
+        end
+
+        keepIdxTrim = (Ntrim+1):(nSamples-Ntrim);
+
+        idx    = idx(   keepIdxTrim);
+        t_k    = t_k(   keepIdxTrim);
+        y_k    = y_k(   keepIdxTrim);
+        stag_k = stag_k(keepIdxTrim);
+        static_k = static_k(keepIdxTrim);
+        manif_k  = manif_k(keepIdxTrim);
+        blp_k    = blp_k(keepIdxTrim);
+
+        % Mark these rows as kept for time-series plots
+        keepRow(idx) = true;
+
+        % ---- Store for BL vs Y (location-based, averaged) ----
+        avgY(k)   = mean(y_k,   'omitnan');
+        avgBLP(k) = mean(blp_k, 'omitnan');
+    end
+
+    %% --------- Clean & Sort BL vs Y for this file ---------
+    validBL = ~isnan(avgY) & ~isnan(avgBLP);
+    avgY   = avgY(validBL);
+    avgBLP = avgBLP(validBL);
+
+    [avgY, sortIdxBL] = sort(avgY);
+    avgBLP = avgBLP(sortIdxBL);
+
+    %% --------- Build time-series from kept rows ---------
+    Tkeep = T(keepRow, :);
+
+    allT      = Tkeep.("Time");
+    allStag   = Tkeep.("Stagnation Pressure");
+    allStatic = Tkeep.("Static Pressure");
+    allManif  = Tkeep.("Manifold Pressure");
+
+    % Sort by absolute time
+    [allT, sortIdxT] = sort(allT);
+    allStag   = allStag(sortIdxT);
+    allStatic = allStatic(sortIdxT);
+    allManif  = allManif(sortIdxT);
+
+    % --------- Normalize time so earliest kept time is zero ---------
+    if ~isempty(allT)
+        t0 = allT(1);
+        tNorm = allT - t0;
+    else
+        tNorm = allT; % empty
+    end
+
+    %% --------- Overlay Plots ---------
+    % BL Pstatic vs Y-location
+    figure(figBLP);
+    plot(avgY, avgBLP, '-o', 'LineWidth', 1.5, 'Color', colors(f,:),...
+        'DisplayName', fileIDs{f});
+
+    % Stagnation vs normalized Time
+    figure(figStagTime);
+    plot(tNorm, allStag, '-', 'LineWidth', 1.5, 'Color', colors(f,:),...
+        'DisplayName', fileIDs{f});
+
+    % Static vs normalized Time
+    figure(figStaticTime);
+    plot(tNorm, allStatic, '-', 'LineWidth', 1.5, 'Color', colors(f,:),...
+        'DisplayName', fileIDs{f});
+
+    % Manifold vs normalized Time
+    figure(figManifTime);
+    plot(tNorm, allManif, '-', 'LineWidth', 1.5, 'Color', colors(f,:),...
+        'DisplayName', fileIDs{f});
+end
+
+%% --------- Add legends to each figure ---------
+figure(figBLP);        legend('show', 'Interpreter', 'none', 'Location', 'best');
+figure(figStagTime);   legend('show', 'Interpreter', 'none', 'Location', 'best');
+figure(figStaticTime); legend('show', 'Interpreter', 'none', 'Location', 'best');
+figure(figManifTime);  legend('show', 'Interpreter', 'none', 'Location', 'best');
+
+fprintf('\nProcessing complete. Time normalized per run (t = 0 at first kept sample).\n');
+
+%% --------- Helper Function: findFirstLineOfData ---------
+function firstDataLine = findFirstLineOfData(fileID)
+    count = 0;
+    while 1
+        count = count + 1;
+        tline = fgetl(fileID);
+        if ~ischar(tline)
+            break
+        end
+        celldata = textscan(tline,'%f %f %f %f %f');
+        cellCount = 0;
+        for i = 1:length(celldata)
+            if isempty(celldata{i})
+                break
+            end
+            cellCount = cellCount + 1;
+        end
+        if cellCount == 5
+            break
+        end
+    end
+    firstDataLine = count;
+end
