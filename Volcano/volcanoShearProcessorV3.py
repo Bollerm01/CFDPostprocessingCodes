@@ -308,6 +308,7 @@ def make_3D_slice_view(slices, preset, fname, scalar):
     # Show and color all slices by the same scalar
     lut = GetColorTransferFunction(scalar)
     for sl in slices:
+        GetSource(sl)
         disp = Show(sl, view)
         loc = array_location(sl, scalar)
         ColorBy(disp, (loc, scalar))
@@ -347,7 +348,7 @@ for s in SCALARS:
 
     # 3D figs - Near 3D
     sliceGroup = make_slice_group(XY_SLICE_Z_3D, XZ_SLICE_Y_3D, YZ_SLICE_X_3D)
-    outputFileName = f"3D_Near_Group_{s}.png"
+    outputFileName = "3D_Near_Group"
     make_3D_slice_view(sliceGroup, '3D_Near', outputFileName, s)
     
 
