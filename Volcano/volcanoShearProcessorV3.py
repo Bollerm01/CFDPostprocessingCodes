@@ -7,7 +7,8 @@ import os
 
 INPUT_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD00/RD00_004/latest.volcano"
 OUTPUT_DIR = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/testOutput/paraviewImgs"
-
+folder_path = os.path.dirname(INPUT_FILE) # /home/user/project
+file_name = os.path.basename(folder_path) # project
 # SCALARS = [
 #     "reynoldsstressxx", "reynoldsstressyy", "reynoldsstresszz",
 #     "reynoldsstressxy", "reynoldsstressxz", "reynoldsstressyz",
@@ -120,6 +121,7 @@ CAMERA_PRESETS = {
 # ============================================================
 
 src = OpenDataFile(INPUT_FILE)
+RenameSource(file_name, src)
 src.CellArrayStatus = SCALARS + [DENSITY_NAME]
 
 view = GetActiveViewOrCreate("RenderView")
