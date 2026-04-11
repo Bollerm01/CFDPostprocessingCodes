@@ -315,7 +315,7 @@ def make_3D_slice_view(slices, preset, fname, scalar):
         lut.ApplyPreset(COLORMAP_PRESET, True)
 
         apply_camera_and_colorbar(lut, preset, scalar)
-        # Render(view)
+        Render(view)
 
     # # Configure shared LUT
     # lut.RescaleTransferFunctionToDataRange()
@@ -325,7 +325,7 @@ def make_3D_slice_view(slices, preset, fname, scalar):
     # apply_camera_and_colorbar(lut, preset, scalar)
 
     # # Render and save a single screenshot containing all visible slices
-    Render(view)
+    # Render(view)
     SaveScreenshot(os.path.join(OUTPUT_DIR, f"{fname}_{scalar}.png"),
                    view, ImageResolution=IMG_RES)
 
@@ -350,6 +350,8 @@ def make_slice_group(xySlices, xzSlices, yzSlices):
             sl_name = f"YZ_x{x:+0.5f}"
             #sl = make_slice([x, 0, 0], [1, 0, 0], sl_name, scalar, schlieren=False)
             group.append(sl_name)
+
+    print(f"Grouped Imgs: {group}")
     return group
 
 
