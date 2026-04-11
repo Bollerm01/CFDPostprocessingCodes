@@ -310,6 +310,8 @@ def make_3D_slice_view(slices, preset, fname, scalar):
     lut = GetColorTransferFunction(scalar)
     for sl in slices:
         currentSlice = FindSource(sl)
+        if currentSlice is None:
+            raise RuntimeError(f"Source '{sl}' not found in pipeline")
         SetActiveSource(currentSlice)
         disp = Show(sl, view)
         loc = array_location(sl, scalar)
@@ -330,6 +332,7 @@ def make_3D_slice_view(slices, preset, fname, scalar):
 
     # Optionally hide slices afterwards
     for sl in slices:
+        currentSlice = FindSource(sl)
         Hide(sl, view)
 
 
