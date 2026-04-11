@@ -363,7 +363,7 @@ for s in SCALARS:
     # 3D figs - Near 3D
     sliceGroup = make_slice_group(XY_SLICE_Z_3D, XZ_SLICE_Y_3D, YZ_SLICE_X_3D, s)
     outputFileName = "3D_Near_Group"
-    make_3D_slice_view(sliceGroup, "3D_NEAR", outputFileName, s)
+    make_3D_slice_view(sliceGroup, "3D_Near", outputFileName, s)
     
 
 if ENABLE_SCHLIEREN:
