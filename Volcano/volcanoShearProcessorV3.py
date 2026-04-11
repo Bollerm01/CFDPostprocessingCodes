@@ -322,8 +322,8 @@ def make_3D_slice_view(slices, preset, fname, scalar):
                    view, ImageResolution=IMG_RES)
 
     # Optionally hide slices afterwards
-    for sl in slices:
-        Hide(sl, view)
+    # for sl in slices:
+    #     Hide(sl, view)
 
 def make_slice_group(xySlices, xzSlices, yzSlices, scalar):
     group = []
