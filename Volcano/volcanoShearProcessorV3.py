@@ -307,17 +307,23 @@ def make_3D_slice_view(slices, preset, fname, scalar):
         disp = Show(sl, view)
         loc = array_location(sl, scalar)
         ColorBy(disp, (loc, scalar))
-        displays.append(disp)
 
-    # Configure shared LUT
-    lut.RescaleTransferFunctionToDataRange()
-    lut.ApplyPreset(COLORMAP_PRESET, True)
+        lut = GetColorTransferFunction(scalar)
+        lut.RescaleTransferFunctionToDataRange()
+        lut.ApplyPreset(COLORMAP_PRESET, True)
 
-    # Apply camera + colorbar
-    apply_camera_and_colorbar(lut, preset, scalar)
+        apply_camera_and_colorbar(lut, preset, scalar)
+        Render(view)
 
-    # Render and save a single screenshot containing all visible slices
-    Render(view)
+    # # Configure shared LUT
+    # lut.RescaleTransferFunctionToDataRange()
+    # lut.ApplyPreset(COLORMAP_PRESET, True)
+
+    # # Apply camera + colorbar
+    # apply_camera_and_colorbar(lut, preset, scalar)
+
+    # # Render and save a single screenshot containing all visible slices
+    # Render(view)
     SaveScreenshot(os.path.join(OUTPUT_DIR, f"{fname}_{scalar}.png"),
                    view, ImageResolution=IMG_RES)
 
