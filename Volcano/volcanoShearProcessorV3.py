@@ -335,17 +335,17 @@ def make_3D_slice_view(slices, preset, fname, scalar):
 
 def make_slice_group(xySlices, xzSlices, yzSlices):
     group = []
-    if not xySlices:
+    if xySlices:
         for z in xySlices:
             sl_name = f"XY_near_z{z:+0.5f}"
             #sl = make_slice([0, 0, z], [0, 0, 1], sl_name, scalar, schlieren=False)
             group.append(sl_name)
-    if not xzSlices:
+    if xzSlices:
         for y in xzSlices:
             sl_name = f"XZ_y{y:+0.5f}"
             #sl = make_slice([0, y, 0], [0, 1, 0], sl_name, scalar, schlieren=False)
             group.append(sl_name)
-    if not yzSlices:
+    if yzSlices:
         for x in yzSlices:
             sl_name = f"YZ_x{x:+0.5f}"
             #sl = make_slice([x, 0, 0], [1, 0, 0], sl_name, scalar, schlieren=False)
