@@ -140,22 +140,6 @@ def hide_scalar_bar_for_array(array_name):
     except:
         pass
 
-def make_slice_group(xySlices, xzSlices, yzSlices):
-    group = []
-    if not xySlices:
-        for z in xySlices:
-            name = f"XY_near_z{z:+0.5f}"
-            group.append(name)
-    if not xzSlices:
-        for y in xzSlices:
-            name = f"XZ_y{y:+0.5f}"
-            group.append(name)
-    if not yzSlices:
-        for x in yzSlices:
-            name = f"YZ_x{x:+0.5f}"
-            group.append(name)
-    return group
-
 def array_location(source, name):
     pd = source.GetPointDataInformation()
     cd = source.GetCellDataInformation()
@@ -235,6 +219,26 @@ def schlieren_pipeline(slice_src):
 
     return [mag, dx, dy]
 
+# Helper: Make Slice
+def make_slice(origin, normal, fname, scalar, schlieren=False):
+    """
+    Create and configure a VolcanoSlice but do not show or save.
+    Returns the slice proxy.
+    """
+    sl = VolcanoSlice(registrationName=fname, Input=src)
+    sl.SlicePoint = origin
+    sl.SliceNormal = normal
+
+    if schlieren:
+        sl.InterpolatedField = DENSITY_NAME
+        sl.MinMaxField = DENSITY_NAME
+    else:
+        sl.InterpolatedField = scalar
+        sl.MinMaxField = scalar
+
+    sl.Crinkle = 0
+    return sl
+
 
 # ============================================================
 # ===================== SLICE ================================
@@ -242,16 +246,7 @@ def schlieren_pipeline(slice_src):
 
 def create_slice(origin, normal, preset, fname, scalar, schlieren=False):
 
-    sl = VolcanoSlice(registrationName=fname, Input=src)
-    sl.SlicePoint = origin
-    sl.SliceNormal = normal
-    if schlieren:
-        sl.InterpolatedField = DENSITY_NAME
-        sl.MinMaxField = DENSITY_NAME
-    else:
-        sl.InterpolatedField = scalar
-        sl.MinMaxField = scalar
-    sl.Crinkle = 0
+    sl = make_slice(origin, normal, preset, fname, scalar, schlieren=schlieren)
 
     if not schlieren:
         disp = Show(sl, view)
@@ -309,10 +304,6 @@ def make_3D_slice_view(slices, preset, fname, scalar):
     # Show and color all slices by the same scalar
     lut = GetColorTransferFunction(scalar)
     for sl in slices:
-        currentSlice = FindSource(sl)
-        if currentSlice is None:
-            raise RuntimeError(f"Source '{sl}' not found in pipeline")
-        SetActiveSource(currentSlice)
         disp = Show(sl, view)
         loc = array_location(sl, scalar)
         ColorBy(disp, (loc, scalar))
@@ -327,13 +318,31 @@ def make_3D_slice_view(slices, preset, fname, scalar):
 
     # Render and save a single screenshot containing all visible slices
     Render(view)
-    SaveScreenshot(os.path.join(OUTPUT_DIR, f"{fname}_{scalar}.png"),
-                       view, ImageResolution=IMG_RES)
+    SaveScreenshot(os.path.join(OUTPUT_DIR, fname),
+                   view, ImageResolution=IMG_RES)
 
     # Optionally hide slices afterwards
     for sl in slices:
-        currentSlice = FindSource(sl)
         Hide(sl, view)
+
+def make_slice_group(xySlices, xzSlices, yzSlices, scalar):
+    group = []
+    if not xySlices:
+        for z in xySlices:
+            sl_name = f"XY_near_z{z:+0.5f}"
+            sl = make_slice([0, 0, z], [0, 0, 1], sl_name, scalar, schlieren=False)
+            group.append(sl)
+    if not xzSlices:
+        for y in xzSlices:
+            sl_name = f"XZ_y{y:+0.5f}"
+            sl = make_slice([0, y, 0], [0, 1, 0], sl_name, scalar, schlieren=False)
+            group.append(sl)
+    if not yzSlices:
+        for x in yzSlices:
+            sl_name = f"YZ_x{x:+0.5f}"
+            sl = make_slice([x, 0, 0], [1, 0, 0], sl_name, scalar, schlieren=False)
+            group.append(sl)
+    return group
 
 
 # ============================================================
@@ -352,7 +361,7 @@ for s in SCALARS:
         # create_slice([0,0,z], [0,0,1], "XY_FAR",  f"XY_far_z{z:+0.5f}",  s) # ADD BACK IF WANTING FAR SHOTS 
 
     # 3D figs - Near 3D
-    sliceGroup = make_slice_group(XY_SLICE_Z_3D, XZ_SLICE_Y_3D, YZ_SLICE_X_3D)
+    sliceGroup = make_slice_group(XY_SLICE_Z_3D, XZ_SLICE_Y_3D, YZ_SLICE_X_3D, s)
     outputFileName = "3D_Near_Group"
     make_3D_slice_view(sliceGroup, '3D_Near', outputFileName, s)
     

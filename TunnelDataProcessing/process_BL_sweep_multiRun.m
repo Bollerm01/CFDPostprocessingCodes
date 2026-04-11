@@ -125,6 +125,7 @@ colors = lines(nFiles);
 %% --------- Loop over each selected file ---------
 for f = 1:nFiles
     thisFile = fullfile(txtPath, txtFileNames{f});
+    [~, baseName, ~] = fileparts(thisFile);
     yOffset = yOffsets(f);
     Patm = atmPressures(f);
 
@@ -261,16 +262,22 @@ for f = 1:nFiles
     %% --------- Build time-series from kept rows ---------
     Tkeep = T(keepRow, :);
 
-    allT      = Tkeep.("Time");
-    allStag   = Tkeep.("Stagnation Pressure");
-    allStatic = Tkeep.("Static Pressure");
-    allManif  = Tkeep.("Manifold Pressure");
+    allT       = Tkeep.("Time");
+    y_keep     = Tkeep.("Y");            % unshifted Y
+    stag_keep  = Tkeep.("Stagnation Pressure");
+    static_keep= Tkeep.("Static Pressure");
+    manif_keep = Tkeep.("Manifold Pressure");
+    blp_psig_keep = Tkeep.("BL Pstatic");
+    blp_psia_keep = blp_psig_keep + Patm;  % convert to psia for each sample
 
     % Sort by absolute time
     [allT, sortIdxT] = sort(allT);
-    allStag   = allStag(sortIdxT);
-    allStatic = allStatic(sortIdxT);
-    allManif  = allManif(sortIdxT);
+    y_keep        = y_keep(sortIdxT);
+    stag_keep     = stag_keep(sortIdxT);
+    static_keep   = static_keep(sortIdxT);
+    manif_keep    = manif_keep(sortIdxT);
+    blp_psig_keep = blp_psig_keep(sortIdxT);
+    blp_psia_keep = blp_psia_keep(sortIdxT);
 
     % Normalize time so earliest kept time is zero
     if ~isempty(allT)
@@ -279,6 +286,38 @@ for f = 1:nFiles
     else
         tNorm = allT;
     end
+    
+    % Apply Y-offset per-sample (for export and for any Y-based analysis)
+    y_shift_keep = y_keep + yOffset;
+
+    %% --------- Save data to Excel sheet ---------
+    % Columns: Time_s, Y_shift_in, Stag, Static, Manifold, BL_psig, BL_psia
+    RunData = table(...
+        tNorm,...
+        y_shift_keep,...
+        stag_keep,...
+        static_keep,...
+        manif_keep,...
+        blp_psig_keep,...
+        blp_psia_keep,...
+        'VariableNames', {...
+            'Time_s',...
+            'Y_shift_in',...
+            'StagnationPressure_psia',...
+            'StaticPressure_psia',...
+            'ManifoldPressure_psig',...
+            'BL_Pstatic_psig',...
+            'BL_StaticPressure_psia'...
+        }...
+    );
+
+    excelName = sprintf('%s_processed_%s.xlsx', baseName, fileIDs{f});
+    excelPath = fullfile(txtPath, excelName);
+
+    fprintf('  Writing processed run data to %s\n', excelPath);
+
+    % Single sheet per run with all fields
+    writetable(RunData, excelPath, 'Sheet', 'RunData', 'WriteMode','overwrite');
 
     %% --------- Plots ---------
     % BL static pressure (psia) vs shifted Y-location
@@ -286,23 +325,24 @@ for f = 1:nFiles
     % plot(avgY_shift, avgBLP_psia, '-o', 'LineWidth', 1.5, 'Color', colors(f,:),...
     %     'DisplayName', fileIDs{f});
     figure(figBLP);
-    plot(avgBLP_psia,avgY_shift, '-o', 'LineWidth', 1.5, 'Color', colors(f,:),...
+    plot(avgBLP_psia, avgY_shift, '-o', 'LineWidth', 1.5, 'Color', colors(f,:),...
         'DisplayName', fileIDs{f});
 
     % Stagnation vs normalized Time
     figure(figStagTime);
-    plot(tNorm, allStag, '-', 'LineWidth', 1.5, 'Color', colors(f,:),...
+    plot(tNorm, stag_keep, '-', 'LineWidth', 1.5, 'Color', colors(f,:),...
         'DisplayName', fileIDs{f});
 
     % Static (plenum) vs normalized Time
     figure(figStaticTime);
-    plot(tNorm, allStatic, '-', 'LineWidth', 1.5, 'Color', colors(f,:),...
+    plot(tNorm, static_keep, '-', 'LineWidth', 1.5, 'Color', colors(f,:),...
         'DisplayName', fileIDs{f});
 
     % Manifold vs normalized Time
     figure(figManifTime);
-    plot(tNorm, allManif, '-', 'LineWidth', 1.5, 'Color', colors(f,:),...
+    plot(tNorm, manif_keep, '-', 'LineWidth', 1.5, 'Color', colors(f,:),...
         'DisplayName', fileIDs{f});
+
 end
 
 %% --------- Legends ---------
