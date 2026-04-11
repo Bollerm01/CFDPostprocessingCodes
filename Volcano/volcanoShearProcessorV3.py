@@ -304,7 +304,9 @@ def make_3D_slice_view(slices, preset, fname, scalar):
     # Show and color all slices by the same scalar
     lut = GetColorTransferFunction(scalar)
     for sl in slices:
-        disp = Show(sl, view)
+        slice_source = FindSource(sl)
+        SetActiveSource(slice_source)
+        disp = Show(slice_source, view)
         loc = array_location(sl, scalar)
         ColorBy(disp, (loc, scalar))
 
@@ -313,7 +315,7 @@ def make_3D_slice_view(slices, preset, fname, scalar):
         lut.ApplyPreset(COLORMAP_PRESET, True)
 
         apply_camera_and_colorbar(lut, preset, scalar)
-        Render(view)
+        # Render(view)
 
     # # Configure shared LUT
     # lut.RescaleTransferFunctionToDataRange()
@@ -323,7 +325,7 @@ def make_3D_slice_view(slices, preset, fname, scalar):
     # apply_camera_and_colorbar(lut, preset, scalar)
 
     # # Render and save a single screenshot containing all visible slices
-    # Render(view)
+    Render(view)
     SaveScreenshot(os.path.join(OUTPUT_DIR, f"{fname}_{scalar}.png"),
                    view, ImageResolution=IMG_RES)
 
@@ -331,23 +333,23 @@ def make_3D_slice_view(slices, preset, fname, scalar):
     # for sl in slices:
     #     Hide(sl, view)
 
-def make_slice_group(xySlices, xzSlices, yzSlices, scalar):
+def make_slice_group(xySlices, xzSlices, yzSlices):
     group = []
     if not xySlices:
         for z in xySlices:
             sl_name = f"XY_near_z{z:+0.5f}"
-            sl = make_slice([0, 0, z], [0, 0, 1], sl_name, scalar, schlieren=False)
-            group.append(sl)
+            #sl = make_slice([0, 0, z], [0, 0, 1], sl_name, scalar, schlieren=False)
+            group.append(sl_name)
     if not xzSlices:
         for y in xzSlices:
             sl_name = f"XZ_y{y:+0.5f}"
-            sl = make_slice([0, y, 0], [0, 1, 0], sl_name, scalar, schlieren=False)
-            group.append(sl)
+            #sl = make_slice([0, y, 0], [0, 1, 0], sl_name, scalar, schlieren=False)
+            group.append(sl_name)
     if not yzSlices:
         for x in yzSlices:
             sl_name = f"YZ_x{x:+0.5f}"
-            sl = make_slice([x, 0, 0], [1, 0, 0], sl_name, scalar, schlieren=False)
-            group.append(sl)
+            #sl = make_slice([x, 0, 0], [1, 0, 0], sl_name, scalar, schlieren=False)
+            group.append(sl_name)
     return group
 
 
@@ -367,7 +369,7 @@ for s in SCALARS:
         # create_slice([0,0,z], [0,0,1], "XY_FAR",  f"XY_far_z{z:+0.5f}",  s) # ADD BACK IF WANTING FAR SHOTS 
 
     # 3D figs - Near 3D
-    sliceGroup = make_slice_group(XY_SLICE_Z_3D, XZ_SLICE_Y_3D, YZ_SLICE_X_3D, s)
+    sliceGroup = make_slice_group(XY_SLICE_Z_3D, XZ_SLICE_Y_3D, YZ_SLICE_X_3D)
     outputFileName = "3D_Near_Group"
     make_3D_slice_view(sliceGroup, "3D_Near", outputFileName, s)
     
