@@ -246,7 +246,7 @@ def make_slice(origin, normal, fname, scalar, schlieren=False):
 
 def create_slice(origin, normal, preset, fname, scalar, schlieren=False):
 
-    sl = make_slice(origin, normal, preset, fname, scalar, schlieren=schlieren)
+    sl = make_slice(origin, normal, preset, fname, scalar, schlieren)
 
     if not schlieren:
         disp = Show(sl, view)
