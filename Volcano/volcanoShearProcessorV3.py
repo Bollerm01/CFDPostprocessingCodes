@@ -52,7 +52,7 @@ CAMERA_PRESETS = {
         "ParallelScale":    0.06142870916705136,
         "Colorbar": {
             "Orientation": "Horizontal",
-            "Position":    [0.31, 0.15],
+            "Position":    [0.29, 0.15],
             "Length":      0.5, # was 0.33
         }
     },
