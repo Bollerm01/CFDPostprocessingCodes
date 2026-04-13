@@ -17,7 +17,7 @@ headers1 = [...
     "Mass Flow",...
     "Static Density",...
     "Reynold's Number",...
-    "BL Pstatic",...
+    "BL Pressure",...
     "Time",...
     "X",...
     "Y"...
@@ -35,11 +35,14 @@ headers2 = {...
     "kg/s",...      % Mass Flow
     "kg/m^3",...    % Static Density
     "N/A",...       % Reynold's Number
-    "psig",...      % BL Pstatic (gauge)
+    "psig",...      % BL pressure (gauge)
     "sec",...       % Time
     "in",...        % X
     "in"...         % Y
 };
+
+gamma = 1.4;
+critRatio = 0.528; %P_static/P0_sonic
 
 %% --------- File selection ---------
 [txtFileNames, txtPath] = uigetfile('*.txt', 'Select one or more data files', 'MultiSelect', 'on');
@@ -96,7 +99,7 @@ Ntrim = input(['Enter number of lines to trim at earliest and latest'...
                ' time at EACH location: ']);
 
 %% --------- Prepare figures ---------
-% BL line static pressure vs shifted Y-location
+% BL pressure vs shifted Y-location
 % figBLP   = figure; hold on; grid on; box on;
 % xlabel('Shifted Y Location (in)');
 % ylabel('Static Pressure (psia)');
@@ -104,8 +107,8 @@ Ntrim = input(['Enter number of lines to trim at earliest and latest'...
 
 figBLP   = figure; hold on; grid on; box on;
 ylabel('Shifted Y Location (in)');
-xlabel('Static Pressure (psia)');
-title('Shifted Y-location vs BL Static Pressure');
+xlabel('BL Pressure (psia)');
+title('Shifted Y-location vs BL Pressure');
 
 % Pressures vs normalized Time
 figStagTime = figure; hold on; grid on; box on;
@@ -114,11 +117,16 @@ title('Stagnation Pressure vs Time');
 
 figStaticTime = figure; hold on; grid on; box on;
 xlabel('Time (s)'); ylabel('Static Pressure (psia)');
-title('Static Pressure vs Time');
+title('Upstream Static Pressure vs Time');
 
 figManifTime = figure; hold on; grid on; box on;
 xlabel('Time (s)'); ylabel('Manifold Pressure (psig)');
 title('Manifold Pressure vs Time');
+
+figMach   = figure; hold on; grid on; box on;
+ylabel('Shifted Y Location (in)');
+xlabel('Mach Number');
+title('Shifted Y-location vs Mach');
 
 colors = lines(nFiles);
 
@@ -177,6 +185,7 @@ for f = 1:nFiles
     %% --------- Allocate Storage (averaged BL vs Y, unshifted) ---------
     avgY_raw   = nan(nLoc, 1);  % unshifted Y
     avgBLP_psia = nan(nLoc, 1); % BL static pressure in psia
+    avgPstatic_psia = nan(nLoc, 1); % BL static pressure in psia
 
     %% --------- Logical mask of rows to keep for time-series ---------
     keepRow = false(height(T),1);
@@ -191,7 +200,7 @@ for f = 1:nFiles
         static_k = T.("Static Pressure")(idx);
         manif_k  = T.("Manifold Pressure")(idx);
         % Convert BL Pstatic from psig to psia using per-run atmospheric pressure
-        blp_k_psia = T.("BL Pstatic")(idx) + Patm;
+        blp_k_psia = T.("BL Pressure")(idx) + Patm;
 
         % Sort by time within this location
         [t_k, sIdx] = sort(t_k);
@@ -246,15 +255,18 @@ for f = 1:nFiles
         % Store averaged BL static pressure (psia) vs unshifted Y
         avgY_raw(k)    = mean(y_k,        'omitnan');
         avgBLP_psia(k) = mean(blp_k_psia, 'omitnan');
+        avgPstatic_psia(k) = mean(static_k, 'omitnan');
     end
 
-    %% --------- Clean & Sort BL static pressure vs Y (unshifted) ---------
+    %% --------- Clean & Sort BL pressure and Pstatic vs Y (unshifted) ---------
     validBL = ~isnan(avgY_raw) & ~isnan(avgBLP_psia);
     avgY_raw    = avgY_raw(validBL);
     avgBLP_psia = avgBLP_psia(validBL);
+    avgPstatic_psia = avgPstatic_psia(validBL);
 
     [avgY_raw, sortIdxBL] = sort(avgY_raw);
     avgBLP_psia = avgBLP_psia(sortIdxBL);
+    avgPstatic_psia = avgPstatic_psia(sortIdxBL);
 
     % --------- Apply Y-offset AFTER cutoff/trimming ---------
     avgY_shift = avgY_raw + yOffset;
@@ -267,7 +279,7 @@ for f = 1:nFiles
     stag_keep  = Tkeep.("Stagnation Pressure");
     static_keep= Tkeep.("Static Pressure");
     manif_keep = Tkeep.("Manifold Pressure");
-    blp_psig_keep = Tkeep.("BL Pstatic");
+    blp_psig_keep = Tkeep.("BL Pressure"); % actually stagnation pressure
     blp_psia_keep = blp_psig_keep + Patm;  % convert to psia for each sample
 
     % Sort by absolute time
@@ -290,8 +302,71 @@ for f = 1:nFiles
     % Apply Y-offset per-sample (for export and for any Y-based analysis)
     y_shift_keep = y_keep + yOffset;
 
-    %% --------- Save data to Excel sheet ---------
-    % Columns: Time_s, Y_shift_in, Stag, Static, Manifold, BL_psig, BL_psia
+    %% --------- Compute P_BL/P0 and Mach ---------
+    ratio_Pstatic_PBL_avg = avgPstatic_psia./ avgBLP_psia;   % P_Static / P_BL (Avg for plotting)
+    ratio_Pstatic_PBL_raw = static_keep./ blp_psia_keep; % Same for table
+
+    Mach_Avg = nan(size(ratio_Pstatic_PBL_avg));
+    Mach_Raw = nan(size(ratio_Pstatic_PBL_raw));
+
+    % Average Mach Loop
+    for i = 1:numel(ratio_Pstatic_PBL_avg)
+        r = ratio_Pstatic_PBL_avg(i);
+        if ~isfinite(r) || r <= 0
+            Mach_Avg(i) = NaN;
+            continue;
+        end
+
+        if r > critRatio
+            % For P_static/P_BL > 0.528, use isentropic inversion for subsonic
+            % cases
+            Mach_Avg(i) = mach_from_isentropic_ratio(r, gamma);
+        else
+            % For P_static/P_BL <= 0.528, use Rayleigh Pitot relation + bisection
+            Mach_Avg(i) = mach_from_rayleigh_ratio_bisect(r, gamma);
+        end
+    end
+
+    % Table Mach Loop
+    for i = 1:numel(ratio_Pstatic_PBL_raw)
+        r = ratio_Pstatic_PBL_raw(i);
+        if ~isfinite(r) || r <= 0
+            Mach_Raw(i) = NaN;
+            continue;
+        end
+
+        if r > critRatio
+            % For P_static/P_BL > 0.528, use isentropic inversion for subsonic
+            % cases
+            Mach_Raw(i) = mach_from_isentropic_ratio(r, gamma);
+        else
+            % For P_static/P_BL <= 0.528, use Rayleigh Pitot relation + bisection
+            Mach_Raw(i) = mach_from_rayleigh_ratio_bisect(r, gamma);
+        end
+    end
+
+    % Freestream Mach Calc
+    ratio_Pstatic_Pstag_Raw = static_keep./ stag_keep;
+    Mach_FS = nan(size(ratio_Pstatic_Pstag_Raw));
+
+    for i = 1:numel(ratio_Pstatic_Pstag_Raw)
+        r = ratio_Pstatic_Pstag_Raw(i);
+        if ~isfinite(r) || r <= 0
+            Mach_FS(i) = NaN;
+            continue;
+        end
+
+        if r > critRatio
+            % For P_static/P_BL > 0.528, use isentropic inversion for subsonic
+            % cases
+            Mach_FS(i) = mach_from_isentropic_ratio(r, gamma);
+        else
+            % For P_static/P_BL <= 0.528, use Rayleigh Pitot relation + bisection
+            Mach_FS(i) = mach_from_rayleigh_ratio_bisect(r, gamma);
+        end
+    end
+
+    %% --------- Save ALL per-sample data to ONE Excel sheet ---------
     RunData = table(...
         tNorm,...
         y_shift_keep,...
@@ -300,14 +375,20 @@ for f = 1:nFiles
         manif_keep,...
         blp_psig_keep,...
         blp_psia_keep,...
+        ratio_Pstatic_PBL_raw,...
+        Mach_Raw,...
+        Mach_FS,...
         'VariableNames', {...
             'Time_s',...
             'Y_shift_in',...
             'StagnationPressure_psia',...
             'StaticPressure_psia',...
             'ManifoldPressure_psig',...
-            'BL_Pstatic_psig',...
-            'BL_StaticPressure_psia'...
+            'BL_Pressure_psig',...
+            'BL_Pressure_psia',...
+            'Pstatic_over_PBL',...
+            'Mach BL',...
+            'Mach FS'...
         }...
     );
 
@@ -324,6 +405,8 @@ for f = 1:nFiles
     % figure(figBLP);
     % plot(avgY_shift, avgBLP_psia, '-o', 'LineWidth', 1.5, 'Color', colors(f,:),...
     %     'DisplayName', fileIDs{f});
+
+    % Y-loc vs BL Static (psia)
     figure(figBLP);
     plot(avgBLP_psia, avgY_shift, '-o', 'LineWidth', 1.5, 'Color', colors(f,:),...
         'DisplayName', fileIDs{f});
@@ -343,6 +426,11 @@ for f = 1:nFiles
     plot(tNorm, manif_keep, '-', 'LineWidth', 1.5, 'Color', colors(f,:),...
         'DisplayName', fileIDs{f});
 
+    % y-loc v Mach
+    figure(figMach);
+    plot(Mach_Avg, avgY_shift, '-', 'LineWidth', 1.5, 'Color', colors(f,:),...
+        'DisplayName', fileIDs{f});
+
 end
 
 %% --------- Legends ---------
@@ -350,6 +438,7 @@ figure(figBLP);        legend('show', 'Interpreter', 'none', 'Location', 'best')
 figure(figStagTime);   legend('show', 'Interpreter', 'none', 'Location', 'best');
 figure(figStaticTime); legend('show', 'Interpreter', 'none', 'Location', 'best');
 figure(figManifTime);  legend('show', 'Interpreter', 'none', 'Location', 'best');
+figure(figMach);        legend('show', 'Interpreter', 'none', 'Location', 'best');
 
 fprintf('\nProcessing complete. Y-offsets and atmospheric-pressure offsets applied; time normalized per run.\n');
 
@@ -375,4 +464,85 @@ function firstDataLine = findFirstLineOfData(fileID)
         end
     end
     firstDataLine = count;
+end
+
+% Invert isentropic total-to-static pressure relation:
+% r = P/P0, gamma = 1.4
+% M = sqrt( 2/(gamma-1) * ( r^(-(gamma-1)/gamma) - 1 ) )
+function M = mach_from_isentropic_ratio(r, gamma)
+    if r <= 0 || r >= 1
+        M = NaN;
+        return;
+    end
+    M = sqrt( (2/(gamma-1)) * ( r.^(-(gamma-1)/gamma) - 1 ) );
+end
+
+%% Rayleigh Pitot tube relation inversion via bisection.
+% r = P_static / P0 (P_BL / P0), gamma = 1.4
+% Uses standard Rayleigh Pitot expression for P0/P.
+function M = mach_from_rayleigh_ratio_bisect(r_target, gamma)
+    % If r is out of physical range, return NaN
+    if r_target <= 0
+        M = NaN;
+        return;
+    end
+
+    % Define Rayleigh Pitot static-to-total ratio function r(M) = P/P0
+    rayleigh_r = @(M) rayleigh_static_total_ratio(M, gamma);
+
+    % Bisection bounds (supersonic range; adjust if needed)
+    M_lo = 1.0 + 1e-6;
+    M_hi = 10.0;
+
+    % Check monotonicity and bracket
+    f_lo = rayleigh_r(M_lo) - r_target;
+    f_hi = rayleigh_r(M_hi) - r_target;
+
+    % If we failed to bracket, return NaN
+    if f_lo * f_hi > 0
+        M = NaN;
+        return;
+    end
+
+    % Bisection iterations
+    maxIter = 60;
+    tolM = 1e-6;
+
+    for it = 1:maxIter
+        M_mid = 0.5*(M_lo + M_hi);
+        f_mid = rayleigh_r(M_mid) - r_target;
+
+        if abs(f_mid) < 1e-8 || (M_hi - M_lo) < tolM
+            M = M_mid;
+            return;
+        end
+
+        if f_lo * f_mid < 0
+            M_hi = M_mid;
+            f_hi = f_mid;
+        else
+            M_lo = M_mid;
+            f_lo = f_mid;
+        end
+    end
+
+    M = 0.5*(M_lo + M_hi);
+end
+
+% Rayleigh Pitot: P0/P1 relation for supersonic flow with a normal shock ahead of Pitot
+% Returns r = P_static / P0 for given M.
+function r = rayleigh_static_total_ratio(M, gamma)
+    % Guard against invalid M
+    if any(M <= 0)
+        r = NaN;
+        return;
+    end
+
+    % P0,2/P1 (Rayleigh Pitot total-to-static ratio)
+    term1 = ((((gamma+1).^2).*(M.^2)) / (4.*gamma.*M.^2 - (2.*(gamma-1)))).^(gamma / (gamma - 1));
+    term2 = (1 - gamma + (2.*gamma.*M.^2)) / (gamma +1);
+    P0_over_P = term1.* term2;
+
+    % r = P/P0
+    r = 1./ P0_over_P;
 end
