@@ -75,7 +75,7 @@ CAMERA_PRESETS = {
         "InteractionMode":  "2D",
         "Colorbar": {
             "Orientation": "Vertical",
-            "Position":    [0.80, 0.50], # was [0.80, 0.38]
+            "Position":    [0.80, 0.24], # was [0.80, 0.38]
             "Length":      0.5,
         }
     },
