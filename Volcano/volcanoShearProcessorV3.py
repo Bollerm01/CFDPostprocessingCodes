@@ -33,7 +33,7 @@ XZ_SLICE_Y = [0.0093]
 # 3D slices group
 YZ_SLICE_X_3D = [2.15057954, 2.1793151, 2.216945]
 XY_SLICE_Z_3D = [0.0381]
-XZ_SLICE_Y_3D = [0.0093]
+XZ_SLICE_Y_3D = [0.0093, 0.001]
 
 IMG_RES = [1920, 1080]
 COLORMAP_PRESET = "Cool to Warm (Extended)"
@@ -92,9 +92,9 @@ CAMERA_PRESETS = {
         }
     },
     "3D_Near": {
-        "CameraPosition":   [3.88543, 0.657277, 4.35785],
-        "CameraFocalPoint": [2.07626, -0.03555, -0.272],
-        "CameraViewUp":     [-0.0564687, 0.9904, -0.126141],
+        "CameraPosition":   [3.47514, 1.07704, 4.42635],
+        "CameraFocalPoint": [2.10515, -0.0598313, -0.266117],
+        "CameraViewUp":     [-0.0835596, 0.973793, -0.21153],
         "ParallelScale":    0.065,  # May need to fix 
         "InteractionMode":  "3D",
         "Colorbar": {
