@@ -175,6 +175,8 @@ def apply_camera_and_colorbar(lut, preset, array_name):
     bar.Orientation = p["Colorbar"]["Orientation"]
     bar.Position    = p["Colorbar"]["Position"]
     bar.ScalarBarLength = p["Colorbar"]["Length"]
+    bar.TitleColor = [0.0, 0.0, 0.0] # black
+    bar.LabelColor = [0.0, 0.0, 0.0] # black
 
     # ---- Title ----
     bar.Title = array_name
@@ -182,6 +184,16 @@ def apply_camera_and_colorbar(lut, preset, array_name):
 
     bar.TitleFontSize = 12 # was 18
     bar.LabelFontSize = 10 # was 16
+
+    # --- Sets background ---
+    # find settings proxy
+    colorPalette = GetSettingsProxy('ColorPalette')
+
+    # Properties modified on colorPalette (white)
+    colorPalette.Background = [1.0, 1.0, 1.0]
+
+    # ---- Sets axis label color -----
+    view.OrientationAxesLabelColor = [0.0, 0.0, 0.0] # black
 
 
 
