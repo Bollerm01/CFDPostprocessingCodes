@@ -1,0 +1,303 @@
+%% VULCAN_location_turbulence_plotter.m
+% Script to:
+%   1) Select Excel file via GUI
+%   2) Read all axial-location sheets (e.g., 'xL_0p03', 'xL_0p17',...)
+%   3) Extract columns:
+%        - Y_norm
+%        - Density
+%        - TKE
+%        - Rxx
+%        - Ryy
+%        - Rzz
+%   4) Form plotting versions of Reynolds stresses:
+%        Rxx_plot = Rxx / -Density, etc.
+%   5) Generate overlay plots (one figure per quantity):
+%        - Y_norm vs TKE
+%        - Y_norm vs Rxx_plot
+%        - Y_norm vs Ryy_plot
+%        - Y_norm vs Rzz_plot
+%      where each line corresponds to a sheet (axial location).
+%   6) Save figures as.png and.fig in:
+%        <excelDir>/Turbulence Figures <file-prefix>/VolcanoAxialOverlays
+
+clear; clc;
+
+%% ------------------------------------------------------------------------
+% 1. Select Excel file via GUI
+% -------------------------------------------------------------------------
+[filename, pathname] = uigetfile({'*.xlsx;*.xls','Excel Files (*.xlsx, *.xls)'},...
+                                 'Select VULCAN probe Excel file');
+if isequal(filename,0) || isequal(pathname,0)
+    disp('User canceled file selection. Exiting script.');
+    return;
+end
+
+excelFile = fullfile(pathname, filename);
+fprintf('Selected Excel file:\n  %s\n\n', excelFile);
+
+%% ------------------------------------------------------------------------
+% 2. Call the core plotting routine (all sheets, no spanwise logic)
+% -------------------------------------------------------------------------
+VULCAN_location_turbulence_plotter_fun(excelFile, filename);
+
+%% ========================================================================
+% Core function
+% ========================================================================
+function VULCAN_location_turbulence_plotter_fun(excelFile, filename)
+% volcano_location_turbulence_plotter_core_allSheets
+%
+% PARAMETERS
+%   excelFile : Full or relative path to the input.xlsx file
+%   filename  : Name of the file (for naming output directory)
+%
+% FUNCTIONALITY
+%   - Reads all sheets from the Excel file.
+%   - Ignores sheets whose names start with 'US' or 'DS'.
+%   - For each sheet, extracts:
+%       Y_norm, Density, TKE, Rxx, Ryy, Rzz
+%   - Forms:
+%       Rxx_plot = Rxx / -Density
+%       Ryy_plot = Ryy / -Density
+%       Rzz_plot = Rzz / -Density
+%   - Produces overlay plots (one figure per quantity):
+%       Y_norm vs TKE
+%       Y_norm vs Rxx_plot
+%       Y_norm vs Ryy_plot
+%       Y_norm vs Rzz_plot
+%     where each curve is one sheet (axial location).
+%   - Saves figures under:
+%       <excelDir>/Turbulence Figures <prefix>/VolcanoAxialOverlays
+
+    %% Paths and output folders
+    [excelDir, ~, ~] = fileparts(excelFile);
+    if isempty(excelDir)
+        excelDir = pwd;
+    end
+
+    nameParts = strsplit(filename, {'_','.'});
+    rootOutDir = fullfile(excelDir, sprintf('Turbulence Figures %s', string(nameParts(2))));
+    if ~exist(rootOutDir, 'dir')
+        mkdir(rootOutDir);
+    end
+
+    % Create subfolders per quantity
+    % qtyNames  = {'TKE','Rxx','Ryy','Rzz'};
+    % qtyDirs   = struct();
+    % for iQ = 1:numel(qtyNames)
+    %     qName = qtyNames{iQ};
+    %     qDir  = fullfile(rootOutDir, qName);
+    %     if ~exist(qDir, 'dir')
+    %         mkdir(qDir);
+    %     end
+    %     qtyDirs.(qName) = qDir;
+    % end
+
+    %% Read sheet names
+    try
+        [~, sheetNames] = xlsfinfo(excelFile);
+    catch ME
+        error('Error reading Excel file "%s": %s', excelFile, ME.message);
+    end
+
+    if isempty(sheetNames)
+        error('No sheets found in Excel file: %s', excelFile);
+    end
+
+    %% Data container: one struct per quantity holding curves for each sheet
+    % Each field: data_Q.<sheetName> = struct('Y_norm',..., 'val',...)
+    data_TKE     = struct();
+    data_RxxPlot = struct();
+    data_RyyPlot = struct();
+    data_RzzPlot = struct();
+
+    %% Loop over sheets
+    for iS = 1:numel(sheetNames)
+        sName = sheetNames{iS};
+
+        % Read table
+        try
+            T = readtable(excelFile, 'Sheet', sName);
+        catch ME
+            warning('Could not read sheet "%s": %s', sName, ME.message);
+            continue;
+        end
+
+        % Required columns in this new workflow
+        neededCols = {'Y_norm','Density','TKE','Rxx','Ryy','Rzz'};
+        missing = setdiff(neededCols, T.Properties.VariableNames);
+        if ~isempty(missing)
+            warning('Sheet "%s" missing columns: %s. Skipping.',...
+                    sName, strjoin(missing, ', '));
+            continue;
+        end
+
+        Y  = T.Y_norm;
+        rho = T.Density;
+        TKE = T.TKE;
+        Rxx = T.Rxx;
+        Ryy = T.Ryy;
+        Rzz = T.Rzz;
+
+        % Build plotting versions of Reynolds stresses
+        % Rxx_plot = Rxx / -Density, etc.
+        Rxx_plot = Rxx./ (-rho);
+        Ryy_plot = Ryy./ (-rho);
+        Rzz_plot = Rzz./ (-rho);
+
+        % Store in structs using the sheet name as field
+        fName = matlab.lang.makeValidName(sName);  % ensure valid field name
+
+        data_TKE.(fName) = struct('Y', Y, 'val', TKE);
+        data_RxxPlot.(fName) = struct('Y', Y, 'val', Rxx_plot);
+        data_RyyPlot.(fName) = struct('Y', Y, 'val', Ryy_plot);
+        data_RzzPlot.(fName) = struct('Y', Y, 'val', Rzz_plot);
+    end
+
+    %% Create overlays: Y_norm vs Quantity, one figure per quantity
+    createOverlay_Y_vs_Q(data_TKE,     'TKE',      rootOutDir);
+    createOverlay_Y_vs_Q(data_RxxPlot, 'Rxx_plot', rootOutDir);
+    createOverlay_Y_vs_Q(data_RyyPlot, 'Ryy_plot', rootOutDir);
+    createOverlay_Y_vs_Q(data_RzzPlot, 'Rzz_plot', rootOutDir);
+
+    fprintf('Processing complete. Figures saved under:\n  %s\n', rootOutDir);
+end
+
+%% ========================================================================
+% Helper: Create overlay plots Y_norm vs quantity for all sheets
+% ========================================================================
+function createOverlay_Y_vs_Q(dataStruct, qName, outDir)
+    if isempty(fieldnames(dataStruct))
+        return;
+    end
+
+    sheetFields = fieldnames(dataStruct);
+
+    % We'll group curves in sets of 3:
+    %   - same color within each group
+    %   - 3 different line styles within a group
+    baseColors = lines(3);                  % 3 base colors, cycle for each group of 3
+    lineStyles = {'-','--',':'};           % exactly 3 line styles per color
+
+    fig = figure('Visible','off');
+    hold on; grid on; box on;
+    set(fig, 'Color','w');
+
+    legends = cell(numel(sheetFields),1);
+    curveIdx = 0;  % counts only curves that are actually plotted
+
+    for i = 1:numel(sheetFields)
+        fName = sheetFields{i};
+
+        % Skip the non-cav locations
+        if contains(fName, 'neg') || contains(fName, 'xL_2')
+            continue
+        end
+
+        entry = dataStruct.(fName);
+
+        Y  = entry.Y;
+        Qv = entry.val;
+
+        % Remove NaNs
+        valid   = ~isnan(Y) & ~isnan(Qv);
+        Y_valid = Y(valid);
+        Q_valid = Qv(valid);
+
+        if numel(Y_valid) < 2
+            continue;
+        end
+
+        % Sort by Y_norm for a reasonable curve
+        [Y_sorted, idx] = sort(Y_valid);
+        Q_sorted = Q_valid(idx);
+
+        % Optional interpolation for smooth lines
+        Yq = linspace(min(Y_sorted), max(Y_sorted), 300);
+        Qq = interp1(Y_sorted, Q_sorted, Yq, 'linear', 'extrap');
+
+        % Advance curve count (only for plotted curves)
+        curveIdx = curveIdx + 1;
+
+        % Grouping: every 3 curves share a color, with 3 different line styles
+        groupIdx = floor((curveIdx-1)/3);                         % 0,1,2,...
+        colorIdx = mod(groupIdx, size(baseColors,1)) + 1;         % 1..3 (cycled)
+        styleIdx = mod(curveIdx-1, numel(lineStyles)) + 1;        % 1,2,3 repeated
+
+        % IMPORTANT: quantity vs Y/D  → x = Qq, y = Yq
+        plot(Qq, Yq,...
+             'Color',     baseColors(colorIdx,:),...
+             'LineStyle', lineStyles{styleIdx},...
+             'LineWidth', 1.5);
+
+        legends{curveIdx} = formatAxialLabel_fromSheetName(fName);
+    end
+
+    % Clean legend entries (remove empties and shrink to actual curves)
+    legends = legends(~cellfun(@isempty, legends));
+
+    % Axis labels and title
+    ylabel('$$Y/D$$', 'Interpreter','latex');
+
+    switch qName
+        case 'TKE'
+            xlabel('$$TKE$$ (J/kg)', 'Interpreter','latex');
+            title('$$Y/D$$ vs $$TKE$$', 'Interpreter','latex');
+            xlim([0 20000])
+
+        case 'Rxx_plot'
+            xlabel('$$R_{xx}$$', 'Interpreter','latex');
+            title('$$Y/D$$ vs $$R_{xx}$$', 'Interpreter','latex');
+            xlim([0 20000])
+
+        case 'Ryy_plot'
+            xlabel('$$R_{yy}$$', 'Interpreter','latex');
+            title('$$Y/D$$ vs $$R_{yy}$$', 'Interpreter','latex');
+            xlim([0 20000])
+
+        case 'Rzz_plot'
+            xlabel('$$R_{zz}$$', 'Interpreter','latex');
+            title('$$Y/D$$ vs $$R_{zz}$$', 'Interpreter','latex');
+            xlim([0 20000])
+
+        otherwise
+            xlabel(qName, 'Interpreter','none');
+            title(['Y/D vs ' qName], 'Interpreter','none');
+    end
+
+    if ~isempty(legends)
+        legend(legends, 'Interpreter','latex', 'Location','best');
+    end
+
+    baseFileName = sprintf('%s_overlay', qName);
+    pngFile = fullfile(outDir, [baseFileName '.png']);
+    figFile = fullfile(outDir, [baseFileName '.fig']);
+
+    saveas(fig, pngFile);
+    savefig(fig, figFile);
+    close(fig);
+end
+
+%% ========================================================================
+% Helper: Convert a sheet name like 'xL_0p03' to a LaTeX label '$$x/L = 0.03$$'
+% ========================================================================
+function lbl = formatAxialLabel_fromSheetName(sheetFieldName)
+% sheetFieldName will be the sanitized MATLAB field name, but usually
+% identical to the original sheet name if it was already valid.
+%
+% Expected primary pattern: 'xL_0p03' -> $$x/L = 0.03$$
+%   - prefix 'xL_'
+%   - numeric part where 'p' is decimal point.
+
+    s = sheetFieldName;
+
+    % Try to match 'xL_' pattern
+    if startsWith(s, 'xL_')
+        numStr = s(4:end);           % strip 'xL_'
+        numStr = strrep(numStr, 'p', '.');  % convert 'p' -> '.'
+        lbl = sprintf('$$x/L = %s$$', numStr);
+        return;
+    end
+
+    % Fallback: if other formats appear, just echo the name
+    lbl = sheetFieldName;
+end

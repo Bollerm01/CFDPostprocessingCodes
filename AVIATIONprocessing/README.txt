@@ -6,6 +6,9 @@ Workflow for AVIATION figure processing
 5) Run "dataCombiner_highFreqProfiles.py" to pull all the data from the 500 kHz shear layer data into one singular .xlsx file FOR EACH LINE (each sheet is a different point over time)
 6) Change file paths, and run "BoundaryLayerProbeExtractor.py" to pull the BL thickness information at the SSWT BL probe location (3.375" US of injector)
 7) Run "Volcano/volcanoShearProcessorV3.py" to get visual profiles from Paraview
-**8) Run "velocity_validation_script.m" in MATLAB to cross-plot VULCAN, Volcano, Tuttle, Fureby (currently just digitized) normalized data (Maybe add UxRMS?)
-9) [INSERT MATLAB CODE FOR NORMALIZED Rxij/TKE PLOTTING]
-10) [INSERT CODE TO PROCESS THE SHEAR GROWTH BEHAVIOR]
+8) Run "velocity_validation_script.m" in MATLAB to cross-plot VULCAN, Volcano, Tuttle, Fureby (currently just digitized) normalized data
+9) Run "Urms_validation_script.m" to cross-plot Volcano, Tuttle, and Fureby Uxrms
+10) Run "volcano_location_turbulence_plotter.m" and "volcano_RD_turbulence_plotter.m" to generate all of the Volcano Rij and TKE figures for specified locations and R/Ds 
+11) Run "VULCAN_location_turbulence_plotter.m" and "VULCAN_RD_turbulence_plotter.m" to generate all of the VULCAN Rij and TKE figures for specified locations and R/Ds
+**12) Run "LES_RANS_turb_overlay.m" to cross plot the Volcano and VULCAN results from the output .fig files from (10) and (11) 
+13) [INSERT CODE TO PROCESS THE SHEAR GROWTH BEHAVIOR]
