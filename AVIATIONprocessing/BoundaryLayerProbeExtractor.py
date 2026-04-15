@@ -19,6 +19,7 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # --- Variables to load from the volcano file ---
 POINT_ARRAYS = [
+    "machnumber",
     "velocitymag",
     "velocitymagavg",
     "velocityx",
