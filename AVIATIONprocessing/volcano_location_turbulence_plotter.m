@@ -11,7 +11,7 @@ clear; clc;
 % 1. Select Excel file via GUI
 % -------------------------------------------------------------------------
 [filename, pathname] = uigetfile({'*.xlsx;*.xls','Excel Files (*.xlsx, *.xls)'},...
-                                 'Select the CFD line probe Excel file');
+                                 'Select the Volcano probe Excel file');
 if isequal(filename,0) || isequal(pathname,0)
     disp('User canceled file selection. Exiting script.');
     return;
@@ -399,7 +399,7 @@ function createSpanwiseOverlays(tbl, spanSuffix, qtyNames, qtyFields, qtySpanDir
             legend(legends, 'Interpreter','latex', 'Location','best');
         end
 
-        baseFileName = sprintf('%s_%s_overlay', qName, spanSuffix); 
+        baseFileName = sprintf('%s_%s_overlay_volcano', qName, spanSuffix); 
         pngFile = fullfile(outDir, [baseFileName '.png']);
         figFile = fullfile(outDir, [baseFileName '.fig']);
 
@@ -527,7 +527,7 @@ function createAxialSpanwiseComparisons(axialLocs, dataMap, qtyNames, qtyFields,
         end
 
         axialTag = strjoin(axialLocs, '_');
-        baseFileName = sprintf('%s_spanwiseComparison_%s', qName, axialTag);
+        baseFileName = sprintf('%s_spanwiseComparison_%s_volcano', qName, axialTag);
         pngFile = fullfile(outDir, [baseFileName '.png']);
         figFile = fullfile(outDir, [baseFileName '.fig']);
 

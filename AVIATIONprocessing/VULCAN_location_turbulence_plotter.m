@@ -268,7 +268,7 @@ function createOverlay_Y_vs_Q(dataStruct, qName, outDir)
         legend(legends, 'Interpreter','latex', 'Location','best');
     end
 
-    baseFileName = sprintf('%s_overlay', qName);
+    baseFileName = sprintf('%s_overlay_VULCAN', qName);
     pngFile = fullfile(outDir, [baseFileName '.png']);
     figFile = fullfile(outDir, [baseFileName '.fig']);
 

@@ -239,7 +239,7 @@ for iA = 1:numel(axialLocs)
 
         % Filename pattern: <Q>_<axial>_RDsweep
         safeAxial = strrep(axialID, '/', '_');
-        baseName  = sprintf('%s_%s_RDsweep', qName, safeAxial);
+        baseName  = sprintf('%s_%s_RDsweep_VULCAN', qName, safeAxial);
         pngFile   = fullfile(rootOutDir, [baseName '.png']);
         figFile   = fullfile(rootOutDir, [baseName '.fig']);
 

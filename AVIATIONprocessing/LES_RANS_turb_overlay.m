@@ -1,0 +1,386 @@
+%% LES_RANS_turb_overlay.m
+%  - Groups by first underscore-delimited token (data type: Rxx, Rxy, etc.)
+%  - Overlays all.fig of a given data type into a single figure
+%  - Each unique R/D gets a distinct line style (consistent across files)
+%  - Legend entry: (x/L =...) - (R/D =...) - (Solution type)
+%  - Title: "Volcano vs. VULCAN: (data type) at x/L =..., x/L =..."
+%  - Y axis: "Y/D"
+%  - X axis: data type
+%  - Colors: for each solution type, axial locations use related shades
+%  - Saves overlays into subfolder "VulcanVolcanoOverlays" under figFolder
+
+clear all; close all; clc;
+
+%% SELECT FOLDER
+
+% figFolder = uigetdir(pwd, 'Select folder containing.fig files');
+% if isequal(figFolder, 0)
+%     error('No folder selected. Script terminated.');
+% end
+figFolder = "E:\Boller CFD\AVIATION CFD\Paper Results\finalData\LESRANScompare";
+
+figFiles = dir(fullfile(figFolder, '*.fig'));
+if isempty(figFiles)
+    error('No.fig files found in the selected folder.');
+end
+
+%% OUTPUT FOLDER FOR OVERLAYS
+
+outFolder = fullfile(figFolder, 'VulcanVolcanoOverlays');
+if ~exist(outFolder, 'dir')
+    mkdir(outFolder);
+end
+
+%% GROUP FILES BY DATA TYPE (FIRST TOKEN)
+
+fileGroups = containers.Map('KeyType', 'char', 'ValueType', 'any');
+
+for k = 1:numel(figFiles)
+    fname = figFiles(k).name;
+    [~, baseName, ~] = fileparts(fname);
+    
+    parts = strsplit(baseName, '_');
+    if isempty(parts)
+        continue;
+    end
+    
+    dataType = parts{1};  % e.g., 'Rxx'
+    fullPath = fullfile(figFolder, fname);
+    
+    if isKey(fileGroups, dataType)
+        tempList = fileGroups(dataType);
+        tempList{end+1} = fullPath;
+        fileGroups(dataType) = tempList;
+    else
+        fileGroups(dataType) = {fullPath};
+    end
+end
+
+if isempty(fileGroups.keys)
+    error('No valid.fig filenames found for grouping.');
+end
+
+%% HELPERS
+
+% Parse axial location + solution type from filename
+parseAxialSol = @(baseName) local_parseAxialSol(baseName);
+
+% Map R/D values to line styles
+getLineStyleForRD = @local_getLineStyleForRD;
+
+%% OVERLAY PLOTS FOR EACH DATA TYPE
+
+dataTypes = fileGroups.keys;
+
+for g = 1:numel(dataTypes)
+    dt = dataTypes{g};
+    filesInGroup = fileGroups(dt);
+    if numel(filesInGroup) < 1
+        continue;
+    end
+    
+    %----------------------------------------------------------
+    % First pass: collect unique axial locations (numeric) and keys
+    %----------------------------------------------------------
+    axialKeys = {};
+    axialVals = [];
+    
+    for f = 1:numel(filesInGroup)
+        thisFile = filesInGroup{f};
+        [~, shortName, ~] = fileparts(thisFile);
+        [axKey, axVal, ~, ~] = parseAxialSol(shortName);
+        
+        % Only store valid axials
+        if ~isempty(axKey) && ~isnan(axVal)
+            if ~ismember(axKey, axialKeys)
+                axialKeys{end+1} = axKey; %#ok<AGROW>
+                axialVals(end+1) = axVal; %#ok<AGROW>
+            end
+        end
+    end
+    
+    % Sort axial locations by numeric value
+    [axialValsSorted, idxSort] = sort(axialVals); %#ok<ASGLU>
+    axialKeysSorted = axialKeys(idxSort);
+    
+    %----------------------------------------------------------
+    % Build color maps: shades per axial location, per solution type
+    %----------------------------------------------------------
+    nAx = numel(axialKeysSorted);
+    colorMap = containers.Map;  % key: sprintf('%s_%s', axKey, solType)
+    
+    % Base colors for solution types
+    baseVolcano = [0, 0.769, 1];       % light blue
+    darkVolcano = [0.165, 0.29, 1];    % dark blue
+    baseVULCAN  = [1, 0.5, 0];         % orange
+    darkVULCAN  = [0.851, 0, 0];       % dark red
+    
+    for i = 1:nAx
+        t = 0;
+        if nAx > 1
+            % 0 -> light (small axial), 1 -> dark (large axial)
+            t = (i-1) / (nAx-1);
+        end
+        
+        % Volcano shades
+        volcanoColor = (1-t)*baseVolcano + t*darkVolcano;
+        vulcanColor  = (1-t)*baseVULCAN  + t*darkVULCAN;
+        
+        kVolcano = sprintf('%s_%s', axialKeysSorted{i}, 'Volcano');
+        kVULCAN  = sprintf('%s_%s', axialKeysSorted{i}, 'VULCAN');
+        
+        colorMap(kVolcano) = volcanoColor;
+        colorMap(kVULCAN)  = vulcanColor;
+    end
+    
+    %----------------------------------------------------------
+    % Second pass: create figure and overlay
+    %----------------------------------------------------------
+    figName = sprintf('Overlay: %s', dt);
+    overlayFig = figure('Name', figName, 'NumberTitle', 'off');
+    ax = axes('Parent', overlayFig);
+    hold(ax, 'on');
+    grid(ax, 'on');
+    
+    allLineHandles = [];
+    allAxialDisp   = {};
+    
+    % Reset RD mapping for this overlay
+    getLineStyleForRD('RESET');
+    
+    for f = 1:numel(filesInGroup)
+        thisFile = filesInGroup{f};
+        [~, shortName, ~] = fileparts(thisFile);
+        
+        % Axial location (key, numeric, display string) + solution type
+        [axKey, axVal, axialDispStr, solType] = parseAxialSol(shortName); %#ok<ASGLU>
+        if ~isempty(axialDispStr)
+            allAxialDisp{end+1} = axialDispStr; %#ok<AGROW>
+        end
+        
+        % Determine color for this axial + solution type
+        colorKey = sprintf('%s_%s', axKey, solType);
+        if colorMap.isKey(colorKey)
+            clr = colorMap(colorKey);
+        else
+            % fallback color if something odd happens
+            clr = [0 0 0];
+        end
+        
+        % Open source figure invisibly
+        tmpFig = openfig(thisFile, 'invisible');
+        
+        % Find all axes in the source figure
+        srcAxes = findall(tmpFig, 'Type', 'axes');
+        
+        for a = 1:numel(srcAxes)
+            srcChildren = findall(srcAxes(a), 'Type', 'line');
+            
+            for c = 1:numel(srcChildren)
+                hObj = srcChildren(c);
+                
+                % Original legend label
+                origName = get(hObj, 'DisplayName');
+                if isempty(origName)
+                    origName = sprintf('Line %d', c);
+                end
+                
+                % Extract RD numeric string from legend, e.g., "0.52" from "R/D = 0.52"
+                rdVal = local_parseRDfromName(origName);
+                
+                % Get line style for this RD
+                ls = getLineStyleForRD(rdVal);
+                
+                % Copy line to overlay axes
+                newObj = copyobj(hObj, ax);
+                
+                % Set color and style
+                if isprop(newObj, 'Color')
+                    newObj.Color = clr;
+                end
+                if isprop(newObj, 'LineStyle')
+                    newObj.LineStyle = ls;
+                end
+                
+                % Legend text: (axial loc) - (R/D value) - (Solution type)
+                % axialDispStr is like 'x/L = 0.17'
+                if strcmp(rdVal, 'UNKNOWN')
+                    rdPart = 'R/D = ?';
+                else
+                    rdPart = sprintf('R/D = %s', rdVal);
+                end
+                legendText = sprintf('%s - %s - %s', axialDispStr, rdPart, solType);
+                
+                set(newObj, 'DisplayName', legendText);
+                allLineHandles(end+1) = newObj; %#ok<AGROW>
+            end
+        end
+        
+        close(tmpFig);
+    end
+    
+    % Unique axial display strings (preserve order they appear numerically)
+    allAxialDisp = unique(allAxialDisp, 'stable');
+    axialStr = strjoin(allAxialDisp, ', ');
+
+    % dt formatting case structure
+    switch dt
+        case 'TKE'
+            dtPlot = '$$TKE$$ (J/kg)';
+            dtPlot2 = '$$TKE$$';
+        case 'Rxx'
+            dtPlot = '$$R_{xx}$$ (Pa)';
+            dtPlot2 = '$$R_{xx}$$';
+        case 'Ryy'
+            dtPlot = '$$R_{yy}$$ (Pa)';
+            dtPlot2 = '$$R_{yy}$$';
+        case 'Rzz'
+            dtPlot = '$$R_{zz}$$ (Pa)';
+            dtPlot2 = '$$R_{zz}$$';
+    end
+    
+    % Axes labels and title
+    xlabel(ax, dtPlot, 'Interpreter', 'latex');          % X axis: data type
+    ylabel(ax, 'Y/D', 'Interpreter', 'latex');       % Y axis
+    title(ax, sprintf('Volcano vs. VULCAN: %s at %s', dtPlot2, axialStr),...
+        'Interpreter', 'latex');
+    xlim([0 20000])
+    ylim([-1 2])
+    
+    if ~isempty(allLineHandles)
+        lgd = legend(ax, allLineHandles, 'Interpreter', 'latex');
+        % Put legend outside the plot on the right
+        set(lgd, 'Location', 'northeast');
+    end
+    
+    %-----------------------------
+    % SAVE OVERLAY FIGURE
+    %-----------------------------
+    outBase = fullfile(outFolder, sprintf('%s_overlay', dt));
+    outBaseChar = char(outBase);  % convert to char vector for I/O functions
+    savefig(overlayFig, [outBaseChar '.fig']);
+    saveas(overlayFig, [outBaseChar '.png']);
+    
+    hold(ax, 'off');
+end
+
+disp('Overlay generation complete.');
+
+%% ------------------------------------------------------------------------
+%% Local function: parse axial location and solution type
+% Returns:
+%   axKey       - string key, e.g. 'xL0p17'
+%   axVal       - numeric axial fraction, e.g. 0.17
+%   axialDisp   - display string, e.g. 'x/L = 0.17'
+%   solType     - 'Volcano', 'VULCAN', or raw last token
+function [axKey, axVal, axialDisp, solType] = local_parseAxialSol(baseName)
+    parts = strsplit(baseName, '_');
+    
+    axKey    = '';
+    axVal    = NaN;
+    axialDisp = '';
+    solType  = 'Unknown';
+    
+    % --- Axial location ---
+    for i = 1:numel(parts)
+        p = parts{i};
+        if startsWith(p, 'xL', 'IgnoreCase', true)
+            if numel(p) > 2
+                axKey = p;  % e.g., 'xL0p17'
+            else
+                % Handle 'xL', '0p17' -> 'xL0p17'
+                if i < numel(parts)
+                    nextP = parts{i+1};
+                    if ~isempty(regexp(nextP, '[0-9]', 'once'))
+                        axKey = [p nextP];
+                    else
+                        axKey = p;
+                    end
+                else
+                    axKey = p;
+                end
+            end
+            break;
+        end
+    end
+    
+    if ~isempty(axKey)
+        % Extract numeric from something like 'xL0p17'
+        % Remove leading 'xL'
+        numericPart = axKey(3:end);
+        % Replace 'p' with '.'
+        numericPart = strrep(numericPart, 'p', '.');
+        axVal = str2double(numericPart);
+        if isnan(axVal)
+            axialDisp = 'x/L = ?';
+        else
+            axialDisp = sprintf('x/L = %.2f', axVal);
+        end
+    end
+    
+    % --- Solution type: last token, normalized ---
+    if ~isempty(parts)
+        rawSol = parts{end};
+        lowSol = lower(rawSol);
+        if contains(lowSol, 'vulcan')
+            solType = 'VULCAN';
+        elseif contains(lowSol, 'volcano')
+            solType = 'Volcano';
+        else
+            solType = rawSol;
+        end
+    end
+end
+
+%% ------------------------------------------------------------------------
+%% Local function: extract RD value from legend text
+% Accepts patterns like:
+%   "R/D = 0.52", "R/D=0.0", "RD=0.52", etc.
+% Returns a string key like "0.52". If not found, returns 'UNKNOWN'.
+function rdVal = local_parseRDfromName(nameStr)
+    rdVal = 'UNKNOWN';
+    expr = '(R\/D|RD)\s*=\s*([-+0-9.]+)';
+    tokens = regexp(nameStr, expr, 'tokens', 'once');
+    if ~isempty(tokens) && numel(tokens) == 2
+        rdVal = tokens{2};  % numeric text
+    end
+end
+
+%% ------------------------------------------------------------------------
+%% Local function: map RD values to line styles
+% Usage:
+%   local_getLineStyleForRD('RESET')  -> reset mapping
+%   ls = local_getLineStyleForRD(rdVal)
+function ls = local_getLineStyleForRD(rdVal)
+    persistent rdMap rdStyles nextIdx
+    
+    if nargin > 0 && strcmpi(rdVal, 'RESET')
+        rdMap    = containers.Map('KeyType', 'char', 'ValueType', 'any');
+        rdStyles = {'-', '--', ':', '-.'};
+        nextIdx  = 1;
+        ls = '';
+        return;
+    end
+    
+    if isempty(rdMap)
+        rdMap    = containers.Map('KeyType', 'char', 'ValueType', 'any');
+        rdStyles = {'-', '--', ':', '-.'};
+        nextIdx  = 1;
+    end
+    
+    key = rdVal;
+    if isempty(key)
+        key = 'UNKNOWN';
+    end
+    
+    if isKey(rdMap, key)
+        ls = rdMap(key);
+    else
+        ls = rdStyles{nextIdx};
+        rdMap(key) = ls;
+        nextIdx = nextIdx + 1;
+        if nextIdx > numel(rdStyles)
+            nextIdx = 1;  % wrap if more R/D values than styles
+        end
+    end
+end

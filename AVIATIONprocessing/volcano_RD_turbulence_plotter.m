@@ -23,7 +23,7 @@ clear; clc;
 % -------------------------------------------------------------------------
 [filenames, pathname] = uigetfile({...
     '*.xlsx;*.xls', 'Excel Files (*.xlsx, *.xls)'},...
-    'Select 3 CFD line probe Excel files (one per geometry)',...
+    'Select 3 Volcano probe Excel files (one per geometry)',...
     'MultiSelect', 'on');
 
 if isequal(filenames,0) || isequal(pathname,0)
@@ -281,7 +281,7 @@ for iP = 1:numel(planeNames)
 
             % Filename pattern: <Q>_<plane>_<axial>_RDsweep
             safeAxial = strrep(axialID, '/', '_');
-            baseName  = sprintf('%s_%s_%s_RDsweep', qName, plane, safeAxial);
+            baseName  = sprintf('%s_%s_%s_RDsweep_volcano', qName, plane, safeAxial);
             pngFile   = fullfile(planeOutDir, [baseName '.png']);
             figFile   = fullfile(planeOutDir, [baseName '.fig']);
 
