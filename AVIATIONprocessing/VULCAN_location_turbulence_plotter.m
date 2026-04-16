@@ -212,8 +212,8 @@ function createOverlay_Y_vs_Q(dataStruct, qName, outDir)
         Q_sorted = Q_valid(idx);
 
         % Optional interpolation for smooth lines
-        Yq = linspace(min(Y_sorted), max(Y_sorted), 300);
-        Qq = interp1(Y_sorted, Q_sorted, Yq, 'linear', 'extrap');
+        % Yq = linspace(min(Y_sorted), max(Y_sorted), 300);
+        % Qq = interp1(Y_sorted, Q_sorted, Yq, 'linear', 'extrap');
 
         % Advance curve count (only for plotted curves)
         curveIdx = curveIdx + 1;
@@ -224,7 +224,7 @@ function createOverlay_Y_vs_Q(dataStruct, qName, outDir)
         styleIdx = mod(curveIdx-1, numel(lineStyles)) + 1;        % 1,2,3 repeated
 
         % IMPORTANT: quantity vs Y/D  → x = Qq, y = Yq
-        plot(Qq, Yq,...
+        plot(Q_sorted, Y_sorted,...
              'Color',     baseColors(colorIdx,:),...
              'LineStyle', lineStyles{styleIdx},...
              'LineWidth', 1.5);

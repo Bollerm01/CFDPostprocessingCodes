@@ -23,7 +23,7 @@ clear; clc;
 % -------------------------------------------------------------------------
 [filenames, pathname] = uigetfile({...
     '*.xlsx;*.xls', 'Excel Files (*.xlsx, *.xls)'},...
-    'Select 3 Volcano probe Excel files (one per geometry)',...
+    'Select 3 Volca probe Excel files (one per geometry)',...
     'MultiSelect', 'on');
 
 if isequal(filenames,0) || isequal(pathname,0)
@@ -230,11 +230,11 @@ for iP = 1:numel(planeNames)
                 end
 
                 % 4) Interpolate to a smooth Y_norm grid
-                yq = linspace(min(y_valid), max(y_valid), 300);
-                q_interp = interp1(y_valid, q_valid, yq, 'linear', 'extrap');
+                % yq = linspace(min(y_valid), max(y_valid), 300);
+                % q_interp = interp1(y_valid, q_valid, yq, 'linear', 'extrap');
 
                 % Plot quantity on x-axis, Y_norm on y-axis
-                plot(q_interp, yq,...
+                plot(q_valid, y_valid,...
                     'LineWidth', lineWidth,...
                     'Color', geomColors(g,:));
 
