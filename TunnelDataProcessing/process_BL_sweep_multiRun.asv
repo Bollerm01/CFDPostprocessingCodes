@@ -42,7 +42,25 @@ headers2 = {...
 };
 
 gamma = 1.4;
-critRatio = 0.528; 
+critRatio = 0.528;
+
+%% Calibration Constants
+% Old calibration:  P_old = m_old * V + b_old
+% New calibration: P_new = m_new * V + b_new
+% => V = (P_old - b_old)/m_old
+% => P_new = m_new*((P_old - b_old)/m_old) + b_new
+
+% Stagnation sensor calibration
+m_stag_old = 50.0;  % old slope (psia/V)
+b_stag_old = 0.5;   % old intercept (psia)
+m_stag_new = 49.963;   % new slope (psia/V)
+b_stag_new = 0.3417;   % new intercept (psia)
+
+% Static sensor calibration
+m_static_old = 5.0; % old slope (psia/V)
+b_static_old = -0.12; % old intercept (psia)
+m_static_new = 4.9997; % new slope (psia/V)
+b_static_new = 0.01; % new intercept (psia)
 
 %% --------- File selection ---------
 [txtFileNames, txtPath] = uigetfile('*.txt', 'Select one or more data files', 'MultiSelect', 'on');
@@ -99,18 +117,11 @@ Ntrim = input(['Enter number of lines to trim at earliest and latest'...
                ' time at EACH location: ']);
 
 %% --------- Prepare figures ---------
-% BL pressure vs shifted Y-location
-% figBLP   = figure; hold on; grid on; box on;
-% xlabel('Shifted Y Location (in)');
-% ylabel('Static Pressure (psia)');
-% title('Static Pressure vs Shifted Y-location');
-
 figBLP   = figure; hold on; grid on; box on;
 ylabel('Shifted Y Location (in)');
 xlabel('BL Pressure (psia)');
 title('Shifted Y-location vs BL Pressure');
 
-% Pressures vs normalized Time
 figStagTime = figure; hold on; grid on; box on;
 xlabel('Time (s)'); ylabel('Stagnation Pressure (psia)');
 title('Stagnation Pressure vs Time');
@@ -183,10 +194,12 @@ for f = 1:nFiles
     nLoc = size(XYuniq, 1);
 
     %% --------- Allocate Storage (averaged BL vs Y, unshifted) ---------
-    avgY_raw   = nan(nLoc, 1);  % unshifted Y
-    avgBLP_psia = nan(nLoc, 1); % BL static pressure in psia
-    avgPstag_psia = nan(nLoc, 1); % Avg Pstag
-    avgPstatic_psia = nan(nLoc, 1); % Avg Pstatic
+    avgY_raw    = nan(nLoc, 1);  % unshifted Y
+    avgBLP_psia = nan(nLoc, 1);  % BL static pressure in psia
+
+    %% Corrected stagnation/static pressures
+    avgPstag_corr_psia   = nan(nLoc, 1);
+    avgPstatic_corr_psia = nan(nLoc, 1);
 
     %% --------- Logical mask of rows to keep for time-series ---------
     keepRow = false(height(T),1);
@@ -203,14 +216,26 @@ for f = 1:nFiles
         % Convert BL Pstatic from psig to psia using per-run atmospheric pressure
         blp_k_psia = T.("BL Pressure")(idx) + Patm;
 
+        % Convert raw stagnation & static pressure to voltage (old calib)
+        stagV_k   = (stag_k   - b_stag_old)./ m_stag_old;
+        staticV_k = (static_k - b_static_old)./ m_static_old;
+
+        % Compute corrected stagnation & static pressures (new calib)
+        stag_corr_k   = m_stag_new.* stagV_k   + b_stag_new;
+        static_corr_k = m_static_new.* staticV_k + b_static_new;
+
         % Sort by time within this location
         [t_k, sIdx] = sort(t_k);
-        idx        = idx(        sIdx);
-        y_k        = y_k(        sIdx);
-        stag_k     = stag_k(     sIdx);
-        static_k   = static_k(   sIdx);
-        manif_k    = manif_k(    sIdx);
-        blp_k_psia = blp_k_psia( sIdx);
+        idx          = idx(        sIdx);
+        y_k          = y_k(        sIdx);
+        stag_k       = stag_k(     sIdx);
+        static_k     = static_k(   sIdx);
+        manif_k      = manif_k(    sIdx);
+        blp_k_psia   = blp_k_psia( sIdx);
+        stagV_k      = stagV_k(    sIdx);       
+        staticV_k    = staticV_k(  sIdx);       
+        stag_corr_k  = stag_corr_k(sIdx);       
+        static_corr_k= static_corr_k(sIdx);     
 
         % Zero location test uses unshifted coordinates
         isZeroLoc = abs(XYuniq(k,1)) < tol && abs(XYuniq(k,2)) < tol;
@@ -226,13 +251,17 @@ for f = 1:nFiles
             keepIdxZero = 1:numel(t_k);
         end
 
-        idx        = idx(        keepIdxZero);
-        t_k        = t_k(        keepIdxZero);
-        y_k        = y_k(        keepIdxZero);
-        stag_k     = stag_k(     keepIdxZero);
-        static_k   = static_k(   keepIdxZero);
-        manif_k    = manif_k(    keepIdxZero);
-        blp_k_psia = blp_k_psia( keepIdxZero);
+        idx           = idx(           keepIdxZero);
+        t_k           = t_k(           keepIdxZero);
+        y_k           = y_k(           keepIdxZero);
+        stag_k        = stag_k(        keepIdxZero);
+        static_k      = static_k(      keepIdxZero);
+        manif_k       = manif_k(       keepIdxZero);
+        blp_k_psia    = blp_k_psia(    keepIdxZero);
+        stagV_k       = stagV_k(       keepIdxZero);      
+        staticV_k     = staticV_k(     keepIdxZero);       
+        stag_corr_k   = stag_corr_k(   keepIdxZero);      
+        static_corr_k = static_corr_k( keepIdxZero);       
 
         % Trim Ntrim samples at start and end
         nSamples = numel(t_k);
@@ -240,57 +269,78 @@ for f = 1:nFiles
             continue;
         end
 
-        keepIdxTrim = (Ntrim+1):(nSamples-Ntrim);
+        keepIdxTrim   = (Ntrim+1):(nSamples-Ntrim);
 
-        idx        = idx(        keepIdxTrim);
-        t_k        = t_k(        keepIdxTrim);
-        y_k        = y_k(        keepIdxTrim);
-        stag_k     = stag_k(     keepIdxTrim);
-        static_k   = static_k(   keepIdxTrim);
-        manif_k    = manif_k(    keepIdxTrim);
-        blp_k_psia = blp_k_psia( keepIdxTrim);
+        idx           = idx(           keepIdxTrim);
+        t_k           = t_k(           keepIdxTrim);
+        y_k           = y_k(           keepIdxTrim);
+        stag_k        = stag_k(        keepIdxTrim);
+        static_k      = static_k(      keepIdxTrim);
+        manif_k       = manif_k(       keepIdxTrim);
+        blp_k_psia    = blp_k_psia(    keepIdxTrim);
+        stagV_k       = stagV_k(       keepIdxTrim);      
+        staticV_k     = staticV_k(     keepIdxTrim);      
+        stag_corr_k   = stag_corr_k(   keepIdxTrim);       
+        static_corr_k = static_corr_k( keepIdxTrim);       
 
         % Rows to keep for time-series
         keepRow(idx) = true;
 
         % Store averaged BL static pressure (psia) vs unshifted Y
-        avgY_raw(k)    = mean(y_k,        'omitnan');
-        avgBLP_psia(k) = mean(blp_k_psia, 'omitnan');
-        avgPstag_psia(k) = mean(static_k, 'omitnan');
+        avgY_raw(k)              = mean(y_k,           'omitnan');
+        avgBLP_psia(k)           = mean(blp_k_psia,    'omitnan');
+
+        %%% NEW: averaged corrected stagnation & static pressures
+        avgPstag_corr_psia(k)    = mean(stag_corr_k,   'omitnan');
+        avgPstatic_corr_psia(k)  = mean(static_corr_k, 'omitnan');
     end
 
     %% --------- Clean & Sort BL pressure and Pstatic vs Y (unshifted) ---------
     validBL = ~isnan(avgY_raw) & ~isnan(avgBLP_psia);
-    avgY_raw    = avgY_raw(validBL);
-    avgBLP_psia = avgBLP_psia(validBL);
-    avgPstag_psia = avgPstag_psia(validBL);
+    avgY_raw             = avgY_raw(validBL);
+    avgBLP_psia          = avgBLP_psia(validBL);
+    avgPstag_corr_psia   = avgPstag_corr_psia(validBL);
+    avgPstatic_corr_psia = avgPstatic_corr_psia(validBL);
 
     [avgY_raw, sortIdxBL] = sort(avgY_raw);
-    avgBLP_psia = avgBLP_psia(sortIdxBL);
-    avgPstag_psia = avgPstag_psia(sortIdxBL);
+    avgBLP_psia           = avgBLP_psia(sortIdxBL);
+    avgPstag_corr_psia    = avgPstag_corr_psia(sortIdxBL);
+    avgPstatic_corr_psia  = avgPstatic_corr_psia(sortIdxBL);
 
-    % --------- Apply Y-offset AFTER cutoff/trimming ---------
+    % Apply Y-offset AFTER cutoff/trimming
     avgY_shift = avgY_raw + yOffset;
 
     %% --------- Build time-series from kept rows ---------
     Tkeep = T(keepRow, :);
 
-    allT       = Tkeep.("Time");
-    y_keep     = Tkeep.("Y");            % unshifted Y
-    stag_keep  = Tkeep.("Stagnation Pressure");
-    static_keep= Tkeep.("Static Pressure");
-    manif_keep = Tkeep.("Manifold Pressure");
-    blp_psig_keep = Tkeep.("BL Pressure"); % actually stagnation pressure
+    allT        = Tkeep.("Time");
+    y_keep      = Tkeep.("Y");            % unshifted Y
+    stag_keep   = Tkeep.("Stagnation Pressure");
+    static_keep = Tkeep.("Static Pressure");
+    manif_keep  = Tkeep.("Manifold Pressure");
+    blp_psig_keep = Tkeep.("BL Pressure"); % actually BL transducer
     blp_psia_keep = blp_psig_keep + Patm;  % convert to psia for each sample
+
+    % Per-sample voltages and corrected pressures (time-series)
+    stagVolt_keep   = (stag_keep   - b_stag_old)./ m_stag_old;
+    staticVolt_keep = (static_keep - b_static_old)./ m_static_old;
+
+    stag_corr_keep   = m_stag_new.* stagVolt_keep   + b_stag_new;
+    static_corr_keep = m_static_new.* staticVolt_keep + b_static_new;
 
     % Sort by absolute time
     [allT, sortIdxT] = sort(allT);
-    y_keep        = y_keep(sortIdxT);
-    stag_keep     = stag_keep(sortIdxT);
-    static_keep   = static_keep(sortIdxT);
-    manif_keep    = manif_keep(sortIdxT);
-    blp_psig_keep = blp_psig_keep(sortIdxT);
-    blp_psia_keep = blp_psia_keep(sortIdxT);
+    y_keep           = y_keep(sortIdxT);
+    stag_keep        = stag_keep(sortIdxT);
+    static_keep      = static_keep(sortIdxT);
+    manif_keep       = manif_keep(sortIdxT);
+    blp_psig_keep    = blp_psig_keep(sortIdxT);
+    blp_psia_keep    = blp_psia_keep(sortIdxT);
+
+    stagVolt_keep    = stagVolt_keep(sortIdxT);    
+    staticVolt_keep  = staticVolt_keep(sortIdxT);  
+    stag_corr_keep   = stag_corr_keep(sortIdxT); 
+    static_corr_keep = static_corr_keep(sortIdxT);
 
     % Normalize time so earliest kept time is zero
     if ~isempty(allT)
@@ -303,55 +353,48 @@ for f = 1:nFiles
     % Apply Y-offset per-sample (for export and for any Y-based analysis)
     y_shift_keep = y_keep + yOffset;
 
-    %% --------- Compute P_BL/P0 and Mach ---------
-    ratio_PBL_Pstag_avg = avgBLP_psia./ avgPstag_psia;   % P_Static / P_BL (Avg for plotting)
-    ratio_PBL_Pstag_raw = blp_psia_keep./ stag_keep; % Same for table
+    %% --------- Compute P_BL/P0 and Mach using CORRECTED pressures ---------
+    % For BL Mach: use BL pressure (psia) over corrected static pressure
+    ratio_PBL_Pstatic_avg = avgBLP_psia./ avgPstatic_corr_psia;   % averaged
+    ratio_PBL_Pstatic_raw = blp_psia_keep./ static_corr_keep;     % per-sample
 
-    Mach_Avg = nan(size(ratio_PBL_Pstag_avg));
-    Mach_Raw = nan(size(ratio_PBL_Pstag_raw));
-    % My_Raw = nan(size(ratio_PBL_Pstag_raw));
+    Mach_Avg = nan(size(ratio_PBL_Pstatic_avg));
+    Mach_Raw = nan(size(ratio_PBL_Pstatic_raw));
 
-    % Average Mach Loop
-    for i = 1:numel(ratio_PBL_Pstag_avg)
-        r = ratio_PBL_Pstag_avg(i);
+    % Average Mach Loop (BL)
+    for i = 1:numel(ratio_PBL_Pstatic_avg)
+        r = ratio_PBL_Pstatic_avg(i);
         if ~isfinite(r) || r <= 0
             Mach_Avg(i) = NaN;
             continue;
         end
 
-        if r > critRatio
-            % For P_static/P_BL > 0.528, use isentropic inversion for subsonic
-            % cases
+        if r < 1/critRatio
+            % Below critical ratio: isentropic 
             Mach_Avg(i) = mach_from_isentropic_ratio(r, gamma);
-             
         else
-            % For P_static/P_BL <= 0.528, use Rayleigh Pitot relation + bisection
+            % Above critical: Rayleigh Pitot relation
             Mach_Avg(i) = mach_from_rayleigh_ratio_bisect(r, gamma);
         end
     end
 
-    % Table Mach Loop
-    for i = 1:numel(ratio_PBL_Pstag_raw)
-        r = ratio_PBL_Pstag_raw(i);
+    % Per-sample Mach Loop (BL)
+    for i = 1:numel(ratio_PBL_Pstatic_raw)
+        r = ratio_PBL_Pstatic_raw(i);
         if ~isfinite(r) || r <= 0
             Mach_Raw(i) = NaN;
             continue;
         end
 
-        if r > critRatio
-            % For P_static/P_BL > 0.528, use isentropic inversion for subsonic
-            % cases
+        if r < 1/critRatio
             Mach_Raw(i) = mach_from_isentropic_ratio(r, gamma);
-             
         else
-            % For P_static/P_BL <= 0.528, use Rayleigh Pitot relation + bisection
-            % My_Raw(i) = mach_from_rayleigh_ratio_bisect(r, gamma);
             Mach_Raw(i) = mach_from_rayleigh_ratio_bisect(r, gamma);
         end
     end
 
-    % Freestream Mach Calc
-    ratio_Pstatic_Pstag_Raw = static_keep./ stag_keep;
+    %% --------- Freestream Mach using CORRECTED static & stagnation ---------
+    ratio_Pstatic_Pstag_Raw = static_corr_keep./ stag_corr_keep;
     Mach_FS = nan(size(ratio_Pstatic_Pstag_Raw));
 
     for i = 1:numel(ratio_Pstatic_Pstag_Raw)
@@ -361,14 +404,11 @@ for f = 1:nFiles
             continue;
         end
 
-        if r > 0.528
-            % For P_static/P_BL > 0.528, use isentropic inversion for subsonic
-            % cases
+        if r > critRatio
+            % Subsonic/small M: isentropic
             Mach_FS(i) = mach_from_isentropic_ratio(r, gamma);
-             
         else
-            % For P_static/P_BL <= 0.528, use Rayleigh Pitot relation + bisection
-            % My = mach_from_rayleigh_ratio_bisect(r, gamma);
+            % Above critical: Rayleigh pitot / shock-in-front behavior
             Mach_FS(i) = mach_from_rayleigh_ratio_bisect(r, gamma);
         end
     end
@@ -377,25 +417,33 @@ for f = 1:nFiles
     RunData = table(...
         tNorm,...
         y_shift_keep,...
-        stag_keep,...
-        static_keep,...
+        stag_keep,...            % raw stagnation pressure
+        static_keep,...          % raw static pressure
+        stagVolt_keep,...        % NEW
+        staticVolt_keep,...      % NEW
+        stag_corr_keep,...       % NEW
+        static_corr_keep,...     % NEW
         manif_keep,...
         blp_psig_keep,...
         blp_psia_keep,...
-        ratio_PBL_Pstag_raw,...
+        ratio_PBL_Pstatic_raw,...
         Mach_Raw,...
         Mach_FS,...
         'VariableNames', {...
             'Time_s',...
             'Y_shift_in',...
-            'StagnationPressure_psia',...
-            'StaticPressure_psia',...
+            'StagnationPressure_raw_psia',...
+            'StaticPressure_raw_psia',...
+            'StagnationVoltage_V',...
+            'StaticVoltage_V',...
+            'StagnationPressure_corrected_psia',...
+            'StaticPressure_corrected_psia',...
             'ManifoldPressure_psig',...
             'BL_Pressure_psig',...
             'BL_Pressure_psia',...
-            'PBL_over_Pstag',...
-            'Mach BL',...
-            'Mach FS'...
+            'PBL_over_Pstatic_corrected',...
+            'Mach_BL',...
+            'Mach_FS'...
         }...
     );
 
@@ -404,36 +452,30 @@ for f = 1:nFiles
 
     fprintf('  Writing processed run data to %s\n', excelPath);
 
-    % Single sheet per run with all fields
     writetable(RunData, excelPath, 'Sheet', 'RunData', 'WriteMode','overwrite');
 
-    %% --------- Plots ---------
+    %% --------- Plots (using CORRECTED stagnation/static) ---------
     % BL static pressure (psia) vs shifted Y-location
-    % figure(figBLP);
-    % plot(avgY_shift, avgBLP_psia, '-o', 'LineWidth', 1.5, 'Color', colors(f,:),...
-    %     'DisplayName', fileIDs{f});
-
-    % Y-loc vs BL Static (psia)
     figure(figBLP);
     plot(avgBLP_psia, avgY_shift, '-o', 'LineWidth', 1.5, 'Color', colors(f,:),...
         'DisplayName', fileIDs{f});
 
-    % Stagnation vs normalized Time
+    % Stagnation vs normalized Time (corrected)
     figure(figStagTime);
-    plot(tNorm, stag_keep, '-', 'LineWidth', 1.5, 'Color', colors(f,:),...
+    plot(tNorm, stag_corr_keep, '-', 'LineWidth', 1.5, 'Color', colors(f,:),...
         'DisplayName', fileIDs{f});
 
-    % Static (plenum) vs normalized Time
+    % Static vs normalized Time (corrected)
     figure(figStaticTime);
-    plot(tNorm, static_keep, '-', 'LineWidth', 1.5, 'Color', colors(f,:),...
+    plot(tNorm, static_corr_keep, '-', 'LineWidth', 1.5, 'Color', colors(f,:),...
         'DisplayName', fileIDs{f});
 
-    % Manifold vs normalized Time
+    % Manifold vs normalized Time (unchanged)
     figure(figManifTime);
     plot(tNorm, manif_keep, '-', 'LineWidth', 1.5, 'Color', colors(f,:),...
         'DisplayName', fileIDs{f});
 
-    % y-loc v Mach
+    % y-loc vs BL Mach (from corrected pressures)
     figure(figMach);
     plot(Mach_Avg, avgY_shift, '-', 'LineWidth', 1.5, 'Color', colors(f,:),...
         'DisplayName', fileIDs{f});
@@ -445,7 +487,7 @@ figure(figBLP);        legend('show', 'Interpreter', 'none', 'Location', 'best')
 figure(figStagTime);   legend('show', 'Interpreter', 'none', 'Location', 'best');
 figure(figStaticTime); legend('show', 'Interpreter', 'none', 'Location', 'best');
 figure(figManifTime);  legend('show', 'Interpreter', 'none', 'Location', 'best');
-figure(figMach);        legend('show', 'Interpreter', 'none', 'Location', 'best');
+figure(figMach);       legend('show', 'Interpreter', 'none', 'Location', 'best');
 
 fprintf('\nProcessing complete. Y-offsets and atmospheric-pressure offsets applied; time normalized per run.\n');
 
@@ -486,32 +528,25 @@ end
 
 %% Rayleigh Pitot tube relation inversion via bisection.
 % r = P_static / P0 (P_BL / P0), gamma = 1.4
-% Uses standard Rayleigh Pitot expression for P0/P.
 function M = mach_from_rayleigh_ratio_bisect(r_target, gamma)
-    % If r is out of physical range, return NaN
     if r_target <= 0
         M = NaN;
         return;
     end
 
-    % Define Rayleigh Pitot static-to-total ratio function r(M) = P/P0
-    rayleigh_r = @(M) rayleigh_total_total_ratio(M, gamma);
+    rayleigh_r = @(M) rayleigh_total_static_ratio(M, gamma);
 
-    % Bisection bounds (supersonic range; adjust if needed)
     M_lo = 1.0 + 1e-6;
     M_hi = 10.0;
 
-    % Check monotonicity and bracket
     f_lo = rayleigh_r(M_lo) - r_target;
     f_hi = rayleigh_r(M_hi) - r_target;
 
-    % If we failed to bracket, return NaN
     if f_lo * f_hi > 0
         M = NaN;
         return;
     end
 
-    % Bisection iterations
     maxIter = 60;
     tolM = 1e-6;
 
@@ -536,33 +571,21 @@ function M = mach_from_rayleigh_ratio_bisect(r_target, gamma)
     M = 0.5*(M_lo + M_hi);
 end
 
-%% Normal shock inversion via bisection.
-% Given downstream Mach M2_target and gamma,
-% solve for upstream Mach M1 (supersonic) satisfying the normal shock relation:
-%
-%   M2^2 = [M1^2 + 2/gamma-1] / [2*gamma/gamma-1*M1^2 - 1]
-%
-% Uses bisection over M1 in a supersonic range.
 function M1 = mach_from_normal_shock_M2_bisect(M2_target, gamma)
-
-    % Basic validity check
     if ~isfinite(M2_target) || M2_target <= 0
         M1 = NaN;
         return;
     end
 
-    % Define function of M1: f(M1) = M2(M1) - M2_target
     normal_shock_M2 = @(M1) normal_shock_downstream_Mach(M1, gamma);
     f = @(M1) normal_shock_M2(M1) - M2_target;
 
-    % Bisection bounds for upstream supersonic Mach number
     M1_lo = 1.0 + 1e-6;
     M1_hi = 10.0;
 
     f_lo = f(M1_lo);
     f_hi = f(M1_hi);
 
-    % If we failed to bracket a root, return NaN
     if f_lo * f_hi > 0
         M1 = NaN;
         return;
@@ -592,40 +615,37 @@ function M1 = mach_from_normal_shock_M2_bisect(M2_target, gamma)
     M1 = 0.5*(M1_lo + M1_hi);
 end
 
-%% Helper: normal shock downstream Mach as function of upstream Mach
 function M2 = normal_shock_downstream_Mach(M1, gamma)
-    % Guard against non-physical M1
     if any(M1 <= 0)
         M2 = NaN;
         return;
     end
-
-    % Normal shock relation:
-    % M2^2 = [M1^2 + 2/gamma-1] / [2*gamma/gamma-1*M1^2 - 1]
     num = M1.^2 + (2/(gamma-1));
     den = ((2*gamma)/(gamma-1)).*M1.^2 - 1;
     M2sq = num./ den;
-
-    % For invalid (negative) M2^2, return NaN
     M2sq(M2sq <= 0) = NaN;
     M2 = sqrt(M2sq);
 end
 
-% Rayleigh Pitot: P0/P1 relation for supersonic flow with a normal shock ahead of Pitot
-% Returns r = P_static / P0 for given M.
 function r = rayleigh_total_total_ratio(M, gamma)
-    % Guard against invalid M
     if any(M <= 0)
         r = NaN;
         return;
     end
-
-    % P0,2/P1 (Rayleigh Pitot total-to-static ratio)
     term1 = ((((gamma+1).^2).*(M.^2)) / (4.*gamma.*M.^2 - (2.*(gamma-1)))).^(gamma / (gamma - 1));
     term2 = (1 - gamma + (2.*gamma.*M.^2)) / (gamma +1);
     term3 = (1 + ((gamma-1)/2).*M.^2).^(-(gamma/ (gamma-1)));
-    P02_over_P01 = term1.* term2 .* term3;
-
-    % r = P02/P01
+    P02_over_P01 = term1.* term2.* term3;
     r = P02_over_P01;
+end
+
+function r = rayleigh_total_static_ratio(M, gamma)
+    if any(M <= 0)
+        r = NaN;
+        return;
+    end
+    term1 = ((((gamma+1).^2).*(M.^2)) / (4.*gamma.*M.^2 - (2.*(gamma-1)))).^(gamma / (gamma - 1));
+    term2 = (1 - gamma + (2.*gamma.*M.^2)) / (gamma +1);
+    P02_over_P = term1.* term2;
+    r = P02_over_P;
 end

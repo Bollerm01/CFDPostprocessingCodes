@@ -7,12 +7,13 @@ clear all; close all; clc;
 
 % === USER SETTINGS ===
 filename  = 'SSWT_UrmsValidation_FigureData.xlsx';  % <-- New Excel file
-mainTitle = 'Normalized Cavity Depth vs. Normalized RMS X-Velocity ';
+mainTitle = 'Normalized Cavity Depth vs. Normalized X-Velocity RMS';
 
-% Legend entries for the 3 overlaid curves
+% Legend entries for the 4 overlaid curves
 legendEntries = {...
     'Volcano',...
     'Fureby et. al.',...
+    'VULCAN',...
     'Tuttle et. al.'...
 };
 
@@ -25,7 +26,7 @@ outputDPI  = 300;                                      % Resolution in DPI
 numSheets = numel(sheetNames);
 
 % Create figure and tiled layout (1x4)
-fig = figure('Name', 'Overlayed y/d vs $U_{rms}$/$U_{inf}$', 'NumberTitle', 'off');
+fig = figure('Name', 'Overlayed y/d vs Vx/Vxinf', 'NumberTitle', 'off');
 tiledlayout(fig, 1, numSheets, 'TileSpacing', 'compact', 'Padding', 'compact');
 
 allLineHandles = []; % For shared legend
@@ -41,8 +42,8 @@ for i = 1:numSheets
     numCols = width(data);
     numPairs = floor(numCols / 2);
 
-    % Safety: if the sheet has more than 3 pairs, only use the first 3
-    numPairs = min(numPairs, 3);
+    % Safety: if the sheet has more than 4 pairs, only use the first 4
+    numPairs = min(numPairs, 4);
 
     % Select next tile
     nexttile;
@@ -54,8 +55,8 @@ for i = 1:numSheets
         UOverUinf = data{:, 2*j - 1};
         yOverd    = data{:, 2*j};
 
-        % Use circles for 3rd dataset, lines otherwise
-        if j == 3
+        % Use circles for 4th dataset, lines otherwise
+        if j == 4
             localLineHandles(j) = plot(UOverUinf, yOverd, 'o',...
                                        'LineWidth', 1.2, 'MarkerSize', 6);
         else
@@ -71,8 +72,8 @@ for i = 1:numSheets
     % Axis and labels
     xlim([-0.1, 0.3]);   % Extended x-bounds
     ylim([-1, 1]);
-    xlabel('U_{rms} / U_{\infty}');
-    ylabel('y / d');
+    xlabel('V_{x,rms} / V_{x,\infty}');
+    ylabel('Y/D');
 
     % Title with “xL” → “x/L”
     title(strrep(sheetNames{i}, 'xL', 'x/L'), 'Interpreter', 'none');
