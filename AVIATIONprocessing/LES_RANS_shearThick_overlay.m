@@ -1,12 +1,10 @@
-%% LES_RANS_shearThick_overlay.m
-%  - Overlays two.fig files per "case" (one per solution type)
-%  - Grouping:
-%       * Filename is split by '_'
-%       * Last token  = solution type (e.g. Volcano, VULCAN)
-%       * First token: if it starts with 'velocityx', normalize to 'velocityx'
-%       * Group key = all (possibly normalized) tokens except the last
-%         so files that differ only by solution type (and e.g. velocityx vs
-%         velocityxavg) are overlaid.
+%% LES_RANS_shearThick_overlay_allVelocityX.m
+%  - Overlays ALL velocityx*.fig files in the folder onto ONE figure
+%  - Filename structure:
+%       * Split by '_'
+%       * First token: velocityx*, velocityxavg, etc. (used only to select)
+%       * Last token: solution type (e.g. Volcano, VULCAN)
+%  - Only files whose first token starts with 'velocityx' are included.
 %  - Legends: keep original legend text, append " - <SolutionType>"
 %  - Colors: fixed per solution type (same color across thresholds)
 %  - Line spec (linestyle/marker): fixed per threshold (same across solutions)
@@ -16,7 +14,7 @@
 %       "90%/10% Bounds"
 %
 %  Output:
-%    - One overlay figure per group, saved in "VulcanVolcanoOverlays"
+%    - A single overlay figure saved in the same folder.
 
 clear; close all; clc;
 
@@ -33,50 +31,30 @@ if isempty(figFiles)
     error('No.fig files found in the selected folder.');
 end
 
-%% OUTPUT FOLDER FOR OVERLAYS
+%% OUTPUT FOLDER (same as input)
 
-outFolder = figFolder; % same as input
+outFolder = figFolder;
 
-%% GROUP FILES BY "BASE WITHOUT SOLUTION TYPE"
-% with normalization of 'velocityx*' -> 'velocityx' in the first token
+%% FILTER: ONLY velocityx* FILES
 
-pairGroups = containers.Map('KeyType', 'char', 'ValueType', 'any');
-
+velFiles = {};
 for k = 1:numel(figFiles)
     fname = figFiles(k).name;
     [~, baseName, ~] = fileparts(fname);
     
     parts = strsplit(baseName, '_');
-    if numel(parts) < 2
-        continue;  % need at least data type + solution
+    if isempty(parts)
+        continue;
     end
     
-    % Normalize first token: velocityx*, velocityxavg, etc. -> velocityx
-    firstTok = parts{1};
+    firstTok = parts{2};
     if startsWith(lower(firstTok), 'velocityx')
-        parts{1} = 'velocityx';
-    end
-    
-    % Last token is solution type
-    % (we still use it later, but not in the grouping key)
-    
-    % Group key: everything except the last token
-    baseKeyParts = parts(1:end-1);
-    baseKey = strjoin(baseKeyParts, '_');
-    
-    fullPath = fullfile(figFolder, fname);
-    
-    if isKey(pairGroups, baseKey)
-        tmp = pairGroups(baseKey);
-        tmp{end+1} = fullPath;
-        pairGroups(baseKey) = tmp;
-    else
-        pairGroups(baseKey) = {fullPath};
+        velFiles{end+1} = fullfile(figFolder, fname); %#ok<AGROW>
     end
 end
 
-if isempty(pairGroups.keys)
-    error('No valid.fig filenames found for grouping.');
+if isempty(velFiles)
+    error('No velocityx*.fig files found in the selected folder.');
 end
 
 %% HELPERS
@@ -87,150 +65,130 @@ getSolutionType = @(baseName) local_getSolutionType_fromName(baseName);
 % Determine line style & marker from threshold legend text
 getLineSpecForThreshold = @local_getLineSpecForThreshold;
 
-%% OVERLAY PLOTS FOR EACH GROUP
+%% OPEN FIRST velocityx FIG TO GET AXES LABELS / TITLE
 
-groupKeys = pairGroups.keys;
-
-for g = 1:numel(groupKeys)
-    key = groupKeys{g};
-    filesInGroup = pairGroups(key);
-    
-    % Expect at least 2 solutions per group
-    % if numel(filesInGroup) < 2
-    %     fprintf('Skipping group %s (only %d file(s)).\n', key, numel(filesInGroup));
-    %     continue;
-    % end
-    
-    % For naming, pull out the data type as the 2nd token of the key (if exists)
-    keyParts = strsplit(key, '_');
-    if numel(keyParts) >= 2
-        dataType = keyParts{2};
-    else
-        dataType = key; % fallback
-    end
-    
-    % Open the first figure just to grab axes labels, title, etc.
-    firstFigPath = filesInGroup{1};
-    tmpFig0 = openfig(firstFigPath, 'invisible');
-    srcAx0 = findall(tmpFig0, 'Type', 'axes');
-    if isempty(srcAx0)
-        close(tmpFig0);
-        fprintf('No axes found in %s, skipping.\n', firstFigPath);
-        continue;
-    end
-    mainAx0 = srcAx0(1);
-    
-    origTitleObj  = get(mainAx0, 'Title');
-    origTitleStr  = origTitleObj.String;
-    
-    origXLabelObj = get(mainAx0, 'XLabel');
-    origXLabelStr = origXLabelObj.String;
-    
-    origYLabelObj = get(mainAx0, 'YLabel');
-    origYLabelStr = origYLabelObj.String;
-    
-    % Create overlay figure
-    figName = sprintf('Overlay: %s', key);
-    overlayFig = figure('Name', figName, 'NumberTitle', 'off');
-    ax = axes('Parent', overlayFig);
-    hold(ax, 'on');
-    grid(ax, 'on');
-    
-    allLineHandles = [];
-    
-    % Fixed colors for solutions (adjust as desired)
-    solColors = containers.Map;
-    solColors('Volcano') = [0.0000, 0.4470, 0.7410];  % MATLAB blue
-    solColors('VULCAN')  = [0.8500, 0.3250, 0.0980];  % MATLAB orange
-    
-    % Loop over solution files in this group
-    for f = 1:numel(filesInGroup)
-        thisFile = filesInGroup{f};
-        [~, shortName, ~] = fileparts(thisFile);
-        
-        solType = getSolutionType(shortName);
-        lowSol = lower(solType);
-        if contains(lowSol, 'vulcan')
-            solType = 'VULCAN';
-        elseif contains(lowSol, 'volcano')
-            solType = 'Volcano';
-        end
-        
-        % Assign color for this solution
-        if isKey(solColors, solType)
-            clr = solColors(solType);
-        else
-            clr = [0 0 0]; % fallback
-        end
-        
-        % Open source figure invisibly
-        tmpFig = openfig(thisFile, 'invisible');
-        srcAxes = findall(tmpFig, 'Type', 'axes');
-        
-        for a = 1:numel(srcAxes)
-            srcChildren = findall(srcAxes(a), 'Type', 'line');
-            
-            for c = 1:numel(srcChildren)
-                hObj = srcChildren(c);
-                
-                % Original legend label (e.g., "95%/5% Bounds")
-                origName = get(hObj, 'DisplayName');
-                if isempty(origName)
-                    origName = sprintf('Line %d', c);
-                end
-                
-                % Determine line spec for this threshold
-                [ls, mk] = getLineSpecForThreshold(origName);
-                
-                % Copy to overlay axes
-                newObj = copyobj(hObj, ax);
-                
-                % Style
-                if isprop(newObj, 'Color')
-                    newObj.Color = clr;
-                end
-                if isprop(newObj, 'LineStyle')
-                    newObj.LineStyle = ls;
-                end
-                if isprop(newObj, 'Marker')
-                    newObj.Marker = mk;
-                end
-                
-                % Legend text: keep original, append solution type
-                legendText = sprintf('%s - %s', origName, solType);
-                set(newObj, 'DisplayName', legendText);
-                
-                allLineHandles(end+1) = newObj; %#ok<AGROW>
-            end
-        end
-        
-        close(tmpFig);
-    end
-    
-    % Labels and title: use original, but prepend Volcano vs VULCAN
-    xlabel(ax, origXLabelStr, 'Interpreter', origXLabelObj.Interpreter);
-    ylabel(ax, origYLabelStr, 'Interpreter', origYLabelObj.Interpreter);
-    
-    newTitleStr = sprintf('Volcano vs. VULCAN: %s', origTitleStr);
-    title(ax, newTitleStr, 'Interpreter', origTitleObj.Interpreter);
-    
-    if ~isempty(allLineHandles)
-        lgd = legend(ax, allLineHandles);
-        set(lgd, 'Interpreter', 'none');
-        set(lgd, 'Location', 'best');
-    end
-    
-    % Save overlay figure
-    outBase = fullfile(outFolder, sprintf('%s_overlay', key));
-    outBaseChar = char(outBase);
-    savefig(overlayFig, [outBaseChar '.fig']);
-    saveas(overlayFig, [outBaseChar '.png']);
-    
-    hold(ax, 'off');
+firstFigPath = velFiles{1};
+tmpFig0 = openfig(firstFigPath, 'invisible');
+srcAx0 = findall(tmpFig0, 'Type', 'axes');
+if isempty(srcAx0)
     close(tmpFig0);
+    error('No axes found in %s.', firstFigPath);
+end
+mainAx0 = srcAx0(1);
+
+origTitleObj  = get(mainAx0, 'Title');
+origTitleStr  = origTitleObj.String;
+
+origXLabelObj = get(mainAx0, 'XLabel');
+origXLabelStr = origXLabelObj.String;
+
+origYLabelObj = get(mainAx0, 'YLabel');
+origYLabelStr = origYLabelObj.String;
+
+%% CREATE OVERLAY FIGURE (ONE FOR ALL velocityx*)
+
+overlayFig = figure('Name', 'Overlay: velocityx', 'NumberTitle', 'off');
+ax = axes('Parent', overlayFig);
+hold(ax, 'on');
+grid(ax, 'on');
+
+allLineHandles = [];
+
+% Fixed colors for solutions (adjust as desired)
+solColors = containers.Map;
+solColors('Volcano') = [0.0000, 0.4470, 0.7410];  % MATLAB blue
+solColors('VULCAN')  = [0.8500, 0.3250, 0.0980];  % MATLAB orange
+
+%% LOOP OVER ALL velocityx* FILES
+
+for f = 1:numel(velFiles)
+    thisFile = velFiles{f};
+    [~, shortName, ~] = fileparts(thisFile);
+    
+    solType = getSolutionType(shortName);
+    lowSol = lower(solType);
+    if contains(lowSol, 'vulcan')
+        solType = 'VULCAN';
+    elseif contains(lowSol, 'volcano')
+        solType = 'Volcano';
+    end
+    
+    % Assign color for this solution
+    if isKey(solColors, solType)
+        clr = solColors(solType);
+    else
+        clr = [0 0 0]; % fallback
+    end
+    
+    % Open source figure invisibly
+    tmpFig = openfig(thisFile, 'invisible');
+    srcAxes = findall(tmpFig, 'Type', 'axes');
+    
+    for a = 1:numel(srcAxes)
+        srcChildren = findall(srcAxes(a), 'Type', 'line');
+        
+        for c = 1:numel(srcChildren)
+            hObj = srcChildren(c);
+            
+            % Original legend label (e.g., "95%/5% Bounds")
+            origName = get(hObj, 'DisplayName');
+            if isempty(origName)
+                origName = sprintf('Line %d', c);
+            end
+            
+            % Determine line spec for this threshold
+            [ls, mk] = getLineSpecForThreshold(origName);
+            
+            % Copy to overlay axes
+            newObj = copyobj(hObj, ax);
+            
+            % Style
+            if isprop(newObj, 'Color')
+                newObj.Color = clr;
+            end
+            if isprop(newObj, 'LineStyle')
+                newObj.LineStyle = ls;
+            end
+            if isprop(newObj, 'Marker')
+                newObj.Marker = mk;
+            end
+            
+            % Legend text: keep original, append solution type and file index
+            % (file index helps if you have many axial locations)
+            legendText = sprintf('%s - %s', origName, solType);
+            set(newObj, 'DisplayName', legendText);
+            
+            allLineHandles(end+1) = newObj; %#ok<AGROW>
+        end
+    end
+    
+    close(tmpFig);
 end
 
-disp('Two-solution overlay generation (velocityx* grouped) complete.');
+%% LABELS AND TITLE
+
+xlabel(ax, origXLabelStr, 'Interpreter', origXLabelObj.Interpreter);
+ylabel(ax, origYLabelStr, 'Interpreter', origYLabelObj.Interpreter);
+
+newTitleStr = sprintf('Volcano vs. VULCAN: %s', origTitleStr);
+title(ax, newTitleStr, 'Interpreter', origTitleObj.Interpreter);
+
+if ~isempty(allLineHandles)
+    lgd = legend(ax, allLineHandles);
+    set(lgd, 'Interpreter', 'none');
+    set(lgd, 'Location', 'best'); % move outside if crowded
+end
+
+% Save overlay figure
+outBase = fullfile(outFolder, 'velocityx_allSolutions_overlay');
+outBaseChar = char(outBase);
+savefig(overlayFig, [outBaseChar '.fig']);
+saveas(overlayFig, [outBaseChar '.png']);
+
+hold(ax, 'off');
+close(tmpFig0);
+
+disp('Overlay of ALL velocityx* figures complete.');
 
 %% ------------------------------------------------------------------------
 %% Local function: get solution type (last token in base name)

@@ -93,6 +93,12 @@ axial_sheets = sheets(startsWith(sheets, 'xL'));
 for iS = 1:numel(axial_sheets)
     sheet = axial_sheets{iS};
     xL = parse_xL_new(sheet);
+    
+    % skips US and DS locations 
+    if xL < 0 || xL > 1.5
+        fprintf('Skipping sheet %s (x/L = %.3f)\n', sheet, xL);
+        continue;
+    end
 
     df_raw = readtable(excel_file, 'Sheet', sheet);
 
