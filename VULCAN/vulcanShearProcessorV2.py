@@ -194,6 +194,7 @@ def apply_camera_and_colorbar(lut, preset, title):
     sb.TitleFontSize = 12
     sb.LabelFontSize = 10
     sb.LabelColor = [0.0, 0.0, 0.0]
+    sb.TitleColor = [0.0, 0.0, 0.0]
 
     # --- Sets background ---
     # find settings proxy
