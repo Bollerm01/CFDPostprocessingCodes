@@ -12,26 +12,26 @@ INPUT_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD00/RD00_004/latest.v
 OUTPUT_DIR = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/contourOutput/RD00" # CHANGE PER RUN
 folder_path = os.path.dirname(INPUT_FILE) # /home/user/project
 file_name = os.path.basename(folder_path) # project
-# SCALARS = [
-#     "reynoldsstressxx", "reynoldsstressyy", "reynoldsstresszz",
-#     "reynoldsstressxy", "reynoldsstressxz", "reynoldsstressyz",
-#     "velocityx", "velocityxavg", "tke", "pressureavg", "vorticitymag", "vorticitymagavg"
-# ]
+SCALARS = [
+    "reynoldsstressxx", "reynoldsstressyy", "reynoldsstresszz",
+    "reynoldsstressxy", "reynoldsstressxz", "reynoldsstressyz",
+    "velocityx", "velocityxavg", "tke", "pressureavg", "vorticitymag", "vorticitymagavg"
+]
 
 # Debugging scalars
-SCALARS = ["reynoldsstressyy"]
+# SCALARS = ["reynoldsstressyy"]
 ENABLE_SCHLIEREN = True # Change to true if desired
 DENSITY_NAME = "density"
 
 # Debugging loop
-YZ_SLICE_X = [2.15057954, 2.1793151, 2.216945]
-XY_SLICE_Z = [0.0381]
-XZ_SLICE_Y = [0.0093,0.001]
+# YZ_SLICE_X = [2.15057954, 2.1793151, 2.216945]
+# XY_SLICE_Z = [0.0381]
+# XZ_SLICE_Y = [0.0093,0.001]
 
 # full loop
-# YZ_SLICE_X = [2.011691, 2.080109, 2.114318, 2.15057954, 2.16015806, 2.1690524, 2.1793151, 2.18889362, 2.19847214, 2.20736648, 2.216945, 2.223063, 2.307804104]
-# XY_SLICE_Z = [-0.0381, 0.00, 0.0381]
-# XZ_SLICE_Y = [0.0182, 0.0093, 0.003, 0.001]
+YZ_SLICE_X = [2.011691, 2.080109, 2.114318, 2.15057954, 2.16015806, 2.1690524, 2.1793151, 2.18889362, 2.19847214, 2.20736648, 2.216945, 2.223063, 2.307804104]
+XY_SLICE_Z = [-0.0381, 0.00, 0.0381]
+XZ_SLICE_Y = [0.0182, 0.0093, 0.003, 0.001]
 
 # 3D slices group
 YZ_SLICE_X_3D = [2.15057954, 2.1793151, 2.216945] #x/L = 0.03, 0.45, 1
@@ -290,7 +290,10 @@ def create_slice(origin, normal, preset, fname, scalar, schlieren=False):
         lut = GetColorTransferFunction(name)
         lut.RescaleTransferFunctionToDataRange()
         lut.ApplyPreset(COLORMAP_PRESET, True)
-
+        # NEW BAR HIDING #
+        bar = GetScalarBar(lut, view)
+        bar.Visibility = 0
+        ##################
         apply_camera_and_colorbar(lut, preset, name)
         Render(view)
 
@@ -345,8 +348,9 @@ def make_3D_slice_view(slices, preset, fname, scalar):
                    view, ImageResolution=IMG_RES, TransparentBackground=1)
 
     # Optionally hide slices afterwards
-    # for sl in slices:
-    #     Hide(sl, view)
+    for sl in slices:
+        slice_source = FindSource(sl)
+        Hide(slice_source, view)
 
 def make_slice_group(xySlices, xzSlices, yzSlices):
     group = []
@@ -393,6 +397,7 @@ for s in SCALARS:
 
 if ENABLE_SCHLIEREN:
     for z in XY_SLICE_Z:
+
         create_slice([0,0,z], [0,0,1], "XY_NEAR",
                      f"XY_near_z{z:+0.5f}", DENSITY_NAME, True)
         create_slice([0,0,z], [0,0,1], "XY_FAR",
