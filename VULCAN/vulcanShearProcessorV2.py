@@ -129,6 +129,13 @@ CAMERA_PRESETS = {
         "ParallelScale": 0.1 , # was 0.1
         "Colorbar": {"Orientation": "Vertical", "Position": [0.642, 0.352], "Length": 0.33},
     },
+    "XZ": {
+        "CameraPosition": [0.4895413324640084, 0.8157857852644791, 0.009204647557753496],
+        "CameraFocalPoint": [0.4895413324640084, -0.0215000007301569, 0.009204647557753496],
+        "CameraViewUp":[-1.0, 0.0, 0.0],
+        "ParallelScale": 0.032211892863822096,
+        "Colorbar": {"Orientation": "Vertical", "Position": [0.642, 0.352], "Length": 0.33},
+    },
     "XY_FAR": {
         "CameraPosition": [0.447675, 0.064359, 0.828586],
         "CameraFocalPoint": [0.447675, 0.064359, 0.0127],
@@ -390,21 +397,24 @@ def render_schlieren(origin, normal, preset, fname):
 
         Hide(slice_calc, view)
 
-def make_slice_group(xySlices, xzSlices, yzSlices):
+def make_slice_group(xySlices, xzSlices, yzSlices, scalar):
     group = []
     if xySlices:
         for z in xySlices:
-            sl_name = f"XY_near_z{z:+0.5f}"
+            loc_ID = f"XY_near_z{z:+0.5f}"
+            sl_name = f"{scalar}_{loc_ID}"
             #sl = make_slice([0, 0, z], [0, 0, 1], sl_name, scalar, schlieren=False)
             group.append(sl_name)
     if xzSlices:
         for y in xzSlices:
-            sl_name = f"XZ_y{y:+0.5f}"
+            loc_ID = f"XZ_y{y:+0.5f}"
+            sl_name = f"{scalar}_{loc_ID}"
             #sl = make_slice([0, y, 0], [0, 1, 0], sl_name, scalar, schlieren=False)
             group.append(sl_name)
     if yzSlices:
         for x in yzSlices:
-            sl_name = f"YZ_x{x:+0.5f}"
+            loc_ID = f"YZ_x{x:+0.5f}"
+            sl_name = f"{scalar}_{loc_ID}"
             #sl = make_slice([x, 0, 0], [1, 0, 0], sl_name, scalar, schlieren=False)
             group.append(sl_name)
 
@@ -422,6 +432,15 @@ for scalar in SCALAR_MAP.keys():
             normal=[1, 0, 0],
             preset="YZ",
             fname=f"YZ_x{x:+0.5f}",
+            logical_scalar=scalar
+        )
+
+    for y in XZ_SLICE_Y:
+        render_overlay_slice(
+            origin=[0, y, 0],
+            normal=[0, 1, 0],
+            preset="XZ",
+            fname=f"XZ_y{y:+0.5f}",
             logical_scalar=scalar
         )
 
