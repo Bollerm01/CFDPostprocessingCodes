@@ -336,7 +336,8 @@ def make_3D_slice_view(slices, preset, fname, scalar):
 
     # # Render and save a single screenshot containing all visible slices
     # Render(view)
-    SaveScreenshot(os.path.join(OUTPUT_DIR, f"{fname}_{scalar}.png"),
+    scalarSave = scalar.split("/")[1]
+    SaveScreenshot(os.path.join(OUTPUT_DIR, f"{fname}_{scalarSave}.png"),
                    view, ImageResolution=IMG_RES, TransparentBackground=1)
 
     # Optionally hide slices afterwards
