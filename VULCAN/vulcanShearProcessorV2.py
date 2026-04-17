@@ -282,6 +282,8 @@ def render_overlay_slice(origin, normal, preset, fname, logical_scalar, hide_sli
         title = SCALAR_TITLES.get(logical_scalar, logical_scalar)
         apply_camera_and_colorbar(lut, preset, title)
 
+    # ---- Sets axis label color -----
+    view.OrientationAxesLabelColor = [0.0, 0.0, 0.0] # black
 
     Render(view)
     SaveScreenshot(
@@ -336,6 +338,10 @@ def make_3D_slice_view(slices, preset, fname, scalar):
 
     # # Render and save a single screenshot containing all visible slices
     # Render(view)
+
+    # ---- Sets axis label color -----
+    view.OrientationAxesLabelColor = [0.0, 0.0, 0.0] # black
+    
     scalarSave = scalar.split("/")[1]
     SaveScreenshot(os.path.join(OUTPUT_DIR, f"{fname}_{scalarSave}.png"),
                    view, ImageResolution=IMG_RES, TransparentBackground=1)
