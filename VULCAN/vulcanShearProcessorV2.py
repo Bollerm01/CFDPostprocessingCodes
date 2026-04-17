@@ -154,7 +154,7 @@ CAMERA_PRESETS = {
         "CameraPosition": [0.5824733318592127, 0.04876318085243274, 0.16198669927641116],
         "CameraFocalPoint": [0.5081591609315163, -0.006139535238138901, 0.008629380687868398],
         "CameraViewUp": [-0.09739205196914372, 0.9510508347723189, -0.29328671618761587],
-        "ParallelScale": 0.4564267410905977, # was 0.1
+        "ParallelScale": 0.0383, # was 0.1
         "Colorbar": {"Orientation": "Horizontal", "Position": [0.174555, 0.0997015], "Length": 0.5},
     },
 }
@@ -341,7 +341,7 @@ def make_3D_slice_view(slices, preset, fname, scalar):
 
     # ---- Sets axis label color -----
     view.OrientationAxesLabelColor = [0.0, 0.0, 0.0] # black
-    
+
     scalarSave = scalar.split("/")[1]
     SaveScreenshot(os.path.join(OUTPUT_DIR, f"{fname}_{scalarSave}.png"),
                    view, ImageResolution=IMG_RES, TransparentBackground=1)
