@@ -11,4 +11,6 @@ Workflow for AVIATION figure processing
 10) Run "volcano_location_turbulence_plotter.m" and "volcano_RD_turbulence_plotter.m" to generate all of the Volcano Rij and TKE figures for specified locations and R/Ds 
 11) Run "VULCAN_location_turbulence_plotter.m" and "VULCAN_RD_turbulence_plotter.m" to generate all of the VULCAN Rij and TKE figures for specified locations and R/Ds
 12) Run "LES_RANS_turb_overlay.m" to cross plot the Volcano and VULCAN results from the output .fig files from (10) and (11) 
-**13) [INSERT CODE TO PROCESS THE SHEAR GROWTH BEHAVIOR]
+13) Run "process_BL_sweep_multiRun.m" to process the SSWT BL run data and "CFD_exp_BL_Processor.m" to format and cross-plot with the Volcano
+14) Run "volcano_shear_thickness_processor.m" and "VULCAN_shear_thickness_processor.m" to extract shear thickness data from Volcano and VULCAN full probe Excels for each of the desired R/Ds
+15) Run "LES_RANS_shearThick_overlay.m" to cross plot the Volcano and VULCAN shear thickness data

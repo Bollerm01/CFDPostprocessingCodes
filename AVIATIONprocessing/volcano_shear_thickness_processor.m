@@ -169,6 +169,10 @@ for iLoc = 1:numel(LOCATIONS)
     for iS = 1:numel(sheet_list)
         sheet = sheet_list{iS};
         xL = parse_xL_MATLAB(sheet);
+        if xL < 0 || xL > 1.1
+            fprintf('Skipping sheet %s (x/L = %.3f)\n', sheet, xL);
+            continue;
+        end
 
         df = readtable(excel_file, 'Sheet', sheet);
 

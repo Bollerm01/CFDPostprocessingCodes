@@ -95,7 +95,7 @@ for iS = 1:numel(axial_sheets)
     xL = parse_xL_new(sheet);
     
     % skips US and DS locations 
-    if xL < 0 || xL > 1.5
+    if xL < 0 || xL > 1.1
         fprintf('Skipping sheet %s (x/L = %.3f)\n', sheet, xL);
         continue;
     end
