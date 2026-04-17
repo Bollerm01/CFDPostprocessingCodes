@@ -402,19 +402,19 @@ def make_slice_group(xySlices, xzSlices, yzSlices, scalar):
     if xySlices:
         for z in xySlices:
             loc_ID = f"XY_near_z{z:+0.5f}"
-            sl_name = f"zone2/{scalar}_{loc_ID}"
+            sl_name = f"{scalar}_{loc_ID}"
             #sl = make_slice([0, 0, z], [0, 0, 1], sl_name, scalar, schlieren=False)
             group.append(sl_name)
     if xzSlices:
         for y in xzSlices:
             loc_ID = f"XZ_y{y:+0.5f}"
-            sl_name = f"zone2/{scalar}_{loc_ID}"
+            sl_name = f"{scalar}_{loc_ID}"
             #sl = make_slice([0, y, 0], [0, 1, 0], sl_name, scalar, schlieren=False)
             group.append(sl_name)
     if yzSlices:
         for x in yzSlices:
             loc_ID = f"YZ_x{x:+0.5f}"
-            sl_name = f"zone2/{scalar}_{loc_ID}"
+            sl_name = f"{scalar}_{loc_ID}"
             #sl = make_slice([x, 0, 0], [1, 0, 0], sl_name, scalar, schlieren=False)
             group.append(sl_name)
 
@@ -461,9 +461,10 @@ for scalar in SCALAR_MAP.keys():
         )
         ######### FIX HERE ##############
         # 3D figs - Near 3D
+        scalar_zone2 = SCALAR_MAP[scalar]["zone2"]
         sliceGroup = make_slice_group(XY_SLICE_Z_3D, XZ_SLICE_Y_3D, YZ_SLICE_X_3D, scalar)
         outputFileName = "3D_Near_Group"
-        make_3D_slice_view(sliceGroup, "3D_NEAR", outputFileName, scalar)
+        make_3D_slice_view(sliceGroup, "3D_NEAR", outputFileName, scalar_zone2)
 
 if ENABLE_SCHLIEREN:
     for z in XY_SLICE_Z:
