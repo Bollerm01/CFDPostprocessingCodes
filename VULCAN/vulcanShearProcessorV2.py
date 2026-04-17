@@ -328,7 +328,9 @@ def make_3D_slice_view(slices, preset, fname, scalar):
         lut.RescaleTransferFunctionToDataRange()
         lut.ApplyPreset(COLORMAP_PRESET, True)
 
-        apply_camera_and_colorbar(lut, preset, scalar)
+        title = SCALAR_TITLES.get(scalar, scalar)
+
+        apply_camera_and_colorbar(lut, preset, title)
         Render(view)
 
     # # Configure shared LUT
