@@ -305,72 +305,56 @@ def create_slice(origin, normal, preset, fname, scalar, schlieren=False):
 
 def make_3D_slice_view(slices, preset, fname, scalar):
     """
-    Parameters
-    ----------
-    slices : list
-        List of preexisting slice proxies (e.g., VolcanoSlice outputs).
-        Typically length 4 for a 4-slice composite.
-    preset : str
-        Name of the camera preset to apply (key in CAMERA_PRESETS).
-    fname : str
-        Output file name (no directory), e.g. 'four_YZ_slices_velocityx.png'.
-    scalar : str
-        Name of the scalar field to color by.
+    slices : list of slice proxies (VolcanoSlice outputs)
+    scalar : name of the scalar field that is present on these slices
     """
-    displays = []
-
-    # Show and color all slices by the same scalar
     lut = GetColorTransferFunction(scalar)
+
     for sl in slices:
-        slice_source = FindSource(sl)
-        SetActiveSource(slice_source)
-        disp = Show(slice_source, view)
-        loc = array_location(slice_source, scalar)
+        SetActiveSource(sl)
+        disp = Show(sl, view)
+        loc = array_location(sl, scalar)
         ColorBy(disp, (loc, scalar))
 
-        lut = GetColorTransferFunction(scalar)
-        lut.RescaleTransferFunctionToDataRange()
-        lut.ApplyPreset(COLORMAP_PRESET, True)
+    # Configure shared LUT once
+    lut.RescaleTransferFunctionToDataRange()
+    lut.ApplyPreset(COLORMAP_PRESET, True)
 
-        apply_camera_and_colorbar(lut, preset, scalar)
-        Render(view)
+    apply_camera_and_colorbar(lut, preset, scalar)
+    Render(view)
 
-    # # Configure shared LUT
-    # lut.RescaleTransferFunctionToDataRange()
-    # lut.ApplyPreset(COLORMAP_PRESET, True)
-
-    # # Apply camera + colorbar
-    # apply_camera_and_colorbar(lut, preset, scalar)
-
-    # # Render and save a single screenshot containing all visible slices
-    # Render(view)
     SaveScreenshot(os.path.join(OUTPUT_DIR, f"{fname}_{scalar}.png"),
                    view, ImageResolution=IMG_RES, TransparentBackground=1)
 
-    # Optionally hide slices afterwards
+    # Optionally hide
     for sl in slices:
-        slice_source = FindSource(sl)
-        Hide(slice_source, view)
+        Hide(sl, view)
 
-def make_slice_group(xySlices, xzSlices, yzSlices):
+def make_slice_group(xySlices, xzSlices, yzSlices, scalar):
     group = []
+
+    # XY planes
     if xySlices:
         for z in xySlices:
-            sl_name = f"XY_near_z{z:+0.5f}"
-            #sl = make_slice([0, 0, z], [0, 0, 1], sl_name, scalar, schlieren=False)
-            group.append(sl_name)
+            fname = f"XY_near_z{z:+0.5f}_3D_{scalar}"
+            sl = make_slice([0, 0, z], [0, 0, 1], fname, scalar, schlieren=False)
+            group.append(sl)
+
+    # XZ planes
     if xzSlices:
         for y in xzSlices:
-            sl_name = f"XZ_y{y:+0.5f}"
-            #sl = make_slice([0, y, 0], [0, 1, 0], sl_name, scalar, schlieren=False)
-            group.append(sl_name)
+            fname = f"XZ_y{y:+0.5f}_3D_{scalar}"
+            sl = make_slice([0, y, 0], [0, 1, 0], fname, scalar, schlieren=False)
+            group.append(sl)
+
+    # YZ planes
     if yzSlices:
         for x in yzSlices:
-            sl_name = f"YZ_x{x:+0.5f}"
-            #sl = make_slice([x, 0, 0], [1, 0, 0], sl_name, scalar, schlieren=False)
-            group.append(sl_name)
+            fname = f"YZ_x{x:+0.5f}_3D_{scalar}"
+            sl = make_slice([x, 0, 0], [1, 0, 0], fname, scalar, schlieren=False)
+            group.append(sl)
 
-    print(f"Grouped Imgs: {group}")
+    print(f"Grouped 3D slice proxies for {scalar}: {group}")
     return group
 
 
@@ -389,8 +373,8 @@ for s in SCALARS:
         create_slice([0,0,z], [0,0,1], "XY_NEAR", f"XY_near_z{z:+0.5f}", s)
         # create_slice([0,0,z], [0,0,1], "XY_FAR",  f"XY_far_z{z:+0.5f}",  s) # ADD BACK IF WANTING FAR SHOTS 
 
-    # 3D figs - Near 3D
-    sliceGroup = make_slice_group(XY_SLICE_Z_3D, XZ_SLICE_Y_3D, YZ_SLICE_X_3D)
+    # 3D figs - Near 3D (for this scalar s)
+    sliceGroup = make_slice_group(XY_SLICE_Z_3D, XZ_SLICE_Y_3D, YZ_SLICE_X_3D, s)
     outputFileName = "3D_Near_Group"
     make_3D_slice_view(sliceGroup, "3D_Near", outputFileName, s)
     
