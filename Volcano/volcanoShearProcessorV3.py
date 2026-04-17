@@ -31,7 +31,7 @@ XZ_SLICE_Y = [0.0093,0.001]
 # XZ_SLICE_Y = [0.0182, 0.0093, 0.003, 0.001]
 
 # 3D slices group
-YZ_SLICE_X_3D = [2.15057954, 2.1793151, 2.216945]
+YZ_SLICE_X_3D = [2.15057954, 2.1793151, 2.216945] #x/L = 0.03, 0.45, 1
 XY_SLICE_Z_3D = [0.0381]
 XZ_SLICE_Y_3D = [0.0093,0.001]
 
@@ -273,7 +273,7 @@ def create_slice(origin, normal, preset, fname, scalar, schlieren=False):
         Render(view)
 
         SaveScreenshot(os.path.join(OUTPUT_DIR, f"{fname}_{scalar}.png"),
-                       view, ImageResolution=IMG_RES)
+                       view, ImageResolution=IMG_RES, TransparentBackground=1)
         Hide(sl, view)
         return
 
@@ -292,7 +292,7 @@ def create_slice(origin, normal, preset, fname, scalar, schlieren=False):
         Render(view)
 
         SaveScreenshot(os.path.join(OUTPUT_DIR, f"{fname}_{name}.png"),
-                       view, ImageResolution=IMG_RES)
+                       view, ImageResolution=IMG_RES, TransparentBackground=1)
         Hide(calc, view)
 
     Hide(sl, view)
@@ -339,7 +339,7 @@ def make_3D_slice_view(slices, preset, fname, scalar):
     # # Render and save a single screenshot containing all visible slices
     # Render(view)
     SaveScreenshot(os.path.join(OUTPUT_DIR, f"{fname}_{scalar}.png"),
-                   view, ImageResolution=IMG_RES)
+                   view, ImageResolution=IMG_RES, TransparentBackground=1)
 
     # Optionally hide slices afterwards
     # for sl in slices:

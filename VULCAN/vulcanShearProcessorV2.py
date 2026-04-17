@@ -14,41 +14,56 @@ OUTPUT_DIR = os.path.join(OUTPUT_ROOT, CASE)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # Test Locations
-#YZ_SLICE_X = [0.327131]
-#XY_SLICE_Z = [0.0127]
+YZ_SLICE_X = [0.327131]
+XY_SLICE_Z = [0.0127]
 
 # Full loop Slice positions
-YZ_SLICE_X = [0.327131, 0.395304, 0.4293905, 0.46552219, 0.47506641, 0.4839289, 0.49415485, 0.50369907, 0.51324329, 0.52210578, 0.53165, 0.5452846, 0.622183744]   
-XY_SLICE_Z = [0.0127]  
+# YZ_SLICE_X = [0.327131, 0.395304, 0.4293905, 0.46552219, 0.47506641, 0.4839289, 0.49415485, 0.50369907, 0.51324329, 0.52210578, 0.53165, 0.5452846, 0.622183744]   
+# XY_SLICE_Z = [0.0127]  
+
+# 3D slices group
+YZ_SLICE_X_3D = [0.46552219, 0.49415485, 0.53165] #x/L = 0.03, 0.45, 1
+XY_SLICE_Z_3D = [0.0001]
+XZ_SLICE_Y_3D = [-0.0215, -0.01556]
 
 
 
+# SCALAR_MAP = {
+#     "Pressure_Pa": {"zone1": "Pressure_Pa", "zone2": "zone2/Pressure_Pa"},
+#     "U_velocity_m_s": {"zone1": "U_velocity_m_s", "zone2": "zone2/U_velocity_m_s"},
+#     "Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup": {
+#         "zone1": "Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup",
+#         "zone2": "zone2/Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup",
+#     },
+#     "greekt_greeksubxx_subsupt_sup": {"zone1": "greekt_greeksubxx_subsupt_sup", "zone2": "zone2/greekt_greeksubxx_subsupt_sup"},
+#     "greekt_greeksubxy_subsupt_sup": {"zone1": "greekt_greeksubxy_subsupt_sup", "zone2": "zone2/greekt_greeksubxy_subsupt_sup"},
+#     "greekt_greeksubxz_subsupt_sup": {"zone1": "greekt_greeksubxz_subsupt_sup", "zone2": "zone2/greekt_greeksubxz_subsupt_sup"},
+#     "greekt_greeksubyy_subsupt_sup": {"zone1": "greekt_greeksubyy_subsupt_sup", "zone2": "zone2/greekt_greeksubyy_subsupt_sup"},
+#     "greekt_greeksubyz_subsupt_sup": {"zone1": "greekt_greeksubyz_subsupt_sup", "zone2": "zone2/greekt_greeksubyz_subsupt_sup"},
+#     "greekt_greeksubzz_subsupt_sup": {"zone1": "greekt_greeksubzz_subsupt_sup", "zone2": "zone2/greekt_greeksubzz_subsupt_sup"},
+# }
+
+# Debugging Scalar Map
 SCALAR_MAP = {
-    "Pressure_Pa": {"zone1": "Pressure_Pa", "zone2": "zone2/Pressure_Pa"},
-    "U_velocity_m_s": {"zone1": "U_velocity_m_s", "zone2": "zone2/U_velocity_m_s"},
-    "Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup": {
-        "zone1": "Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup",
-        "zone2": "zone2/Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup",
-    },
-    "greekt_greeksubxx_subsupt_sup": {"zone1": "greekt_greeksubxx_subsupt_sup", "zone2": "zone2/greekt_greeksubxx_subsupt_sup"},
-    "greekt_greeksubxy_subsupt_sup": {"zone1": "greekt_greeksubxy_subsupt_sup", "zone2": "zone2/greekt_greeksubxy_subsupt_sup"},
-    "greekt_greeksubxz_subsupt_sup": {"zone1": "greekt_greeksubxz_subsupt_sup", "zone2": "zone2/greekt_greeksubxz_subsupt_sup"},
-    "greekt_greeksubyy_subsupt_sup": {"zone1": "greekt_greeksubyy_subsupt_sup", "zone2": "zone2/greekt_greeksubyy_subsupt_sup"},
-    "greekt_greeksubyz_subsupt_sup": {"zone1": "greekt_greeksubyz_subsupt_sup", "zone2": "zone2/greekt_greeksubyz_subsupt_sup"},
-    "greekt_greeksubzz_subsupt_sup": {"zone1": "greekt_greeksubzz_subsupt_sup", "zone2": "zone2/greekt_greeksubzz_subsupt_sup"},
+    "U_velocity_m_s": {"zone1": "U_velocity_m_s", "zone2": "zone2/U_velocity_m_s"}
 }
 
-# User-editable scalar bar titles
+# # User-editable scalar bar titles
+# SCALAR_TITLES = {
+#     "Pressure_Pa": "Pressure [Pa]",
+#     "U_velocity_m_s": "U Velocity [m/s]",
+#     "Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup": "Turbulence Kinetic Energy [m²/s²]",
+#     "greekt_greeksubxx_subsupt_sup": r"$\tau_{xx}$",
+#     "greekt_greeksubxy_subsupt_sup": r"$\tau_{xy}$",
+#     "greekt_greeksubxz_subsupt_sup": r"$\tau_{xz}$",
+#     "greekt_greeksubyy_subsupt_sup": r"$\tau_{yy}$",
+#     "greekt_greeksubyz_subsupt_sup": r"$\tau_{yz}$",
+#     "greekt_greeksubzz_subsupt_sup": r"$\tau_{zz}$",
+# }
+
+# Debugging Titles
 SCALAR_TITLES = {
-    "Pressure_Pa": "Pressure [Pa]",
-    "U_velocity_m_s": "U Velocity [m/s]",
-    "Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup": "Turbulence Kinetic Energy [m²/s²]",
-    "greekt_greeksubxx_subsupt_sup": r"$\tau_{xx}$",
-    "greekt_greeksubxy_subsupt_sup": r"$\tau_{xy}$",
-    "greekt_greeksubxz_subsupt_sup": r"$\tau_{xz}$",
-    "greekt_greeksubyy_subsupt_sup": r"$\tau_{yy}$",
-    "greekt_greeksubyz_subsupt_sup": r"$\tau_{yz}$",
-    "greekt_greeksubzz_subsupt_sup": r"$\tau_{zz}$",
+    "U_velocity_m_s": "U Velocity [m/s]"
 }
 
 DENSITY_ZONE2 = "zone2/Density_kg_msup3_sup"
@@ -127,6 +142,13 @@ CAMERA_PRESETS = {
         "ParallelScale": 0.05, # was 0.1
         "Colorbar": {"Orientation": "Horizontal", "Position": [0.311, 0.075], "Length": 0.33},
     },
+    "3D_NEAR": {
+        "CameraPosition": [0.5824733318592127, 0.04876318085243274, 0.16198669927641116],
+        "CameraFocalPoint": [0.5081591609315163, -0.006139535238138901, 0.008629380687868398],
+        "CameraViewUp": [-0.09739205196914372, 0.9510508347723189, -0.29328671618761587],
+        "ParallelScale": 0.4564267410905977, # was 0.1
+        "Colorbar": {"Orientation": "Horizontal", "Position": [0.174555, 0.0997015], "Length": 0.5},
+    },
 }
 
 # ============================================================
@@ -163,6 +185,16 @@ def apply_camera_and_colorbar(lut, preset, title):
     sb.ComponentTitle = ""
     sb.TitleFontSize = 12
     sb.LabelFontSize = 10
+
+    # --- Sets background ---
+    # find settings proxy
+    colorPalette = GetSettingsProxy('ColorPalette')
+
+    # Properties modified on colorPalette (white)
+    colorPalette.Background = [1.0, 1.0, 1.0]
+
+    # ---- Sets axis label color -----
+    view.OrientationAxesLabelColor = [0.0, 0.0, 0.0] # black
 
 
 def make_slice(src, origin, normal, scalar_name=None, loc_identifier=None):
@@ -205,7 +237,7 @@ def make_slice(src, origin, normal, scalar_name=None, loc_identifier=None):
 # ===================== OVERLAY SLICE ========================
 # ============================================================
 
-def render_overlay_slice(origin, normal, preset, fname, logical_scalar):
+def render_overlay_slice(origin, normal, preset, fname, logical_scalar, hide_slice=True):
     scalar_zone1 = SCALAR_MAP[logical_scalar]["zone1"]
     scalar_zone2 = SCALAR_MAP[logical_scalar]["zone2"]
 
@@ -247,12 +279,60 @@ def render_overlay_slice(origin, normal, preset, fname, logical_scalar):
     SaveScreenshot(
         os.path.join(OUTPUT_DIR, f"{fname}_{logical_scalar}.png"),
         view,
-        ImageResolution=IMG_RES
+        ImageResolution=IMG_RES, TransparentBackground=1
     )
 
-    Hide(zone1_slice, view)
-    Hide(zone2_slice, view)
+    if hide_slice:
+        Hide(zone1_slice, view)
+        Hide(zone2_slice, view)
 
+def make_3D_slice_view(slices, preset, fname, scalar):
+    """
+    Parameters
+    ----------
+    slices : list
+        List of preexisting slice proxies (e.g., VolcanoSlice outputs).
+        Typically length 4 for a 4-slice composite.
+    preset : str
+        Name of the camera preset to apply (key in CAMERA_PRESETS).
+    fname : str
+        Output file name (no directory), e.g. 'four_YZ_slices_velocityx.png'.
+    scalar : str
+        Name of the scalar field to color by.
+    """
+    displays = []
+
+    # Show and color all slices by the same scalar
+    lut = GetColorTransferFunction(scalar)
+    for sl in slices:
+        slice_source = FindSource(sl)
+        SetActiveSource(slice_source)
+        disp = Show(slice_source, view)
+        loc = array_location(slice_source, scalar)
+        ColorBy(disp, (loc, scalar))
+
+        lut = GetColorTransferFunction(scalar)
+        lut.RescaleTransferFunctionToDataRange()
+        lut.ApplyPreset(COLORMAP_PRESET, True)
+
+        apply_camera_and_colorbar(lut, preset, scalar)
+        Render(view)
+
+    # # Configure shared LUT
+    # lut.RescaleTransferFunctionToDataRange()
+    # lut.ApplyPreset(COLORMAP_PRESET, True)
+
+    # # Apply camera + colorbar
+    # apply_camera_and_colorbar(lut, preset, scalar)
+
+    # # Render and save a single screenshot containing all visible slices
+    # Render(view)
+    SaveScreenshot(os.path.join(OUTPUT_DIR, f"{fname}_{scalar}.png"),
+                   view, ImageResolution=IMG_RES, TransparentBackground=1)
+
+    # Optionally hide slices afterwards
+    # for sl in slices:
+    #     Hide(sl, view
 
 # ============================================================
 # ===================== SCHLIEREN ============================
@@ -304,10 +384,31 @@ def render_schlieren(origin, normal, preset, fname):
         SaveScreenshot(
             os.path.join(OUTPUT_DIR, f"{fname}_{calc.ResultArrayName}.png"),
             view,
-            ImageResolution=IMG_RES
+            ImageResolution=IMG_RES, TransparentBackground=1
         )
 
         Hide(slice_calc, view)
+
+def make_slice_group(xySlices, xzSlices, yzSlices):
+    group = []
+    if xySlices:
+        for z in xySlices:
+            sl_name = f"XY_near_z{z:+0.5f}"
+            #sl = make_slice([0, 0, z], [0, 0, 1], sl_name, scalar, schlieren=False)
+            group.append(sl_name)
+    if xzSlices:
+        for y in xzSlices:
+            sl_name = f"XZ_y{y:+0.5f}"
+            #sl = make_slice([0, y, 0], [0, 1, 0], sl_name, scalar, schlieren=False)
+            group.append(sl_name)
+    if yzSlices:
+        for x in yzSlices:
+            sl_name = f"YZ_x{x:+0.5f}"
+            #sl = make_slice([x, 0, 0], [1, 0, 0], sl_name, scalar, schlieren=False)
+            group.append(sl_name)
+
+    print(f"Grouped Imgs: {group}")
+    return group
 
 # ============================================================
 # ===================== EXECUTION ============================
@@ -338,6 +439,11 @@ for scalar in SCALAR_MAP.keys():
             fname=f"XY_far_z{z:+0.5f}",
             logical_scalar=scalar
         )
+        ######### FIX HERE ##############
+        # 3D figs - Near 3D
+        sliceGroup = make_slice_group(XY_SLICE_Z_3D, XZ_SLICE_Y_3D, YZ_SLICE_X_3D)
+        outputFileName = "3D_Near_Group"
+        make_3D_slice_view(sliceGroup, "3D_NEAR", outputFileName, scalar)
 
 if ENABLE_SCHLIEREN:
     for z in XY_SLICE_Z:
