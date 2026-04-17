@@ -341,8 +341,8 @@ function createSpanwiseOverlays(tbl, spanSuffix, qtyNames, qtyFields, qtySpanDir
             end
 
             % --- 3) INTERPOLATE TO A SMOOTH Y_norm GRID ---------------------
-            % yq = linspace(min(y_valid), max(y_valid), 300);
-            % q_interp = interp1(y_valid, q_valid, yq, 'linear', 'extrap');
+            yq = linspace(min(y_valid), max(y_valid), 300);
+            q_interp = interp1(y_valid, q_valid, yq, 'linear', 'extrap');
             % -----------------------------------------------------------------
 
             % Determine color and line style for this axial location
@@ -351,7 +351,7 @@ function createSpanwiseOverlays(tbl, spanSuffix, qtyNames, qtyFields, qtySpanDir
             styleIdx   = mod(iRow-1, 3) + 1;                     % -, --, : within group
 
             % INVERTED: quantity on x-axis, Y_norm on y-axis
-            plot(q_valid, y_valid,...
+            plot(q_interp, yq,...
                  'LineWidth', 1.5,...
                  'Color', baseColors(colorIdx,:),...
                  'LineStyle', lineStyles{styleIdx});

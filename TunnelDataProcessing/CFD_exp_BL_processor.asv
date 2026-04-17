@@ -1,0 +1,184 @@
+%% Rrocessing code for Experimental Boundary Layer Data vs. CFD (Volcano)
+% Inputs: 3x SSWT BL run data (processed from process_BL_sweep_multiRun.m)
+% Output: Processed, combined Excel sheet and cross-plotted Y vs. Mach figure
+
+% --- Select Excel files (3 files) ---
+[excelNames, excelPath] = uigetfile(...
+    {'*.xlsx;*.xls;*.xlsm', 'Excel Files (*.xlsx, *.xls, *.xlsm)'},...
+    'Select 3 Excel files',...
+    'MultiSelect', 'on');
+
+if isequal(excelNames, 0)
+    error('No Excel files selected. Script terminated.');
+end
+
+if ischar(excelNames)
+    excelNames = {excelNames};
+end
+
+if numel(excelNames) ~= 3
+    error('You must select exactly 3 Excel files. You selected %d.', numel(excelNames));
+end
+
+excelFiles = fullfile(excelPath, excelNames);
+
+% --- Select CSV file ---
+[csvName, csvPath] = uigetfile(...
+    {'*.csv', 'CSV Files (*.csv)'},...
+    'Select the CSV file');
+
+if isequal(csvName, 0)
+    error('No CSV file selected. Script terminated.');
+end
+
+csvFile = fullfile(csvPath, csvName);
+
+%% Ask where to save outputs (Excel + figures)
+% Uses the same directory as the workbook
+output_dir = fullfile(excelPath, 'BoundaryLayerComparison');
+if ~exist(output_dir, 'dir')
+    mkdir(output_dir);
+end
+
+% Specifies the output Excel file name
+saveName = "BoundaryLayerComparison.xlsx";
+outputExcel = fullfile(output_dir, saveName);
+
+% Derive base name for figures (no extension)
+[~, baseName, ~] = fileparts(outputExcel);
+figFile = fullfile(output_dir, [baseName '.fig']);
+pngFile = fullfile(output_dir, [baseName '.png']);
+
+%% Constants
+maxY_cm = 2.59;   % 1.02 inches ≈ 2.59 cm
+
+%% Storage for processed datasets
+excelY    = cell(1, numel(excelFiles));
+excelMach = cell(1, numel(excelFiles));
+csvY      = [];
+csvMach   = [];
+
+%% ---- Process the Excel files ----
+for k = 1:numel(excelFiles)
+    T = readtable(excelFiles{k});
+
+    % Extract columns (assumed names)
+    y_cm = T.Y_shift_cm;   % already in cm
+    M    = T.Mach_BL;
+
+    % Remove NaNs
+    valid = ~isnan(y_cm) & ~isnan(M);
+    y_cm = y_cm(valid);
+    M    = M(valid);
+
+    % Average Mach numbers at duplicated Y locations
+    [yUnique, ~, idxGrp] = unique(y_cm);
+    MachAvg = accumarray(idxGrp, M, [], @mean);
+
+    % Make lowest y-value zero
+    yUnique = yUnique - min(yUnique);
+
+    % Keep only values <= 2.59 cm (1.02 in)
+    keep = yUnique <= maxY_cm;
+    yUnique = yUnique(keep);
+    MachAvg = MachAvg(keep);
+
+    % Store
+    excelY{k}    = yUnique;
+    excelMach{k} = MachAvg;
+end
+
+%% ---- Process the CSV file ----
+Tcsv = readtable(csvFile);
+
+% Extract columns:
+%   Points_1  -> Y in meters
+%   machnumberavg
+Y_m  = Tcsv.("Points_1");     % meters
+Mcsv = Tcsv.machnumberavg;
+
+% Remove NaNs
+valid = ~isnan(Y_m) & ~isnan(Mcsv);
+Y_m  = Y_m(valid);
+Mcsv = Mcsv(valid);
+
+% Convert Y from meters to cm
+Y_cm = Y_m * 100;
+
+% Remove duplicate Y values (keep first occurrence)
+[~, idxFirst] = unique(Y_cm, 'stable');
+Y_cm  = Y_cm(idxFirst);
+Mcsv  = Mcsv(idxFirst);
+
+% Make lowest y-value zero
+Y_cm = Y_cm - min(Y_cm);
+
+% Keep only values <= 2.59 cm (1.02 in)
+keep = Y_cm <= maxY_cm;
+Y_cm  = Y_cm(keep);
+Mcsv  = Mcsv(keep);
+
+% Interpolates over 
+
+csvY    = Y_cm;
+csvMach = Mcsv;
+
+%% ---- Save processed data to a single Excel file (multiple sheets) ----
+
+% Excel sheets for each processed dataset
+for k = 1:numel(excelFiles)
+    TblOut = table(excelY{k}, excelMach{k},...
+        'VariableNames', {'Y_cm', 'Mach'});
+    sheetName = sprintf('Excel_%d', k);
+    writetable(TblOut, outputExcel, 'Sheet', sheetName, 'WriteMode', 'overwrite');
+end
+
+% CSV processed data
+TblCSV = table(csvY, csvMach,...
+    'VariableNames', {'Y_cm', 'Mach'});
+writetable(TblCSV, outputExcel, 'Sheet', 'CSV', 'WriteMode', 'overwrite');
+
+%% ---- Build legend labels from Excel filenames ----
+excelLegendLabels = cell(1, numel(excelNames));
+for k = 1:numel(excelNames)
+    [~, fname, ~] = fileparts(excelNames{k});
+    parts = strsplit(fname, {'_','.'});
+    excelLegendLabels{k} = parts{end-1};   % last token after "_"
+end
+
+% CSV legend label from CSV filename (without extension)
+[~, csvBaseName, ~] = fileparts(csvName);
+csvLegendLabel = 'Volcano';  % or set a custom label if you prefer
+
+%% ---- Plot all datasets ----
+fig = figure; 
+hold on; grid on; box on;
+
+colors = lines(numel(excelFiles) + 1);
+
+% Plot Excel datasets (small circles)
+for k = 1:numel(excelFiles)
+    plot(excelMach{k}, excelY{k}, '-o',...
+        'Color', colors(k,:),...
+        'MarkerSize', 4,...              % smaller circles
+        'DisplayName', excelLegendLabels{k});
+end
+
+% Plot CSV dataset as a continuous line (no markers)
+plot(csvMach, csvY, '-',...
+    'Color', colors(end,:),...
+    'LineWidth', 1.5,...
+    'DisplayName', csvLegendLabel);
+
+xlabel('Mach number');
+ylabel('Y (cm)');
+title('Boundary-Layer Mach Profiles (Y vs Mach)');
+legend('Location', 'best');
+set(gca, 'YDir', 'normal');
+
+%% ---- Save figure as.fig and.png ----
+savefig(fig, figFile);       % MATLAB figure format
+saveas(fig, pngFile);        % PNG image
+
+disp(['Processed data saved to: ' outputExcel]);
+disp(['Figure saved as: ' figFile ' and ' pngFile]);

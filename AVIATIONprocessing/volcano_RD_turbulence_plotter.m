@@ -230,11 +230,11 @@ for iP = 1:numel(planeNames)
                 end
 
                 % 4) Interpolate to a smooth Y_norm grid
-                % yq = linspace(min(y_valid), max(y_valid), 300);
-                % q_interp = interp1(y_valid, q_valid, yq, 'linear', 'extrap');
+                yq = linspace(min(y_valid), max(y_valid), 300);
+                q_interp = interp1(y_valid, q_valid, yq, 'linear', 'extrap');
 
                 % Plot quantity on x-axis, Y_norm on y-axis
-                plot(q_valid, y_valid,...
+                plot(q_interp, yq,...
                     'LineWidth', lineWidth,...
                     'Color', geomColors(g,:));
 
