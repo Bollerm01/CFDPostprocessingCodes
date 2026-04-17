@@ -316,6 +316,7 @@ def make_3D_slice_view(slices, preset, fname, scalar):
 
     # Show and color all slices by the same scalar
     lut = GetColorTransferFunction(scalar)
+    scalarSave = scalar.split("/")[1] #pulls just the name, not the zone
     for sl in slices:
         slice_source = FindSource(sl)
         SetActiveSource(slice_source)
@@ -327,8 +328,8 @@ def make_3D_slice_view(slices, preset, fname, scalar):
         lut = GetColorTransferFunction(scalar)
         lut.RescaleTransferFunctionToDataRange()
         lut.ApplyPreset(COLORMAP_PRESET, True)
-
-        title = SCALAR_TITLES.get(scalar, scalar)
+        
+        title = SCALAR_TITLES.get(scalarSave, scalarSave)
 
         apply_camera_and_colorbar(lut, preset, title)
         Render(view)
