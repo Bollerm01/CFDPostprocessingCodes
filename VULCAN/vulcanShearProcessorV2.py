@@ -461,7 +461,7 @@ for scalar in SCALAR_MAP.keys():
         )
         ######### FIX HERE ##############
         # 3D figs - Near 3D
-        sliceGroup = make_slice_group(XY_SLICE_Z_3D, XZ_SLICE_Y_3D, YZ_SLICE_X_3D)
+        sliceGroup = make_slice_group(XY_SLICE_Z_3D, XZ_SLICE_Y_3D, YZ_SLICE_X_3D, scalar)
         outputFileName = "3D_Near_Group"
         make_3D_slice_view(sliceGroup, "3D_NEAR", outputFileName, scalar)
 
