@@ -1,5 +1,5 @@
 ## NEEDS UPDATING TO VULCAN INPUTS ##
-
+### LEGACY: SEE MATLAB IN AVIATIONprocessing
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
