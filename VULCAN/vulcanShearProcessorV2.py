@@ -316,6 +316,7 @@ def make_3D_slice_view(slices, preset, fname, scalar):
         slice_source = FindSource(sl)
         SetActiveSource(slice_source)
         disp = Show(slice_source, view)
+        edge_disp.Representation = "Surface"
         loc = array_location(slice_source, scalar)
         ColorBy(disp, (loc, scalar))
 
