@@ -183,7 +183,7 @@ def apply_camera_and_colorbar(lut, preset, title):
 
     # Get scalar bar for current LUT
     sb = GetScalarBar(lut, view)
-    sb.Visibility = 1
+    sb.Visibility = 1 # CHANGE TO 0 TO HIDE BAR
     sb.WindowLocation = "Any Location"
     sb.Orientation = p["Colorbar"]["Orientation"]
     sb.Position = p["Colorbar"]["Position"]
