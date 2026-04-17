@@ -12,26 +12,26 @@ INPUT_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD00/RD00_004/latest.v
 OUTPUT_DIR = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/contourOutput/RD00" # CHANGE PER RUN
 folder_path = os.path.dirname(INPUT_FILE) # /home/user/project
 file_name = os.path.basename(folder_path) # project
-SCALARS = [
-    "reynoldsstressxx", "reynoldsstressyy", "reynoldsstresszz",
-    "reynoldsstressxy", "reynoldsstressxz", "reynoldsstressyz",
-    "velocityx", "velocityxavg", "tke", "pressureavg", "vorticitymag", "vorticitymagavg"
-]
+# SCALARS = [
+#     "reynoldsstressxx", "reynoldsstressyy", "reynoldsstresszz",
+#     "reynoldsstressxy", "reynoldsstressxz", "reynoldsstressyz",
+#     "velocityx", "velocityxavg", "tke", "pressureavg", "vorticitymag", "vorticitymagavg"
+# ]
 
 # Debugging scalars
-# SCALARS = ["velocityx"]
+SCALARS = ["reynoldsstressyy"]
 ENABLE_SCHLIEREN = True # Change to true if desired
 DENSITY_NAME = "density"
 
 # Debugging loop
-# YZ_SLICE_X = [2.15057954, 2.1793151, 2.216945]
-# XY_SLICE_Z = [0.0381]
-# XZ_SLICE_Y = [0.0093,0.001]
+YZ_SLICE_X = [2.15057954, 2.1793151, 2.216945]
+XY_SLICE_Z = [0.0381]
+XZ_SLICE_Y = [0.0093,0.001]
 
 # full loop
-YZ_SLICE_X = [2.011691, 2.080109, 2.114318, 2.15057954, 2.16015806, 2.1690524, 2.1793151, 2.18889362, 2.19847214, 2.20736648, 2.216945, 2.223063, 2.307804104]
-XY_SLICE_Z = [-0.0381, 0.00, 0.0381]
-XZ_SLICE_Y = [0.0182, 0.0093, 0.003, 0.001]
+# YZ_SLICE_X = [2.011691, 2.080109, 2.114318, 2.15057954, 2.16015806, 2.1690524, 2.1793151, 2.18889362, 2.19847214, 2.20736648, 2.216945, 2.223063, 2.307804104]
+# XY_SLICE_Z = [-0.0381, 0.00, 0.0381]
+# XZ_SLICE_Y = [0.0182, 0.0093, 0.003, 0.001]
 
 # 3D slices group
 YZ_SLICE_X_3D = [2.15057954, 2.1793151, 2.216945] #x/L = 0.03, 0.45, 1
