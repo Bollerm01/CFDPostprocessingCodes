@@ -360,7 +360,7 @@ for iNorm = 1:numel(avg_norm_cols)
             data = sortrows(data, 1);
 
             % Plane + threshold in legend
-            label = sprintf('%s, %d%%/%d%%', locLabel, round(upper*100), round(lower*100));
+            label = sprintf('%s, %d%%/%d%% $$U/U_{\infty}$$', locLabel, round(upper*100), round(lower*100));
 
             % Choose line style by threshold index
             ls = lineStyles{min(iThr, numel(lineStyles))};
@@ -385,7 +385,7 @@ for iNorm = 1:numel(avg_norm_cols)
     ylabel('Normalized Shear Layer Thickness', 'Interpreter', 'latex');
     title(sprintf('%s Thickness', nice_name), 'Interpreter', 'latex');
     grid on;
-    legend('Location', 'best');  % let MATLAB choose best in-axes position
+    legend('Location', 'best', 'Interpreter','latex');  % let MATLAB choose best in-axes position
     hold off;
 
     % Save combined-all-planes plots

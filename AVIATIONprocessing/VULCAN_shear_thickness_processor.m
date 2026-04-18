@@ -178,7 +178,7 @@ for iThr = 1:size(THRESHOLDS,1)
     end
     data = sortrows(data, 1);
 
-    label = sprintf('%d%%/%d%% Bounds', round(upper*100), round(lower*100));
+    label = sprintf('%d%%/%d%% $$U/U_{\infty}$$', round(upper*100), round(lower*100));
     plot(data(:,1), data(:,2), '-o', 'DisplayName', label, 'LineWidth', 1.5);
     has_data = true;
 end
@@ -190,7 +190,7 @@ if has_data
     ylabel('Normalized Shear Layer Thickness', 'Interpreter', 'latex');
     title(sprintf('%s Thickness, %s', nice_name, locLabel), 'Interpreter', 'latex');
     grid on;
-    legend('Location', 'best');
+    legend('Location', 'best', 'Interpreter','latex');
     hold off;
 
     plot_path_png = fullfile(plots_dir,...
