@@ -6,11 +6,11 @@ import os
 # ============================================================
 
 INPUT_ROOT = r"E:\Boller CFD\VULCAN Data\SSWT"
-CASE = "CAVmix_SSWT_r0p5_noinject"
+CASE = "CAVmix_SSWT_r0_noinject" #Change this prior to every run
 INPUT_FILE = rf"{INPUT_ROOT}\{CASE}\iteration-009\Plot_files\vulcan_solution.plt"
 
-OUTPUT_ROOT = r"E:\Boller CFD\AVIATION CFD\output\VulcanProcessingOutput"
-OUTPUT_DIR = os.path.join(OUTPUT_ROOT, CASE)
+OUTPUT_ROOT = r"E:\Boller CFD\AVIATION CFD\Paper Results\finalData\VULCAN\CompleteData\Contours" 
+OUTPUT_DIR = os.path.join(OUTPUT_ROOT, "RD00")#Change this prior to every run
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # Test Locations
