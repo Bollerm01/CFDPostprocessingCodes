@@ -168,7 +168,7 @@ def apply_camera_and_colorbar(lut, preset, array_name):
     # ---- Scalar bar ----
     bar = GetScalarBar(lut, view)
     # bar.Visibility = 1
-    bar.visibility = 0 # hides bar
+    bar.Visibility = 0 # hides bar
 
     # --- Reset cached geometry ----
     bar.AutomaticLabelFormat = 0
