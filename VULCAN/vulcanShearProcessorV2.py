@@ -5,12 +5,18 @@ import os
 # ===================== USER SETTINGS =======================
 # ============================================================
 
-INPUT_ROOT = r"E:\Boller CFD\VULCAN Data\SSWT"
-CASE = "CAVmix_SSWT_r0_noinject" #Change this prior to every run
-INPUT_FILE = rf"{INPUT_ROOT}\{CASE}\iteration-009\Plot_files\vulcan_solution.plt"
+#### Windows System Roots ####
+# INPUT_ROOT = r"E:\Boller CFD\VULCAN Data\SSWT"
+# CASE = "CAVmix_SSWT_r0_noinject" #Change this prior to every run
+# INPUT_FILE = rf"{INPUT_ROOT}\{CASE}\iteration-009\Plot_files\vulcan_solution.plt"
 
-OUTPUT_ROOT = r"E:\Boller CFD\AVIATION CFD\Paper Results\finalData\VULCAN\CompleteData\Contours" 
-OUTPUT_DIR = os.path.join(OUTPUT_ROOT, "RD00")#Change this prior to every run
+# OUTPUT_ROOT = r"E:\Boller CFD\AVIATION CFD\Paper Results\finalData\VULCAN\CompleteData\Contours" 
+# OUTPUT_DIR = os.path.join(OUTPUT_ROOT, "RD00")#Change this prior to every run
+
+# Linux System Roots
+CASE = "RD00" #Change this prior to every run
+INPUT_FILE = rf"/home/bollerma/RANSdata/VULCAN/SolutionFilesRDSweep/{CASE}/vulcan_solution.plt"
+OUTPUT_DIR = rf"/home/bollerma/RANSdata/VULCAN/SolutionFilesRDSweep/{CASE}/output"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # Test Locations
