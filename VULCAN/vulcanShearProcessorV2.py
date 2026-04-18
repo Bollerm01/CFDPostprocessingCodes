@@ -14,7 +14,7 @@ import os
 # OUTPUT_DIR = os.path.join(OUTPUT_ROOT, "RD00")#Change this prior to every run
 
 # Linux System Roots
-CASE = "RD17" #Change this prior to every run
+CASE = "RD52" #Change this prior to every run
 INPUT_FILE = rf"/home/bollerma/RANSdata/VULCAN/SolutionFilesRDSweep/{CASE}/vulcan_solution.plt"
 OUTPUT_DIR = rf"/home/bollerma/RANSdata/VULCAN/SolutionFilesRDSweep/{CASE}/output"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
