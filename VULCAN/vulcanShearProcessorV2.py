@@ -14,13 +14,15 @@ OUTPUT_DIR = os.path.join(OUTPUT_ROOT, CASE)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # Test Locations
-YZ_SLICE_X = [0.46552219, 0.49415485, 0.53165] #x/L = 0.03, 0.45, 1
-XY_SLICE_Z = [0.0001]
-XZ_SLICE_Y = [-0.0215, -0.01556]
+# YZ_SLICE_X = [0.46552219, 0.49415485, 0.53165] #x/L = 0.03, 0.45, 1
+# XY_SLICE_Z = [0.0001]
+# XZ_SLICE_Y = [-0.0215, -0.01556]
 
 # Full loop Slice positions
-# YZ_SLICE_X = [0.327131, 0.395304, 0.4293905, 0.46552219, 0.47506641, 0.4839289, 0.49415485, 0.50369907, 0.51324329, 0.52210578, 0.53165, 0.5452846, 0.622183744]   
-# XY_SLICE_Z = [0.0127]  
+YZ_SLICE_X = [0.327131, 0.395304, 0.4293905, 0.46552219, 0.47506641, 0.4839289, 0.49415485, 0.50369907, 0.51324329, 0.52210578, 0.53165, 0.5452846, 0.622183744]   
+XZ_SLICE_Y = [-0.0215, -0.01556]
+XY_SLICE_Z = [0.0001, 0.0127]  
+
 
 # 3D slices group
 YZ_SLICE_X_3D = [0.46552219, 0.49415485, 0.53165] #x/L = 0.03, 0.45, 1
@@ -29,43 +31,43 @@ XZ_SLICE_Y_3D = [-0.0215, -0.01556]
 
 
 
-# SCALAR_MAP = {
-#     "Pressure_Pa": {"zone1": "Pressure_Pa", "zone2": "zone2/Pressure_Pa"},
-#     "U_velocity_m_s": {"zone1": "U_velocity_m_s", "zone2": "zone2/U_velocity_m_s"},
-#     "Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup": {
-#         "zone1": "Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup",
-#         "zone2": "zone2/Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup",
-#     },
-#     "greekt_greeksubxx_subsupt_sup": {"zone1": "greekt_greeksubxx_subsupt_sup", "zone2": "zone2/greekt_greeksubxx_subsupt_sup"},
-#     "greekt_greeksubxy_subsupt_sup": {"zone1": "greekt_greeksubxy_subsupt_sup", "zone2": "zone2/greekt_greeksubxy_subsupt_sup"},
-#     "greekt_greeksubxz_subsupt_sup": {"zone1": "greekt_greeksubxz_subsupt_sup", "zone2": "zone2/greekt_greeksubxz_subsupt_sup"},
-#     "greekt_greeksubyy_subsupt_sup": {"zone1": "greekt_greeksubyy_subsupt_sup", "zone2": "zone2/greekt_greeksubyy_subsupt_sup"},
-#     "greekt_greeksubyz_subsupt_sup": {"zone1": "greekt_greeksubyz_subsupt_sup", "zone2": "zone2/greekt_greeksubyz_subsupt_sup"},
-#     "greekt_greeksubzz_subsupt_sup": {"zone1": "greekt_greeksubzz_subsupt_sup", "zone2": "zone2/greekt_greeksubzz_subsupt_sup"},
-# }
+SCALAR_MAP = {
+    "Pressure_Pa": {"zone1": "Pressure_Pa", "zone2": "zone2/Pressure_Pa"},
+    "U_velocity_m_s": {"zone1": "U_velocity_m_s", "zone2": "zone2/U_velocity_m_s"},
+    "Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup": {
+        "zone1": "Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup",
+        "zone2": "zone2/Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup",
+    },
+    "greekt_greeksubxx_subsupt_sup": {"zone1": "greekt_greeksubxx_subsupt_sup", "zone2": "zone2/greekt_greeksubxx_subsupt_sup"},
+    "greekt_greeksubxy_subsupt_sup": {"zone1": "greekt_greeksubxy_subsupt_sup", "zone2": "zone2/greekt_greeksubxy_subsupt_sup"},
+    "greekt_greeksubxz_subsupt_sup": {"zone1": "greekt_greeksubxz_subsupt_sup", "zone2": "zone2/greekt_greeksubxz_subsupt_sup"},
+    "greekt_greeksubyy_subsupt_sup": {"zone1": "greekt_greeksubyy_subsupt_sup", "zone2": "zone2/greekt_greeksubyy_subsupt_sup"},
+    "greekt_greeksubyz_subsupt_sup": {"zone1": "greekt_greeksubyz_subsupt_sup", "zone2": "zone2/greekt_greeksubyz_subsupt_sup"},
+    "greekt_greeksubzz_subsupt_sup": {"zone1": "greekt_greeksubzz_subsupt_sup", "zone2": "zone2/greekt_greeksubzz_subsupt_sup"},
+}
 
 # Debugging Scalar Map
-SCALAR_MAP = {
-    "U_velocity_m_s": {"zone1": "U_velocity_m_s", "zone2": "zone2/U_velocity_m_s"}
-}
-
-# # User-editable scalar bar titles
-# SCALAR_TITLES = {
-#     "Pressure_Pa": "Pressure [Pa]",
-#     "U_velocity_m_s": "U Velocity [m/s]",
-#     "Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup": "Turbulence Kinetic Energy [m²/s²]",
-#     "greekt_greeksubxx_subsupt_sup": r"$\tau_{xx}$",
-#     "greekt_greeksubxy_subsupt_sup": r"$\tau_{xy}$",
-#     "greekt_greeksubxz_subsupt_sup": r"$\tau_{xz}$",
-#     "greekt_greeksubyy_subsupt_sup": r"$\tau_{yy}$",
-#     "greekt_greeksubyz_subsupt_sup": r"$\tau_{yz}$",
-#     "greekt_greeksubzz_subsupt_sup": r"$\tau_{zz}$",
+# SCALAR_MAP = {
+#     "U_velocity_m_s": {"zone1": "U_velocity_m_s", "zone2": "zone2/U_velocity_m_s"}
 # }
 
-# Debugging Titles
+# # User-editable scalar bar titles
 SCALAR_TITLES = {
-    "U_velocity_m_s": "U Velocity [m/s]"
+    "Pressure_Pa": "Pressure [Pa]",
+    "U_velocity_m_s": "U Velocity [m/s]",
+    "Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup": "Turbulence Kinetic Energy [m²/s²]",
+    "greekt_greeksubxx_subsupt_sup": r"$\tau_{xx}$",
+    "greekt_greeksubxy_subsupt_sup": r"$\tau_{xy}$",
+    "greekt_greeksubxz_subsupt_sup": r"$\tau_{xz}$",
+    "greekt_greeksubyy_subsupt_sup": r"$\tau_{yy}$",
+    "greekt_greeksubyz_subsupt_sup": r"$\tau_{yz}$",
+    "greekt_greeksubzz_subsupt_sup": r"$\tau_{zz}$",
 }
+
+# Debugging Titles
+# SCALAR_TITLES = {
+#     "U_velocity_m_s": "U Velocity [m/s]"
+# }
 
 DENSITY_ZONE2 = "zone2/Density_kg_msup3_sup"
 ENABLE_SCHLIEREN = False
@@ -298,62 +300,55 @@ def render_overlay_slice(origin, normal, preset, fname, logical_scalar, hide_sli
         Hide(zone1_slice, view)
         Hide(zone2_slice, view)
 
-def make_3D_slice_view(slices, preset, fname, scalar):
+def make_3D_slice_view(slices, preset, fname, scalar_zone2, logical_scalar):
     """
     Parameters
     ----------
     slices : list
-        List of preexisting slice proxies (e.g., VolcanoSlice outputs).
-        Typically length 4 for a 4-slice composite.
+        List of Slice proxies (zone2 slices).
     preset : str
-        Name of the camera preset to apply (key in CAMERA_PRESETS).
+        Camera preset key ('3D_NEAR' etc.).
     fname : str
-        Output file name (no directory), e.g. 'four_YZ_slices_velocityx.png'.
-    scalar : str
-        Name of the scalar field to color by.
+        Base output file name (no directory, no extension).
+    scalar_zone2 : str
+        Actual array name on zone2 (e.g. 'zone2/U_velocity_m_s').
+    logical_scalar : str
+        Logical key used in SCALAR_TITLES (e.g. 'U_velocity_m_s').
     """
-    displays = []
+    # Shared LUT for the actual array name
+    lut = GetColorTransferFunction(scalar_zone2)
 
-    # Show and color all slices by the same scalar
-    lut = GetColorTransferFunction(scalar)
-    scalarSave = scalar.split("/")[1] #pulls just the name, not the zone
     for sl in slices:
-        slice_source = FindSource(sl)
-        SetActiveSource(slice_source)
-        disp = Show(slice_source, view)
+        # sl is already a proxy; no FindSource needed
+        SetActiveSource(sl)
+        disp = Show(sl, view)
         disp.Representation = "Surface"
-        loc = array_location(slice_source, scalar)
-        ColorBy(disp, (loc, scalar))
 
-        lut = GetColorTransferFunction(scalar)
-        lut.RescaleTransferFunctionToDataRange()
-        lut.ApplyPreset(COLORMAP_PRESET, True)
-        
-        title = SCALAR_TITLES.get(scalarSave, scalarSave)
+        loc = array_location(sl, scalar_zone2)
+        ColorBy(disp, (loc, scalar_zone2))
 
-        apply_camera_and_colorbar(lut, preset, title)
-        Render(view)
+    # Configure LUT once
+    lut.RescaleTransferFunctionToDataRange()
+    lut.ApplyPreset(COLORMAP_PRESET, True)
 
-    # # Configure shared LUT
-    # lut.RescaleTransferFunctionToDataRange()
-    # lut.ApplyPreset(COLORMAP_PRESET, True)
+    # Title uses logical name
+    title = SCALAR_TITLES.get(logical_scalar, logical_scalar)
+    apply_camera_and_colorbar(lut, preset, title)
 
-    # # Apply camera + colorbar
-    # apply_camera_and_colorbar(lut, preset, scalar)
+    # Axis labels color
+    view.OrientationAxesLabelColor = [0.0, 0.0, 0.0]
 
-    # # Render and save a single screenshot containing all visible slices
-    # Render(view)
-
-    # ---- Sets axis label color -----
-    view.OrientationAxesLabelColor = [0.0, 0.0, 0.0] # black
-
-    scalarSave = scalar.split("/")[1]
-    SaveScreenshot(os.path.join(OUTPUT_DIR, f"{fname}_{scalarSave}.png"),
-                   view, ImageResolution=IMG_RES, TransparentBackground=1)
+    Render(view)
+    SaveScreenshot(
+        os.path.join(OUTPUT_DIR, f"{fname}_{logical_scalar}.png"),
+        view,
+        ImageResolution=IMG_RES,
+        TransparentBackground=1
+    )
 
     # Optionally hide slices afterwards
-    # for sl in slices:
-    #     Hide(sl, view
+    for sl in slices:
+        Hide(sl, view)
 
 # ============================================================
 # ===================== SCHLIEREN ============================
@@ -410,42 +405,81 @@ def render_schlieren(origin, normal, preset, fname):
 
         Hide(slice_calc, view)
 
-def make_slice_group(xySlices, xzSlices, yzSlices, scalar):
+def make_slice_group(xySlices, xzSlices, yzSlices, scalar_zone2):
+    """
+    Create 3D slice group for a single scalar (zone2 array).
+
+    Parameters
+    ----------
+    xySlices : list of z values
+    xzSlices : list of y values
+    yzSlices : list of x values
+    scalar_zone2 : str
+        Actual scalar array name on zone2 (e.g. 'zone2/U_velocity_m_s').
+
+    Returns
+    -------
+    list of Slice proxies
+    """
     group = []
+
+    # XY planes: normal [0, 0, 1]
     if xySlices:
         for z in xySlices:
             loc_ID = f"XY_near_z{z:+0.5f}"
-            sl_name = f"{scalar}_{loc_ID}"
-            #sl = make_slice([0, 0, z], [0, 0, 1], sl_name, scalar, schlieren=False)
-            group.append(sl_name)
+            sl = make_slice(
+                src=zone2,
+                origin=[0, 0, z],
+                normal=[0, 0, 1],
+                scalar_name=scalar_zone2,
+                loc_identifier=loc_ID
+            )
+            group.append(sl)
+
+    # XZ planes: normal [0, 1, 0]
     if xzSlices:
         for y in xzSlices:
             loc_ID = f"XZ_y{y:+0.5f}"
-            sl_name = f"{scalar}_{loc_ID}"
-            #sl = make_slice([0, y, 0], [0, 1, 0], sl_name, scalar, schlieren=False)
-            group.append(sl_name)
+            sl = make_slice(
+                src=zone2,
+                origin=[0, y, 0],
+                normal=[0, 1, 0],
+                scalar_name=scalar_zone2,
+                loc_identifier=loc_ID
+            )
+            group.append(sl)
+
+    # YZ planes: normal [1, 0, 0]
     if yzSlices:
         for x in yzSlices:
             loc_ID = f"YZ_x{x:+0.5f}"
-            sl_name = f"{scalar}_{loc_ID}"
-            #sl = make_slice([x, 0, 0], [1, 0, 0], sl_name, scalar, schlieren=False)
-            group.append(sl_name)
+            sl = make_slice(
+                src=zone2,
+                origin=[x, 0, 0],
+                normal=[1, 0, 0],
+                scalar_name=scalar_zone2,
+                loc_identifier=loc_ID
+            )
+            group.append(sl)
 
-    print(f"Grouped Imgs: {group}")
+    print(f"Grouped 3D slice proxies for {scalar_zone2}: {group}")
     return group
 
 # ============================================================
 # ===================== EXECUTION ============================
 # ============================================================
 
-for scalar in SCALAR_MAP.keys():
+for logical_scalar in SCALAR_MAP.keys():
+    scalar_zone2 = SCALAR_MAP[logical_scalar]["zone2"]
+
+    # 2D OVERLAY SLICES
     for x in YZ_SLICE_X:
         render_overlay_slice(
             origin=[x, 0, 0],
             normal=[1, 0, 0],
             preset="YZ",
             fname=f"YZ_x{x:+0.5f}",
-            logical_scalar=scalar
+            logical_scalar=logical_scalar
         )
 
     for y in XZ_SLICE_Y:
@@ -454,7 +488,7 @@ for scalar in SCALAR_MAP.keys():
             normal=[0, 1, 0],
             preset="XZ",
             fname=f"XZ_y{y:+0.5f}",
-            logical_scalar=scalar
+            logical_scalar=logical_scalar
         )
 
     for z in XY_SLICE_Z:
@@ -463,21 +497,31 @@ for scalar in SCALAR_MAP.keys():
             normal=[0, 0, 1],
             preset="XY_NEAR",
             fname=f"XY_near_z{z:+0.5f}",
-            logical_scalar=scalar
+            logical_scalar=logical_scalar
         )
         render_overlay_slice(
             origin=[0, 0, z],
             normal=[0, 0, 1],
             preset="XY_FAR",
             fname=f"XY_far_z{z:+0.5f}",
-            logical_scalar=scalar
+            logical_scalar=logical_scalar
         )
-        ######### FIX HERE ##############
-        # 3D figs - Near 3D
-        scalar_zone2 = SCALAR_MAP[scalar]["zone2"]
-        sliceGroup = make_slice_group(XY_SLICE_Z_3D, XZ_SLICE_Y_3D, YZ_SLICE_X_3D, scalar)
-        outputFileName = "3D_Near_Group"
-        make_3D_slice_view(sliceGroup, "3D_NEAR", outputFileName, scalar_zone2)
+
+    # 3D FIGS - Near 3D (zone2 slices)
+    sliceGroup = make_slice_group(
+        xySlices=XY_SLICE_Z_3D,
+        xzSlices=XZ_SLICE_Y_3D,
+        yzSlices=YZ_SLICE_X_3D,
+        scalar_zone2=scalar_zone2
+    )
+    outputFileName = "3D_Near_Group"
+    make_3D_slice_view(
+        slices=sliceGroup,
+        preset="3D_NEAR",
+        fname=outputFileName,
+        scalar_zone2=scalar_zone2,
+        logical_scalar=logical_scalar
+    )
 
 if ENABLE_SCHLIEREN:
     for z in XY_SLICE_Z:
