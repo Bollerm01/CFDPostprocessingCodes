@@ -13,11 +13,11 @@ base_dir = "/home/bollerma/LESdata/SSWT/fullCav/injectionTest/test15/test1M2SSWT
 file_pattern = "cavityPlane.*.plt"
 
 # Output movie (MP4)
-output_movie = "/home/bollerma/processingCodes/CFDPostprocessingCodes/VULCAN/cavityPlane_massfraction1.mp4"
+output_movie = "/home/bollerma/LESdata/SSWT/fullCav/injectionTest/test15/cavityPlane_massfraction1.mp4"
 
 # Reduced resolution
-image_width = 800
-image_height = 600
+image_width = 1920
+image_height = 1080
 
 # Frames per second
 fps = 24
