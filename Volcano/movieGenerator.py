@@ -14,6 +14,14 @@ image_height = 600
 var_name = "massfraction1"
 
 # ----------------------
+# HELPER: delete all sources
+# ----------------------
+def delete_all_sources():
+    srcs = GetSources()
+    for key in list(srcs.keys()):
+        Delete(srcs[key])
+
+# ----------------------
 # COLLECT FILES
 # ----------------------
 files = sorted(glob.glob(os.path.join(base_dir, file_pattern)))
@@ -48,8 +56,8 @@ renderView1.UseColorPaletteForBackground = 0  # plain background
 for i, f in enumerate(files):
     print(f"Processing {i+1}/{len(files)}: {f}")
 
-    # Clear previous sources
-    DeleteAll()
+    # Remove previous data sources
+    delete_all_sources()
     renderView1.Update()
 
     # Reader for this specific PLT file
@@ -73,10 +81,10 @@ for i, f in enumerate(files):
 
     # Move scalar bar further to the RIGHT
     scalar_bar.WindowLocation = 'Any Location'
-    scalar_bar.Position = [0.90, 0.20]   # x ~ 0.90 (near right edge), y ~ 0.20
+    scalar_bar.Position = [0.90, 0.20]   # x ~ 0.90 (near right edge)
     scalar_bar.ScalarBarLength = 0.33
 
-    # Ensure camera stays as desired
+    # Re-assert camera (in case ParaView tweaks it)
     renderView1.Set(
         InteractionMode='2D',
         CameraPosition=[2.1945000886917114, 0.5291300058364868, 0.0],
