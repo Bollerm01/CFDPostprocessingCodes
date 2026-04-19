@@ -13,7 +13,7 @@ base_dir = "/home/bollerma/LESdata/SSWT/fullCav/injectionTest/test15/test1M2SSWT
 file_pattern = "cavityPlane.*.plt"
 
 # Output movie (MP4)
-output_movie = "/home/bollerma/LESdata/SSWT/fullCav/injectionTest/test15/cavityPlane_massfraction1.mp4"
+output_movie = "/home/bollerma/LESdata/SSWT/fullCav/injectionTest/test15/cavityPlane_massfraction1.avi"
 
 # Reduced resolution
 image_width = 1920
