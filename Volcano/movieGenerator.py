@@ -13,13 +13,27 @@ image_width = 800
 image_height = 600
 var_name = "massfraction1"
 
+# Fixed global scalar range
+scalar_min = 0.0
+scalar_max = 0.25
+
+# Sampling frequency and time step (50 kHz)
+sampling_freq = 50000.0        # Hz
+dt = 1.0 / sampling_freq       # seconds per frame
+
 # ----------------------
-# HELPER: delete all sources
+# HELPER: delete all non-text sources
 # ----------------------
-def delete_all_sources():
+def delete_all_sources_except_text():
     srcs = GetSources()
-    for key in list(srcs.keys()):
-        Delete(srcs[key])
+    for key, proxy in list(srcs.items()):
+        # Keep Text sources so the timestamp survives across frames
+        try:
+            if proxy.GetXMLName() == "TextSource":
+                continue
+        except AttributeError:
+            pass
+        Delete(proxy)
 
 # ----------------------
 # COLLECT FILES
@@ -51,13 +65,26 @@ renderView1.Set(
 renderView1.UseColorPaletteForBackground = 0  # plain background
 
 # ----------------------
+# TIMESTAMP TEXT (created once, updated each frame)
+# ----------------------
+time_text = Text()
+time_text.Text = ""
+time_display = Show(time_text, renderView1)
+time_display.WindowLocation = 'Any Location'
+time_display.Position = [0.05, 0.90]  # near top-left
+time_display.FontSize = 14
+
+# ----------------------
 # LOOP OVER FILES
 # ----------------------
+lut = None
+pwf = None
+
 for i, f in enumerate(files):
     print(f"Processing {i+1}/{len(files)}: {f}")
 
-    # Remove previous data sources
-    delete_all_sources()
+    # Remove previous data sources but keep timestamp Text
+    delete_all_sources_except_text()
     renderView1.Update()
 
     # Reader for this specific PLT file
@@ -72,17 +99,24 @@ for i, f in enumerate(files):
 
     # Coloring
     ColorBy(display, ('POINTS', var_name))
-    display.RescaleTransferFunctionToDataRange(True, False)
-    display.SetScalarBarVisibility(renderView1, True)
 
-    lut = GetColorTransferFunction(var_name)
-    pwf = GetOpacityTransferFunction(var_name)
+    # Get LUT/PWF once; enforce global range [0, 0.25] for every frame
+    if lut is None:
+        lut = GetColorTransferFunction(var_name)
+        pwf = GetOpacityTransferFunction(var_name)
+    lut.RescaleTransferFunction(scalar_min, scalar_max)
+    pwf.RescaleTransferFunction(scalar_min, scalar_max)
+
+    # Do NOT auto-rescale to data; keep fixed global range
+    # display.RescaleTransferFunctionToDataRange(True, False)
+
+    display.SetScalarBarVisibility(renderView1, True)
     scalar_bar = GetScalarBar(lut, renderView1)
 
-    # Move scalar bar further to the RIGHT
+    # Move scalar bar up and slightly left
     scalar_bar.WindowLocation = 'Any Location'
-    scalar_bar.Position = [0.90, 0.20]   # x ~ 0.90 (near right edge)
-    scalar_bar.ScalarBarLength = 0.33
+    scalar_bar.Position = [0.82, 0.35]   # adjust as needed
+    scalar_bar.ScalarBarLength = 0.30
 
     # Re-assert camera (in case ParaView tweaks it)
     renderView1.Set(
@@ -92,6 +126,12 @@ for i, f in enumerate(files):
         CameraViewUp=[1.0, 0.0, 0.0],
         CameraParallelScale=0.09074449712164291,
     )
+
+    # Update timestamp for this frame (here in microseconds)
+    t = i * dt  # seconds
+    time_text.Text = f"t = {t*1e6:0.0f} μs"
+    # If you prefer seconds:
+    # time_text.Text = f"t = {t:0.6f} s"
 
     renderView1.Update()
 
