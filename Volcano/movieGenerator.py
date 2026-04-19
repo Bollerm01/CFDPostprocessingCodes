@@ -115,7 +115,7 @@ for i, f in enumerate(files):
 
     # Move scalar bar up and slightly left
     scalar_bar.WindowLocation = 'Any Location'
-    scalar_bar.Position = [0.82, 0.35]   # adjust as needed
+    scalar_bar.Position = [0.84, 0.35]   # adjust as needed
     scalar_bar.ScalarBarLength = 0.30
 
     # Re-assert camera (in case ParaView tweaks it)
