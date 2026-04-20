@@ -231,8 +231,8 @@ function [ls, mk] = local_getLineSpecForThreshold(origLegend, solType)
     s = lower(strtrim(origLegend));
     st = lower(strtrim(solType));
 
-    is95 = contains(s, '95%/5');
-    is90 = contains(s, '90%/10');
+    is95 = contains(s, '95');
+    is90 = contains(s, '90');
 
     % -----------------------------
     % Volcano styles

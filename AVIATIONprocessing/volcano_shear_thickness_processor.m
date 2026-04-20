@@ -415,9 +415,12 @@ for iNorm = 1:numel(avg_norm_cols)
     ylabel('Normalized Shear Layer Thickness', 'Interpreter', 'latex');
     title(sprintf('%s Thickness, %s', nice_name, geoLabel), 'Interpreter', 'latex');
     grid on;
-    legend('Location', 'best', 'Interpreter','latex');  % let MATLAB choose best in-axes position
+    
     % Catch to display legend not overtop Vx avg data
-    if strcmp(norm_col, 'velocityxavg_norm')
+    if strcmp(norm_col, 'velocityxavg_norm') && strcmp(geometryType, 'RD00')
+        ylim([0.4 1.6])
+        legend('Location', 'best', 'Interpreter','latex');  % let MATLAB choose best in-axes position
+    else
         ylim([0.4 1.6])
     end
 
