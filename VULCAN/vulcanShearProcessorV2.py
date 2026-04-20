@@ -77,12 +77,12 @@ SCALAR_TITLES = {
     "U_velocity_m_s": "U Velocity [m/s]",
     "Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup": "Turbulence Kinetic Energy [m²/s²]",
     # Titles still correspond to logical names τ_ij, now interpreted as normalized τ_ij / (-ρ)
-    "greekt_greeksubxx_subsupt_sup": r"$\tau_{xx}/(-\rho)$",
-    "greekt_greeksubxy_subsupt_sup": r"$\tau_{xy}/(-\rho)$",
-    "greekt_greeksubxz_subsupt_sup": r"$\tau_{xz}/(-\rho)$",
-    "greekt_greeksubyy_subsupt_sup": r"$\tau_{yy}/(-\rho)$",
-    "greekt_greeksubyz_subsupt_sup": r"$\tau_{yz}/(-\rho)$",
-    "greekt_greeksubzz_subsupt_sup": r"$\tau_{zz}/(-\rho)$",
+    "greekt_greeksubxx_subsupt_sup": r"$\tau_{xx}$",
+    "greekt_greeksubxy_subsupt_sup": r"$\tau_{xy}$",
+    "greekt_greeksubxz_subsupt_sup": r"$\tau_{xz}$",
+    "greekt_greeksubyy_subsupt_sup": r"$\tau_{yy}$",
+    "greekt_greeksubyz_subsupt_sup": r"$\tau_{yz}$",
+    "greekt_greeksubzz_subsupt_sup": r"$\tau_{zz}$",
 }
 
 # <<< NEW: Optional per-logical-scalar ranges (min, max) >>>
