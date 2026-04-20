@@ -15,13 +15,47 @@ file_name = os.path.basename(folder_path) # project
 SCALARS = [
     "reynoldsstressxx", "reynoldsstressyy", "reynoldsstresszz",
     "reynoldsstressxy", "reynoldsstressxz", "reynoldsstressyz",
-    "velocityx", "velocityxavg", "tke", "pressureavg", "vorticitymag", "vorticitymagavg"
+    "velocityx", "velocityxavg", "tke", "pressure", "pressureavg", 
+    "vorticitymag", "vorticitymagavg"
 ]
 
 # Debugging scalars
 # SCALARS = ["reynoldsstressyy"]
 ENABLE_SCHLIEREN = True # Change to true if desired
 DENSITY_NAME = "density"
+
+# <<< NEW: Optional, user-defined scalar ranges (min, max) per array name >>>
+# If a scalar is not in this dictionary, the script will fall back to the
+# actual data range for that array.
+SCALAR_RANGES = {
+    # ---- Example ranges: update to match your dataset ----
+    # Reynolds stresses
+    "reynoldsstressxx": (0.0, 2.4e4),
+    "reynoldsstressyy": (0.0, 6500.0),
+    "reynoldsstresszz": (-100.0, 100.0),
+    "reynoldsstressxy": (-5e3, 1.5e3),
+    "reynoldsstressxz": (-400.0, 250.0),
+    "reynoldsstressyz": (-400.0, 250.0),
+
+    # Velocities
+    "velocityx":    (-160.0, 730.0),
+    "velocityxavg": (-160.0, 730.0),
+
+    # Turbulence / pressure
+    "tke":         (0.0, 20000.0),
+    "pressureavg": (13000.0, 32000.0),
+    "pressureavg": (13000.0, 32000.0),
+
+    # Vorticity
+    "vorticitymag":    (0.0, 1.1e6),
+    "vorticitymagavg": (0.0, 1.1e6),
+
+    # Schlieren outputs (only used if ENABLE_SCHLIEREN is True)
+    "magDelRho":         (0.0, 120.0),
+    "Schlieren_dRho_dX": (0.0, 90.0),
+    "Schlieren_dRho_dY": (0.0, 90.0),
+}
+# <<< END NEW >>>
 
 # Debugging loop
 # YZ_SLICE_X = [2.15057954, 2.1793151, 2.216945]
@@ -60,10 +94,10 @@ CAMERA_PRESETS = {
         }
     },
     "XY_FAR": {
-        "CameraPosition":   [1.25, 0.05994982668344116, 5.011016610690195], # was [1.4547914383436304, 0.05994982668344116, 5.011016610690195]
-        "CameraFocalPoint": [1.25, 0.05994982668344116, 0.0], # was [1.4547914383436304, 0.05994982668344116, 0.0]
+        "CameraPosition":   [1.25, 0.05994982668344116, 5.011016610690195],
+        "CameraFocalPoint": [1.25, 0.05994982668344116, 0.0],
         "CameraViewUp":     [0,1,0],
-        "ParallelScale":    0.75, # was 0.7320925072135284, 0.8 for centered
+        "ParallelScale":    0.75,
         "Colorbar": {
             "Orientation": "Horizontal",
             "Position":    [0.29, 0.26],
@@ -74,11 +108,11 @@ CAMERA_PRESETS = {
         "CameraPosition":   [2.745205, 0.0887413, 0.0],
         "CameraFocalPoint": [2.15058,  0.0887413, 0.0],
         "CameraViewUp":     [0,1,0],
-        "ParallelScale":    0.10, # was 0.11684418
+        "ParallelScale":    0.10,
         "InteractionMode":  "2D",
         "Colorbar": {
             "Orientation": "Vertical",
-            "Position":    [0.80, 0.24], # was [0.80, 0.38]
+            "Position":    [0.80, 0.24],
             "Length":      0.5,
         }
     },
@@ -98,7 +132,7 @@ CAMERA_PRESETS = {
         "CameraPosition":   [3.47514, 1.07704, 4.42635],
         "CameraFocalPoint": [2.10515, -0.0598313, -0.266117],
         "CameraViewUp":     [-0.0835596, 0.973793, -0.21153],
-        "ParallelScale":    0.065,  # May need to fix 
+        "ParallelScale":    0.065,
         "InteractionMode":  "3D",
         "Colorbar": {
             "Orientation": "Horizontal",
@@ -110,7 +144,7 @@ CAMERA_PRESETS = {
         "CameraPosition":   [4.50317, 2.18599, 3.42866],
         "CameraFocalPoint": [2.01636, -0.171346, -0.238507],
         "CameraViewUp":     [-10.247616, 0.882667, -0.399482],
-        "ParallelScale":    0.065, # may need to change 
+        "ParallelScale":    0.065,
         "InteractionMode":  "3D",
         "Colorbar": {
             "Orientation": "Horizontal",
@@ -151,6 +185,19 @@ def array_location(source, name):
     if cd.GetArray(name) is not None:
         return "CELLS"
     raise RuntimeError(f"Array '{name}' not found on points or cells")
+
+# Helper to apply user-defined or automatic LUT range
+def apply_lut_range(lut, array_name):
+    """
+    If array_name has a manual range in SCALAR_RANGES, use that range.
+    Otherwise, fall back to the data-derived range.
+    """
+    if array_name in SCALAR_RANGES:
+        vmin, vmax = SCALAR_RANGES[array_name]
+        lut.RescaleTransferFunction(vmin, vmax)
+    else:
+        # Use data range if not specified
+        lut.RescaleTransferFunctionToDataRange()
 
 def apply_camera_and_colorbar(lut, preset, array_name):
 
@@ -270,13 +317,14 @@ def create_slice(origin, normal, preset, fname, scalar, schlieren=False):
         ColorBy(disp, (loc, scalar))
 
         lut = GetColorTransferFunction(scalar)
-        lut.RescaleTransferFunctionToDataRange()
+        # <<< CHANGED: use helper for manual/automatic range >>>
+        apply_lut_range(lut, scalar)
         lut.ApplyPreset(COLORMAP_PRESET, True)
 
         apply_camera_and_colorbar(lut, preset, scalar)
         Render(view)
 
-        SaveScreenshot(os.path.join(OUTPUT_DIR, f"{fname}_{scalar}.png"),
+        SaveScreenshot(os.path.join(OUTPUT_DIR, f"{fname}_{scalar}_Volcano.png"),
                        view, ImageResolution=IMG_RES, TransparentBackground=1)
         Hide(sl, view)
         return
@@ -289,7 +337,8 @@ def create_slice(origin, normal, preset, fname, scalar, schlieren=False):
 
         ColorBy(disp, (loc, name))
         lut = GetColorTransferFunction(name)
-        lut.RescaleTransferFunctionToDataRange()
+        # <<< CHANGED: use helper here too >>>
+        apply_lut_range(lut, name)
         lut.ApplyPreset(COLORMAP_PRESET, True)
         # NEW BAR HIDING #
         bar = GetScalarBar(lut, view)
@@ -298,7 +347,7 @@ def create_slice(origin, normal, preset, fname, scalar, schlieren=False):
         apply_camera_and_colorbar(lut, preset, name)
         Render(view)
 
-        SaveScreenshot(os.path.join(OUTPUT_DIR, f"{fname}_{name}.png"),
+        SaveScreenshot(os.path.join(OUTPUT_DIR, f"{fname}_{name}_Volcano.png"),
                        view, ImageResolution=IMG_RES, TransparentBackground=1)
         Hide(calc, view)
 
@@ -318,13 +367,14 @@ def make_3D_slice_view(slices, preset, fname, scalar):
         ColorBy(disp, (loc, scalar))
 
     # Configure shared LUT once
-    lut.RescaleTransferFunctionToDataRange()
+    # <<< CHANGED: use helper for manual/automatic range >>>
+    apply_lut_range(lut, scalar)
     lut.ApplyPreset(COLORMAP_PRESET, True)
 
     apply_camera_and_colorbar(lut, preset, scalar)
     Render(view)
 
-    SaveScreenshot(os.path.join(OUTPUT_DIR, f"{fname}_{scalar}.png"),
+    SaveScreenshot(os.path.join(OUTPUT_DIR, f"{fname}_{scalar}_Volcano.png"),
                    view, ImageResolution=IMG_RES, TransparentBackground=1)
 
     # Optionally hide
@@ -372,7 +422,7 @@ for s in SCALARS:
 
     for z in XY_SLICE_Z:
         create_slice([0,0,z], [0,0,1], "XY_NEAR", f"XY_near_z{z:+0.5f}", s)
-        # create_slice([0,0,z], [0,0,1], "XY_FAR",  f"XY_far_z{z:+0.5f}",  s) # ADD BACK IF WANTING FAR SHOTS 
+        # create_slice([0,0,z], [0,0,1], "XY_FAR",  f"XY_far_z{z:+0.5f}",  s)
 
     # 3D figs - Near 3D (for this scalar s)
     sliceGroup = make_slice_group(XY_SLICE_Z_3D, XZ_SLICE_Y_3D, YZ_SLICE_X_3D, s)

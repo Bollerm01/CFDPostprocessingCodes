@@ -263,7 +263,16 @@ for iLoc = 1:numel(LOCATIONS)
                 continue;
             end
             data = sortrows(data, 1); % sort by xL
-            label = sprintf('%d%%/%d%% Bounds', round(upper*100), round(lower*100));
+            % Step 1: make basic percent text (sprintf needs %% to print %)
+            pct_text = sprintf('%d%%/%d%%', round(upper*100), round(lower*100));
+            % pct_text is now e.g. '90%/10%'
+        
+            % Step 2: escape % for LaTeX: % -> \%
+            pct_text = strrep(pct_text, '%', '\%');
+            % pct_text is now '90\%/10\%'
+        
+            % Step 3: append LaTeX math for U/U_infinity
+            label = sprintf('%s $V_x/V_{x,\\infty}$', pct_text);
             plot(data(:,1), data(:,2), '-o', 'DisplayName', label, 'LineWidth',1.5);
             has_data = true;
         end
@@ -359,8 +368,17 @@ for iNorm = 1:numel(avg_norm_cols)
             end
             data = sortrows(data, 1);
 
-            % Plane + threshold in legend
-            label = sprintf('%s, %d%%/%d%% $$U/U_{\infty}$$', locLabel, round(upper*100), round(lower*100));
+            % Step 1: make basic percent text (sprintf needs %% to print %)
+            pct_text = sprintf('%d%%/%d%%', round(upper*100), round(lower*100));
+            % pct_text is now e.g. '90%/10%'
+        
+            % Step 2: escape % for LaTeX: % -> \%
+            pct_text = strrep(pct_text, '%', '\%');
+            % pct_text is now '90\%/10\%'
+        
+            % Step 3: append LaTeX math for U/U_infinity
+            label = sprintf('%s, %s $V_x/V_{x,\\infty}$', locLabel, pct_text);
+
 
             % Choose line style by threshold index
             ls = lineStyles{min(iThr, numel(lineStyles))};
@@ -381,11 +399,28 @@ for iNorm = 1:numel(avg_norm_cols)
         continue;
     end
 
+    % Geometry label text
+    switch geometryType
+        case 'RD00'
+            geoLabel = 'R/D = 0.0';
+        case 'RD17'
+            geoLabel = 'R/D = 0.17';
+        case 'RD52'
+            geoLabel = 'R/D = 0.52';
+        otherwise
+            geoLabel = '';
+    end
+
     xlabel('x/L', 'Interpreter', 'latex');
     ylabel('Normalized Shear Layer Thickness', 'Interpreter', 'latex');
-    title(sprintf('%s Thickness', nice_name), 'Interpreter', 'latex');
+    title(sprintf('%s Thickness, %s', nice_name, geoLabel), 'Interpreter', 'latex');
     grid on;
     legend('Location', 'best', 'Interpreter','latex');  % let MATLAB choose best in-axes position
+    % Catch to display legend not overtop Vx avg data
+    if strcmp(norm_col, 'velocityxavg_norm')
+        ylim([0.4 1.6])
+    end
+
     hold off;
 
     % Save combined-all-planes plots

@@ -20,11 +20,13 @@ clear; close all; clc;
 
 %% SELECT FOLDER
 
-% figFolder = uigetdir(pwd, 'Select folder containing.fig files');
-% if isequal(figFolder, 0)
-%     error('No folder selected. Script terminated.');
-% end
-figFolder = "E:\Boller CFD\AVIATION CFD\Paper Results\finalData\LESRANScompare\VulcanVolcanoShearOverlay";
+figFolder = uigetdir(pwd, 'Select folder containing.fig files');
+figSplit = split(figFolder, '\');
+geometry = figSplit(end);
+if isequal(figFolder, 0)
+    error('No folder selected. Script terminated.');
+end
+% figFolder = "E:\Boller CFD\AVIATION CFD\Paper Results\finalData\LESRANScompare\VulcanVolcanoShearOverlay";
 
 figFiles = dir(fullfile(figFolder, '*.fig'));
 if isempty(figFiles)
@@ -166,21 +168,32 @@ for f = 1:numel(velFiles)
 end
 
 %% LABELS AND TITLE
+% Geometry Labeling
+switch string(geometry)
+    case 'RD00'
+        geoLabel = 'R/D = 0.0';
+    case 'RD17'
+        geoLabel = 'R/D = 0.17';
+    case 'RD52'
+        geoLabel = 'R/D = 0.52';
+    otherwise
+        geoLabel = '';
+end
 
 xlabel(ax, origXLabelStr, 'Interpreter', origXLabelObj.Interpreter);
 ylabel(ax, origYLabelStr, 'Interpreter', origYLabelObj.Interpreter);
 
-newTitleStr = sprintf('Volcano vs. VULCAN: %s', origTitleStr);
+newTitleStr = sprintf('Volcano vs. VULCAN: %s, %s', origTitleStr, geoLabel);
 title(ax, newTitleStr, 'Interpreter', origTitleObj.Interpreter);
 
 if ~isempty(allLineHandles)
     lgd = legend(ax, allLineHandles);
-    set(lgd, 'Interpreter', 'none');
+    set(lgd, 'Interpreter', 'latex');
     set(lgd, 'Location', 'best'); % move outside if crowded
 end
 
 % Save overlay figure
-outBase = fullfile(outFolder, 'velocityx_allSolutions_overlay');
+outBase = fullfile(outFolder, sprintf('velocityx_allSolutions_overlay_%s',string(geometry)));
 outBaseChar = char(outBase);
 savefig(overlayFig, [outBaseChar '.fig']);
 saveas(overlayFig, [outBaseChar '.png']);

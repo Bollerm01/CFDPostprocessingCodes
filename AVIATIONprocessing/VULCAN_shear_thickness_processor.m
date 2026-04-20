@@ -178,7 +178,17 @@ for iThr = 1:size(THRESHOLDS,1)
     end
     data = sortrows(data, 1);
 
-    label = sprintf('%d%%/%d%% $$U/U_{\infty}$$', round(upper*100), round(lower*100));
+    % Step 1: make basic percent text (sprintf needs %% to print %)
+    pct_text = sprintf('%d%%/%d%%', round(upper*100), round(lower*100));
+    % pct_text is now e.g. '90%/10%'
+
+    % Step 2: escape % for LaTeX: % -> \%
+    pct_text = strrep(pct_text, '%', '\%');
+    % pct_text is now '90\%/10\%'
+
+    % Step 3: append LaTeX math for U/U_infinity
+    label = sprintf('%s $V_x/V_{x,\\infty}$', pct_text);
+
     plot(data(:,1), data(:,2), '-o', 'DisplayName', label, 'LineWidth', 1.5);
     has_data = true;
 end

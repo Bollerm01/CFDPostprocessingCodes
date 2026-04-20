@@ -79,7 +79,7 @@ if isempty(sheetNames1)
 end
 
 % Filter out US/DS or other unwanted prefixes if needed
-axialLocs = {'xL_0p17', 'xL_0p59', 'xL_0p86', 'xL_1p2'};
+axialLocs = {'xL_0p17', 'xL_0p59', 'xL_0p86', 'xL_1', 'xL_1p2'};
 
 
 fprintf('Using axial locations:\n  %s\n\n', strjoin(axialLocs, ', '));
