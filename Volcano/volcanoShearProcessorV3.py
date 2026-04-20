@@ -214,8 +214,8 @@ def apply_camera_and_colorbar(lut, preset, array_name):
 
     # ---- Scalar bar ----
     bar = GetScalarBar(lut, view)
-    # bar.Visibility = 1
-    bar.Visibility = 0 # hides bar
+    bar.Visibility = 1
+    # bar.Visibility = 0 # hides bar
 
     # --- Reset cached geometry ----
     bar.AutomaticLabelFormat = 0
@@ -342,7 +342,7 @@ def create_slice(origin, normal, preset, fname, scalar, schlieren=False):
         lut.ApplyPreset(COLORMAP_PRESET, True)
         # NEW BAR HIDING #
         bar = GetScalarBar(lut, view)
-        bar.Visibility = 0
+        bar.Visibility = 1
         ##################
         apply_camera_and_colorbar(lut, preset, name)
         Render(view)

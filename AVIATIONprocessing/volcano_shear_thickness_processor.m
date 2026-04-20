@@ -533,12 +533,7 @@ function [thickness, lower_vel_for_dat] = find_thickness_robust_MATLAB(y, vel_no
 
     lower_vel_for_dat = NaN;
 
-    if ~any(above)
-        thickness = NaN;
-        lower_vel_for_dat = NaN;
-        return;
-    end
-
+    % ---------- LOWER BOUNDARY ----------
     if any(below)
         idx_below = find(below);
         i_low = idx_below(end);
@@ -574,24 +569,77 @@ function [thickness, lower_vel_for_dat] = find_thickness_robust_MATLAB(y, vel_no
         lower_vel_for_dat = vel(i_low);
     end
 
+    % ---------- UPPER BOUNDARY WITH EXTRAPOLATION ----------
     idx_above = find(above);
-    i_up = idx_above(1);
-    if i_up == 1
-        thickness = NaN;
-        return;
+
+    if ~isempty(idx_above)
+        % Normal case: at least one point above upper -> interpolate to crossing
+        i_up = idx_above(1);
+        if i_up == 1
+            thickness = NaN;
+            return;
+        end
+
+        y1 = y(i_up - 1);
+        y2 = y(i_up);
+        v1 = vel(i_up - 1);
+        v2 = vel(i_up);
+        if v2 == v1
+            thickness = NaN;
+            return;
+        end
+
+        y_upper = y1 + (upper - v1) * (y2 - y1) / (v2 - v1);
+
+    else
+        % No point is above 'upper' -> try extrapolation if conditions are met
+        n = numel(vel);
+
+        % Conditions:
+        %  1) Need at least 4 points total
+        %  2) Last point is below 'upper'
+        %  3) Last 4 points are strictly increasing in velocity
+        can_extrap = false;
+        if n >= 4 && vel(end) < upper
+            v_last4 = vel(end-3:end);
+            if all(diff(v_last4) > 0)
+                can_extrap = true;
+            end
+        end
+
+        if ~can_extrap
+            % Original behavior: cannot determine upper boundary
+            thickness = NaN;
+            return;
+        end
+
+        % Use last 3 points for a linear fit v(y) = a*y + b
+        y_fit = y(end-2:end);
+        v_fit = vel(end-2:end);
+
+        % Least-squares line fit
+        p = polyfit(y_fit, v_fit, 1);   % p(1) = a (slope), p(2) = b (intercept)
+        a = p(1);
+        b = p(2);
+
+        if a <= 0
+            % Increasing trend failed in fit (shouldn't happen with strictly increasing points,
+            % but keep this as a safety check)
+            thickness = NaN;
+            return;
+        end
+
+        % Solve upper = a*y_upper + b  ->  y_upper = (upper - b)/a
+        y_upper = (upper - b) / a;
+
+        % Optional sanity check: crossing should be at or beyond last y point
+        if y_upper <= y(end)
+            thickness = NaN;
+            return;
+        end
     end
 
-    y1 = y(i_up - 1);
-    y2 = y(i_up);
-    v1 = vel(i_up - 1);
-    v2 = vel(i_up);
-    if v2 == v1
-        thickness = NaN;
-        return;
-    end
-
-    y_upper = y1 + (upper - v1) * (y2 - y1) / (v2 - v1);
-
+    % ---------- THICKNESS AND MINIMUM SEPARATION ----------
     thickness = y_upper - y_lower;
     if thickness <= min_sep
         thickness = NaN;

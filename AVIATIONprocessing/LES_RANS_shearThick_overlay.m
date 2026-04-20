@@ -139,7 +139,7 @@ for f = 1:numel(velFiles)
             end
             
             % Determine line spec for this threshold
-            [ls, mk] = getLineSpecForThreshold(origName);
+            [ls, mk] = getLineSpecForThreshold(origName, solType);
             
             % Copy to overlay axes
             newObj = copyobj(hObj, ax);
@@ -214,31 +214,60 @@ function solType = local_getSolutionType_fromName(baseName)
     end
 end
 
-%% ------------------------------------------------------------------------
-%% Local function: determine line spec (linestyle & marker) from threshold legend
+
+%% Local function: determine line spec (linestyle & marker) from
+%% threshold legend AND solution type.
 %  Assumes legend strings like:
 %     "95%/5% Bounds"
 %     "90%/10% Bounds"
-function [ls, mk] = local_getLineSpecForThreshold(origLegend)
-    % DEFAULT
+%  and solType like:
+%     "Volcano", "VULCAN"
+function [ls, mk] = local_getLineSpecForThreshold(origLegend, solType)
+
+    % Default style (fallback)
     ls = '-';
     mk = 'o';
-    
+
     s = lower(strtrim(origLegend));
-    
-    % 95%/5% bounds -> solid circle
-    if contains(s, '95%/5')
-        ls = '-';
-        mk = 'o';
-        return;
+    st = lower(strtrim(solType));
+
+    is95 = contains(s, '95%/5');
+    is90 = contains(s, '90%/10');
+
+    % -----------------------------
+    % Volcano styles
+    % -----------------------------
+    if contains(st, 'volcano')
+        if is95
+            % Volcano 95/5
+            ls = '-';     % solid
+            mk = 'o';     % circle
+            return;
+        elseif is90
+            % Volcano 90/10
+            ls = '--';    % dashed
+            mk = 'o';     % circle
+            return;
+        end
     end
-    
-    % 90%/10% bounds -> dashed square
-    if contains(s, '90%/10')
-        ls = '--';
-        mk = 's';
-        return;
+
+    % -----------------------------
+    % VULCAN styles
+    % -----------------------------
+    if contains(st, 'vulcan')
+        if is95
+            % VULCAN 95/5
+            ls = '-';     % solid
+            mk = 'o';     % circle
+            return;
+        elseif is90
+            % VULCAN 90/10
+            ls = '--';    % dashed
+            mk = 'o';     % circle
+            return;
+        end
     end
-    
-    % extend here for more thresholds if needed
+
+    % You can extend for other solutions/thresholds here if needed.
+
 end
