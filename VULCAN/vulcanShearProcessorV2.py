@@ -159,37 +159,37 @@ zone2 = reader
 # Rxx_norm = (zone2/greekt_xx) / (- zone2/Density)
 calc_Rxx = Calculator(Input=zone2)
 calc_Rxx.ResultArrayName = "Rxx_norm"
-calc_Rxx.Function = "zone2/greekt_greeksubxx_subsupt_sup / (-zone2/Density_kg_msup3_sup)"
+calc_Rxx.Function = '"zone2/greekt_greeksubxx_subsupt_sup" / (-"zone2/Density_kg_msup3_sup")'
 calc_Rxx.UpdatePipeline()
 
 # Rxy_norm
 calc_Rxy = Calculator(Input=calc_Rxx)
 calc_Rxy.ResultArrayName = "Rxy_norm"
-calc_Rxy.Function = "zone2/greekt_greeksubxy_subsupt_sup / (-zone2/Density_kg_msup3_sup)"
+calc_Rxy.Function = '"zone2/greekt_greeksubxy_subsupt_sup" / (-"zone2/Density_kg_msup3_sup")'
 calc_Rxy.UpdatePipeline()
 
 # Rxz_norm
 calc_Rxz = Calculator(Input=calc_Rxy)
 calc_Rxz.ResultArrayName = "Rxz_norm"
-calc_Rxz.Function = "zone2/greekt_greeksubxz_subsupt_sup / (-zone2/Density_kg_msup3_sup)"
+calc_Rxz.Function = '"zone2/greekt_greeksubxz_subsupt_sup" / (-"zone2/Density_kg_msup3_sup")'
 calc_Rxz.UpdatePipeline()
 
 # Ryy_norm
 calc_Ryy = Calculator(Input=calc_Rxz)
 calc_Ryy.ResultArrayName = "Ryy_norm"
-calc_Ryy.Function = "zone2/greekt_greeksubyy_subsupt_sup / (-zone2/Density_kg_msup3_sup)"
+calc_Ryy.Function = '"zone2/greekt_greeksubyy_subsupt_sup" / (-"zone2/Density_kg_msup3_sup")'
 calc_Ryy.UpdatePipeline()
 
 # Ryz_norm
 calc_Ryz = Calculator(Input=calc_Ryy)
 calc_Ryz.ResultArrayName = "Ryz_norm"
-calc_Ryz.Function = "zone2/greekt_greeksubyz_subsupt_sup / (-zone2/Density_kg_msup3_sup)"
+calc_Ryz.Function = '"zone2/greekt_greeksubyz_subsupt_sup" / (-"zone2/Density_kg_msup3_sup")'
 calc_Ryz.UpdatePipeline()
 
 # Rzz_norm
 calc_Rzz = Calculator(Input=calc_Ryz)
 calc_Rzz.ResultArrayName = "Rzz_norm"
-calc_Rzz.Function = "zone2/greekt_greeksubzz_subsupt_sup / (-zone2/Density_kg_msup3_sup)"
+calc_Rzz.Function = '"zone2/greekt_greeksubzz_subsupt_sup" / (-"zone2/Density_kg_msup3_sup")'
 calc_Rzz.UpdatePipeline()
 
 # Use the final calculator output as zone2 source everywhere else
