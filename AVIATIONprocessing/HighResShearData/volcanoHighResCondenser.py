@@ -1,8 +1,9 @@
 # CSV-to-Excel combiner for ParaView probe line outputs
-# - Minimal cleaning only:
+# - Cleaning steps:
 #   * Rename coordinates
 #   * Keep only selected columns
 #   * Drop rows where ALL velocity columns are NaN
+#   * Drop duplicate velocity rows (keep the first)
 #   * Compute Y_norm
 # - No interpolation or resampling is performed.
 #
@@ -37,7 +38,7 @@ FINAL_COLUMNS = [
     "velocityxavg",
 ]
 
-# Velocity columns used for blank-row detection
+# Velocity columns used for blank-row and duplicate detection
 VELOCITY_COLUMNS = [
     "velocitymag",
     "velocitymagavg",
@@ -58,9 +59,11 @@ Y_DEPTH = 0.018593       # Normalization depth (must be non-zero)
 
 def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Minimal cleaning:
+    Cleaning steps:
       1. Drop rows where ALL velocity columns are NaN.
-      2. Compute Y_norm if Y and Y_DEPTH are available.
+      2. Drop duplicate velocity rows (based on velocity columns, keep first).
+      3. Compute Y_norm if Y and Y_DEPTH are available (fallback to Y if needed).
+      4. Sort by Y_norm if present.
     No interpolation or resampling.
     """
 
@@ -73,12 +76,15 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
             df["Y_norm"] = (df["Y"] - Y_REFERENCE) / Y_DEPTH
         return df
 
-    # --- Drop rows with NO velocity data at all ---
+    # --- 1) Drop rows with NO velocity data at all ---
     df = df.dropna(subset=vel_cols, how="all")
     if df.empty:
         return df
 
-    # --- Compute Y_norm if possible ---
+    # --- 2) Drop duplicate velocity rows (keep first) ---
+    df = df.drop_duplicates(subset=vel_cols, keep="first")
+
+    # --- 3) Compute Y_norm if possible ---
     if "Y" in df.columns and Y_DEPTH != 0.0:
         df["Y_norm"] = (df["Y"] - Y_REFERENCE) / Y_DEPTH
     elif "Y" in df.columns:
@@ -88,7 +94,7 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
         # No Y available: no Y_norm column
         pass
 
-    # Optional: sort by Y_norm if present
+    # --- 4) Sort by Y_norm if present ---
     if "Y_norm" in df.columns:
         df = df.sort_values("Y_norm").reset_index(drop=True)
 
@@ -149,7 +155,7 @@ def run_conversion():
                 existing_cols = [c for c in FINAL_COLUMNS if c in df.columns]
                 df = df[existing_cols]
 
-                # Clean (no interpolation)
+                # Clean (drop NaN velocity rows + duplicate velocity rows)
                 df_clean = clean_data(df)
 
                 # Excel sheet name (31 char limit)
@@ -177,8 +183,8 @@ def run_conversion():
 # ============================================================
 
 root = tk.Tk()
-root.title("Probe CSV → Excel Combiner (Clean Only)")
-root.geometry("460x160")
+root.title("Probe CSV → Excel Combiner (Clean Only, Remove Duplicates)")
+root.geometry("480x170")
 root.resizable(False, False)
 
 run_button = tk.Button(
@@ -186,7 +192,7 @@ run_button = tk.Button(
     text="Select Probe CSV Folder and Create Cleaned Excel",
     command=run_conversion,
     height=2,
-    width=55
+    width=58
 )
 
 run_button.pack(pady=35)
