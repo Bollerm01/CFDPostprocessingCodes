@@ -82,7 +82,7 @@ for iLoc = 1:numel(LOCATIONS)
     % df_fs_tail = df_fs( floor(nRows/2)+1 : end, : );
     %High res
     nRows = height(df_fs);
-    df_fs_tail = df_fs( 490 : end, : ); % takes the last 10 rows (hard coded)
+    df_fs_tail = df_fs( end-5 : end, : ); % takes the last 5 rows (hard coded)
 
 
     if ~ismember(VELMAGAVG_COL, df_fs_tail.Properties.VariableNames)
