@@ -6,10 +6,10 @@ import pandas as pd
 
 # ---------------- USER SETTINGS ----------------
 INPUT_ROOT = r"E:\Boller CFD\VULCAN Data\SSWT"
-CASE = "CAVmix_SSWT_r0_noinject"
+CASE = "CAVmix_SSWT_r3_noinject"
 INPUT_FILE = rf"{INPUT_ROOT}\{CASE}\iteration-009\Plot_files\vulcan_solution.plt"
 
-OUTPUT_ROOT = r"E:\Boller CFD\AVIATION CFD\Paper Results\finalData\VULCAN\HighResShearData"
+OUTPUT_ROOT = r"E:\Boller CFD\AVIATION CFD\Paper Results\finalData\VULCAN\CompleteData\HighResShearData"
 OUTPUT_DIR = os.path.join(OUTPUT_ROOT, CASE)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
@@ -20,7 +20,7 @@ V_REF = 694.0
 SLICE_Z = 0.0127
 
 # --- Number of probe lines between xL_0p03 and xL1 ---
-N_PROBE_LINES = 13  # includes endpoints
+N_PROBE_LINES = 25  # includes endpoints
 
 # x/L values corresponding to the first and last line
 X_OVER_L_START = 0.03
@@ -82,15 +82,11 @@ vel_norm_calc.UpdatePipeline()
 # ---------------- PASSTHROUGH: EXPORT RELEVANT ARRAYS ----------------
 pa = PassArrays(registrationName='ExportData', Input=vel_norm_calc)
 pa.PointDataArrays = [
-    'U_velocity_m_s',        # zone1 U
-    'X',
-    'Y',
-    'Z',
-    'zone2/U_velocity_m_s',  # zone2 U
     'zone2/X',
     'zone2/Y',
     'zone2/Z',
-    'U_velocity_norm'        # normalized U from zone2
+    'U_velocity_norm',
+    'zone2/U_velocity_m_s'     # normalized U from zone2
 ]
 pa.UpdatePipeline()
 
