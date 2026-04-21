@@ -46,7 +46,7 @@ VELX_NORM_COL = 'Velocity_X_Norm';
 VEL_USED_COL  = 'velocityx_norm';
 
 % Thickness bounds
-THRESHOLDS = [0.95 0.05; 0.90 0.10];  % rows = [upper lower]
+THRESHOLDS = [0.95 0.05];  % rows = [upper lower]
 
 %% LOAD WORKBOOK (sheet names)
 [status, sheets] = xlsfinfo(excel_file);

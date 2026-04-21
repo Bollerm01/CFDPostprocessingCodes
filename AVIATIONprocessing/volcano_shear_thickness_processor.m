@@ -14,8 +14,8 @@ end
 excel_file = fullfile(pathname, filename);
 
 % Gets file edge geometry type (before first underscore)
-parts = strsplit(filename, '_');
-geometryType = parts{1};
+parts = strsplit(filename, {'_','.'});
+geometryType = parts{2};
 
 % Uses the same directory as the workbook
 output_dir = fullfile(pathname, ['ShearResults_' geometryType]);
@@ -42,11 +42,11 @@ VELMAGAVG_COL = 'velocitymagavg';
 
 VELOCITY_COLS = {VELX_COL, VELXAVG_COL, VELMAG_COL, VELMAGAVG_COL};
 
-THRESHOLDS = [0.95 0.05; 0.90 0.10];  % rows = [upper lower]
-
+% THRESHOLDS = [0.95 0.05; 0.9 0.1];  % rows = [upper lower]
+THRESHOLDS = [0.95 0.05];
 % Locations for freestream sheets and per-location results
-LOCATIONS = {'MP', 'z25', 'z75'};  % corresponding to sheets US_MP, US_z25, US_z75
-
+% LOCATIONS = {'MP', 'z25', 'z75'};  % corresponding to sheets US_MP, US_z25, US_z75
+LOCATIONS = {'MP'}; 
 
 %% LOAD WORKBOOK (sheet names)
 [status, sheets] = xlsfinfo(excel_file);
@@ -417,7 +417,7 @@ for iNorm = 1:numel(avg_norm_cols)
     end
 
     xlabel('x/L', 'Interpreter', 'latex');
-    ylabel('Normalized Shear Layer Thickness', 'Interpreter', 'latex');
+    ylabel('$\delta_{SL}/D$', 'Interpreter', 'latex');
     title(sprintf('%s Thickness, %s', nice_name, geoLabel), 'Interpreter', 'latex');
     grid on;
     legend('Location', 'best', 'Interpreter','latex');  % let MATLAB choose best in-axes position
