@@ -1,0 +1,255 @@
+%% ==========================================================
+%  Script: plot_normalized_axial_profiles.m
+%  Description:
+%    - Reads up to 3 Excel files of identical format (output from the 'High
+%    Res Shear Data' processing)
+%    - Each file represents a different geometry (encoded in filename).
+%    - Each file contains multiple sheets at different axial locations
+%      (e.g., xL0p03, xL0p31, xL0p72, xL1) plus a "US_MP" sheet.
+%    - For a specified variable (column name), computes normalization by
+%      the mean of the last 5 rows of that variable in "US_MP" for each file.
+%    - Plots Y_norm (Y-axis) vs normalized variable (X-axis) for 4 axial
+%      locations in a 1x4 tiled layout.
+%    - Overlays multiple geometries in each subplot with a shared legend
+%      below all tiles (horizontal, box off).
+% ===========================================================
+
+clear; clc; close all;
+
+%% ---------------- USER INPUT SECTION -----------------------
+% Specify the variable/column name to plot (must match Excel header)
+variableName = 'velocityxavg';  % <-- CHANGE the variable name here if needed
+
+% Data files (geometries)
+path  = "E:\Boller CFD\AVIATION CFD\Paper Results\finalData\Volcano\CompleteData\High Res Shear Data\All RD\";
+files = {'CondensedProbeData_RD00.xlsx',...
+         'CondensedProbeData_RD17.xlsx',...
+         'CondensedProbeData_RD52.xlsx'};
+filePaths = fullfile(path, files);
+
+% Axial location sheet names (edit if your sheet names differ)
+axialSheets = {'xL_0p03_MP', 'xL_0p31_MP', 'xL_0p72_MP', 'xL1_MP'};
+
+% Sheet name for normalization reference
+normSheetName = 'US_MP';
+
+% ---- Figure / export settings (style section) --------------
+mainTitle  = 'Y/D vs Normalized $$\bar{V_x}$$';   % <-- MAIN TITLE (sgtitle)
+outputFile = 'AxialProfiles_VxNorm.jpg';       % <-- OUTPUT FILENAME
+outputDPI  = 600;                              % <-- EXPORT RESOLUTION (dpi)
+
+%% ------------- PLOT APPEARANCE SETTINGS -------------------
+% ------------ CHANGE COLOR / STYLE / LABELS HERE -----------
+
+colorOrder = [
+    0.00 0.45 0.74;  % blue-ish
+    0.85 0.33 0.10;  % red-ish
+    0.93 0.69 0.13;  % yellow-ish
+];
+
+lineStyles = {'-', '--', ':'};
+
+% Axis labels (LaTeX interpreter in the plots)
+xLabelStr = '$$\bar{V_x}/V_{x,\infty}$$';   % <-- CHANGE X label text
+yLabelStr = '$$Y/D$$';                      % <-- CHANGE Y label text
+
+% Per-tile titles
+subplotTitles = {...
+    'x/L = 0.03',...
+    'x/L = 0.31',...
+    'x/L = 0.72',...
+    'x/L = 1.0'...
+}; % <-- EDIT titles to match your sheet meaning
+
+axisFontSize   = 11;
+labelFontSize  = 12;
+titleFontSize  = 14;
+legendFontSize = 12;
+
+% Fixed axis limits
+xLim = [-0.2, 1.1];
+yLim = [-1.0, 1.0];
+
+% ------------------------------------------------------------
+
+nGeom   = numel(filePaths);
+nAxial  = numel(axialSheets);
+numSheets = nAxial;     % for clarity with your example notation
+
+% Extract geometry labels from filenames (tail after last underscore)
+geomLabels = cell(nGeom,1);
+for i = 1:nGeom
+    [~, fname, ~] = fileparts(filePaths{i});
+    underscoreIdx = strfind(fname, '_');
+    if ~isempty(underscoreIdx)
+        geomLabels{i} = fname(underscoreIdx(end)+1:end);
+    else
+        geomLabels{i} = fname;
+    end
+end
+
+legendEntries = geomLabels;  % <-- Legend entries per geometry
+
+%% -------------- COMPUTE NORMALIZATION FACTORS -------------
+normFactors = nan(nGeom,1);
+
+for g = 1:nGeom
+    try
+        Tnorm = readtable(filePaths{g}, 'Sheet', normSheetName);
+    catch ME
+        error('Error reading sheet "%s" from file "%s": %s',...
+              normSheetName, filePaths{g}, ME.message);
+    end
+    
+    if ~ismember(variableName, Tnorm.Properties.VariableNames)
+        error('Variable "%s" not found in sheet "%s" of file "%s".',...
+              variableName, normSheetName, filePaths{g});
+    end
+    
+    varData = Tnorm.(variableName);
+    if numel(varData) < 5
+        error('Not enough rows in "%s" sheet of "%s" to take last 5 values.',...
+              normSheetName, filePaths{g});
+    end
+    
+    last5 = varData(end-4:end);
+    normFactors(g) = mean(last5, 'omitnan');
+    
+    if isnan(normFactors(g)) || normFactors(g) == 0
+        warning('Normalization factor for "%s" in file "%s" is NaN or zero.',...
+                variableName, filePaths{g});
+    end
+end
+
+%% ----------------- DATA LOADING (ALL SHEETS) ---------------
+dataStruct = struct;
+
+for g = 1:nGeom
+    dataStruct(g).geomLabel = geomLabels{g};
+    dataStruct(g).axial = struct;
+    
+    for a = 1:nAxial
+        sheetName = axialSheets{a};
+        try
+            T = readtable(filePaths{g}, 'Sheet', sheetName);
+        catch ME
+            error('Error reading sheet "%s" from file "%s": %s',...
+                  sheetName, filePaths{g}, ME.message);
+        end
+        
+        if ~ismember('Y_norm', T.Properties.VariableNames)
+            error('Column "Y_norm" not found in sheet "%s" of file "%s".',...
+                  sheetName, filePaths{g});
+        end
+        if ~ismember(variableName, T.Properties.VariableNames)
+            error('Variable "%s" not found in sheet "%s" of file "%s".',...
+                  variableName, sheetName, filePaths{g});
+        end
+        
+        Y    = T.('Y_norm');
+        Xraw = T.(variableName);
+        Xnorm = Xraw./ normFactors(g);
+        
+        dataStruct(g).axial(a).sheetName = sheetName;
+        dataStruct(g).axial(a).Y = Y;
+        dataStruct(g).axial(a).Xnorm = Xnorm;
+    end
+end
+
+%% ----------------- CREATE FIGURE & TILED LAYOUT ------------
+fig = figure('Name', 'Overlayed y/d vs U/Uinf', 'NumberTitle', 'off');
+
+% Make the figure wider and somewhat shorter to get wider tiles
+set(fig, 'Units', 'normalized', 'Position', [0.05 0.25 0.5 0.5]);
+% [left bottom width height]; increase width to 0.9, reduce height to 0.5
+
+% Match example style: 1 x numSheets layout and use fig handle
+tl = tiledlayout(fig, 1, numSheets, 'TileSpacing', 'tight', 'Padding', 'compact');
+
+allLineHandles = [];   % to store one line per geometry from first tile
+
+%% ---------------------- PLOTTING LOOP ----------------------
+for a = 1:nAxial
+    nexttile;
+    hold on; grid on; box on;
+    
+    localLineHandles = gobjects(1, nGeom);
+    
+    for g = 1:nGeom
+        Xnorm = dataStruct(g).axial(a).Xnorm;
+        Y     = dataStruct(g).axial(a).Y;
+        
+        cIdx = min(g, size(colorOrder,1));
+        color = colorOrder(cIdx,:);
+        ls    = lineStyles{min(g, numel(lineStyles))};
+        
+        % ---- CHANGE LINE STYLING HERE IF DESIRED -------------
+        localLineHandles(g) = plot(Xnorm, Y,...
+            'Color', color,...
+            'LineStyle', ls,...
+            'LineWidth', 2);
+    end
+    
+    % Save handles from FIRST subplot only (for shared legend)
+    if a == 1
+        allLineHandles = localLineHandles;
+    end
+    
+    % Axis labels and limits
+    xlim(xLim);
+    ylim(yLim);
+    xlabel(xLabelStr, 'FontSize', labelFontSize, 'Interpreter', 'latex');
+
+    % Labels the first y-axis only
+    if a == 1
+        ylabel(yLabelStr, 'FontSize', labelFontSize, 'Interpreter', 'latex');
+    else
+        % Other subplots: hide y-axis ticks and labels
+        set(gca, 'YTickLabel', []);   % hides tick marks & labels
+        ylabel('');                                % ensure no individual y-label
+    end
+    
+    % Tile title
+    if a <= numel(subplotTitles)
+        title(subplotTitles{a}, 'FontSize', titleFontSize, 'Interpreter', 'latex');
+    else
+        title(axialSheets{a}, 'FontSize', titleFontSize, 'Interpreter', 'none');
+    end
+    
+    set(gca, 'FontSize', axisFontSize);
+    hold off;
+end
+
+%% ----------------- SHARED Y LABEL (INVISIBLE AXES) ----------
+% Create an invisible axes covering the tiled layout and put a single
+% y-label on it. This acts as a global/shared y-label.
+axShared = axes(fig, 'Position', tl.Position, 'Color', 'none',...
+                'XTick', [], 'YTick', [], 'Box', 'off');
+axShared.YAxis.Visible = 'off';
+axShared.XAxis.Visible = 'off';
+ylabel(axShared, yLabelStr, 'FontSize', labelFontSize+1,...
+       'Interpreter', 'latex', 'Rotation', 90, 'VerticalAlignment', 'middle');
+uistack(axShared, 'bottom');  % keep plots and legend on top
+
+%% ----------------- SHARED LEGEND (BELOW TILES) -------------
+if ~isempty(allLineHandles)
+    lg = legend(allLineHandles, legendEntries,...
+                'Orientation', 'horizontal',...
+                'Box', 'off');   % <-- CHANGE legend box/orientation here if desired
+    
+    % Place legend under all tiles
+    lg.Layout.Tile = 'south';
+    lg.FontSize    = legendFontSize;
+end
+
+%% ----------------- SHARED MAIN TITLE -----------------------
+sgtitle(tl, mainTitle, 'FontSize', 14, 'FontWeight', 'bold', 'Interpreter','latex');
+
+%% ----------------- SAVE HIGH-RES FIGURE --------------------
+set(fig, 'PaperPositionMode', 'auto');  % Ensure proper sizing
+exportgraphics(fig, outputFile, 'Resolution', outputDPI);
+outputFile = 'AxialProfiles_VxNorm.pdf';  % <-- vector PDF
+exportgraphics(fig, outputFile,...
+    'ContentType', 'vector');             % forces vector output
+
+%% ----------------- END OF SCRIPT ---------------------------

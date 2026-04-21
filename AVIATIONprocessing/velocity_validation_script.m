@@ -67,9 +67,18 @@ for i = 1:numSheets
     % Axis and labels
     xlim([-0.2, 1.1]);   % Extended x-bounds
     ylim([-1, 1]);
-    xlabel('U / U_{\infty}');
-    ylabel('y / d');
-
+    xlabel('$$\bar{V_x}/V_{x,\infty}$$', 'Interpreter', 'latex');
+    ylabel('Y/D');
+    
+    % Labels the first y-axis only
+    if i == 1
+        ylabel('Y/D', 'Interpreter', 'latex');
+    else
+        % Other subplots: hide y-axis ticks and labels
+        %set(gca, 'YTickLabel', []);   % hides tick marks & labels
+        ylabel('');                                % ensure no individual y-label
+    end
+    
     % Title with “xL” → “x/L”
     title(strrep(sheetNames{i}, 'xL', 'x/L'), 'Interpreter', 'none');
 
