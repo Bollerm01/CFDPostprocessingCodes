@@ -43,12 +43,8 @@ FINAL_COLUMNS = [
     "X",
     "Y",
     "Z",
-    "X_zone2",
-    "Y_zone2",
-    "Z_zone2",
-    "U_zone1",
-    "U_zone2",
-    "U_zone2_norm",
+    "Velocity_X",
+    "Velocity_X_Norm"
 ]
 
 # ============================================================
