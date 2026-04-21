@@ -1,12 +1,12 @@
-# Current workflow for condensing CSVs of probe lines from Volcano sims
-# Future improvements needed when running final sims with direct probe .DAT files (see Time SensitivityVolcano data combiner workflow)
-# Input: Folder of CSVs from Paraview
-# Output: Condensed XLSX workbook with sheets per xL location
+# CSV-to-Excel combiner for ParaView probe line outputs
+# Input: Folder of CSVs from ParaView (25 lines, each file)
+# Output: One XLSX workbook with one sheet per probe location,
+#         including a normalized Y column (Y_norm)
 
 import os
 import pandas as pd
 import tkinter as tk
-from tkinter import filedialog, messagebox, simpledialog
+from tkinter import filedialog, messagebox
 
 # ============================================================
 # ================= COLUMN DEFINITIONS =======================
@@ -18,6 +18,7 @@ COLUMN_RENAME_MAP = {
     "Points:2": "Z",
 }
 
+# Only the columns that should exist from the new probe script
 FINAL_COLUMNS = [
     "X",
     "Y",
@@ -26,29 +27,15 @@ FINAL_COLUMNS = [
     "velocitymagavg",
     "velocityx",
     "velocityxavg",
-    "velocityy",
-    "velocityyavg",
-    "velocityz",
-    "velocityzavg",
-    "pressure",
-    "pressureavg",
-    "qcriterion",
-    "reynoldsstressxx",
-    "reynoldsstressxy",
-    "reynoldsstressxz",
-    "reynoldsstressyy",
-    "reynoldsstressyz",
-    "reynoldsstresszz",
-    "tke"
 ]
 
 # ============================================================
 # ============== Y NORMALIZATION PARAMETERS =================
 # ============================================================
 
-Y_REFERENCE = 0.018593   # Y-location of zero point
-Y_DEPTH = 0.018593      # Normalization depth (must be non-zero)
-
+# Adjust these as needed for your geometry
+Y_REFERENCE = 0.018593   # Y-location of zero point (e.g., cavity lip)
+Y_DEPTH = 0.018593       # Normalization depth (must be non-zero)
 
 # ============================================================
 # ===================== MAIN PROCESS =========================
@@ -60,7 +47,7 @@ def run_conversion():
     csv_folder = filedialog.askdirectory(
         title="Select folder containing CSV files"
     )
-    geometry = csv_folder.split('\\')[-1]
+
     if not csv_folder:
         messagebox.showerror("Error", "No CSV folder selected.")
         return
@@ -72,7 +59,7 @@ def run_conversion():
         )
         return
 
-    output_name = f"CondensedHighResData_{geometry}.xlsx"
+    output_name = "CondensedProbeData.xlsx"
     output_excel = os.path.join(csv_folder, output_name)
 
     # --- Find CSV files ---
@@ -97,10 +84,10 @@ def run_conversion():
 
                 df = pd.read_csv(csv_path)
 
-                # Rename coordinate columns
+                # Rename coordinate columns if present
                 df = df.rename(columns=COLUMN_RENAME_MAP)
 
-                # Keep only desired columns that exist
+                # Keep only desired columns that actually exist
                 existing_cols = [c for c in FINAL_COLUMNS if c in df.columns]
                 df = df[existing_cols]
 
@@ -130,22 +117,21 @@ def run_conversion():
             str(e)
         )
 
-
 # ============================================================
 # ========================= GUI ==============================
 # ============================================================
 
 root = tk.Tk()
-root.title("CSV Probe Condenser")
-root.geometry("380x130")
+root.title("Probe CSV → Excel Combiner")
+root.geometry("420x140")
 root.resizable(False, False)
 
 run_button = tk.Button(
     root,
-    text="Select CSV Folder and Create Excel",
+    text="Select Probe CSV Folder and Create Excel",
     command=run_conversion,
     height=2,
-    width=45
+    width=48
 )
 
 run_button.pack(pady=35)
