@@ -60,7 +60,7 @@ def run_conversion():
     csv_folder = filedialog.askdirectory(
         title="Select folder containing CSV files"
     )
-    geometry = csv_folder.split('\\')[-1]
+    geometry = csv_folder.split('/')[-1]
     if not csv_folder:
         messagebox.showerror("Error", "No CSV folder selected.")
         return
