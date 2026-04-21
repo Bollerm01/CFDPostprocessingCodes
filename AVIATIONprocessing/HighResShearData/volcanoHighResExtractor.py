@@ -55,6 +55,11 @@ end_0   = [2.15058, 0.03719, 0.0]
 start_1 = [2.21695, 0.0,     0.0]
 end_1   = [2.21695, 0.04648, 0.0]  # Down to floor even though on ramp
 
+# US line definition (x, y only; z comes from the plane)
+US_X = 2.0801
+US_Y_START = 0.018593
+US_Y_END   = 0.055779
+
 # Build PROBE_LINES by linear interpolation between (start_0, end_0) and (start_1, end_1)
 # parameter t runs from 0 to 1 over N_PROBE_LINES points.
 PROBE_LINES = {}
@@ -118,7 +123,7 @@ for plane_tag, plane_z in PLANES:
     slice_plane.SlicePoint = [0.0, 0.0, plane_z]
     slice_plane.SliceNormal = [0.0, 0.0, 1.0]
 
-    # Extract probe lines on this slice
+    # Extract xL probe lines on this slice
     for label, line_def in PROBE_LINES.items():
         full_label = f"{label}{plane_tag}"
         print(f"  Extracting {full_label}...")
@@ -146,7 +151,34 @@ for plane_tag, plane_z in PLANES:
         # Cleanup probe filter
         Delete(pol)
 
+    # --------------------------------------------------------
+    # Additional "US" line for each plane:
+    # US_MP, US_z25, US_z75
+    # --------------------------------------------------------
+    us_label = f"US{plane_tag}"  # -> "US_MP", "US_z25", "US_z75"
+    print(f"  Extracting {us_label}...")
+
+    us_start = [US_X, US_Y_START, plane_z]
+    us_end   = [US_X, US_Y_END,   plane_z]
+
+    us_pol = PlotOverLine(Input=slice_plane)
+    us_pol.Point1 = us_start
+    us_pol.Point2 = us_end
+    us_pol.Resolution = LINE_RESOLUTION
+
+    RenameSource(us_label, us_pol)
+
+    us_output_file = os.path.join(OUTPUT_DIR, f"{us_label}.csv")
+
+    SaveData(
+        us_output_file,
+        proxy=us_pol,
+        Precision=6,
+    )
+
+    Delete(us_pol)
+
     # Cleanup slice for this plane
     Delete(slice_plane)
 
-print("All probe lines extracted successfully for all z-planes.")
+print("All probe lines (including US_MP, US_z25, US_z75) extracted successfully for all z-planes.")
