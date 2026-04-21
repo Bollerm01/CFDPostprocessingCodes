@@ -11,7 +11,7 @@ VOLCANO_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD00/RD00_004/latest
 # VOLCANO_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD52/RD52_057/latest.volcano" # RD52 Path
 
 # --- Output directory ---
-OUTPUT_DIR = r"/home/bollerma/LESdata/SSWT/fullCav/RDsteps/highResShearOutput/RD00" # Change tailing folder
+OUTPUT_DIR = r"/home/bollerma/LESdata/SSWT/fullCav/RDsteps/highResShearOutput/RD00"  # Change tailing folder
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # --- Variables to load from the volcano file ---
@@ -29,21 +29,24 @@ SLICE_Z = 0.0
 # --- Line resolution ---
 LINE_RESOLUTION = 500
 
-# --- Number of probe lines between xL_0 and xL_1 ---
+# --- Number of probe lines between xL_0p03 and xL1 (inclusive) ---
 N_PROBE_LINES = 25
+
+# x/L range
+X_OVER_L_START = 0.03
+X_OVER_L_END   = 1.0
 
 # ============================================================
 # ========== BASELINE LINES TO INTERPOLATE BETWEEN ===========
 # ============================================================
 
-
-# xL_0 (original xL_0p03)
+# xL_0p03
 start_0 = [2.15058, 0.0,     0.0]
 end_0   = [2.15058, 0.03719, 0.0]
 
-# xL_1 (original xL_1)
-start_1 = [2.21695, 0.0,  0.0]
-end_1   = [2.21695, 0.03719, 0.0] # Down to floor even though on ramp
+# xL1
+start_1 = [2.21695, 0.0,     0.0]
+end_1   = [2.21695, 0.4648, 0.0]  # Down to floor even though on ramp
 
 # Build PROBE_LINES by linear interpolation between (start_0, end_0) and (start_1, end_1)
 # parameter t runs from 0 to 1 over N_PROBE_LINES points.
@@ -61,8 +64,20 @@ for i in range(N_PROBE_LINES):
         for j in range(3)
     ]
 
-    # Labeling: xL_0, xL_1,..., xL_24
-    label = f"xL_{i}"
+    # Compute corresponding x/L value between 0.03 and 1.0
+    x_over_L = X_OVER_L_START + t * (X_OVER_L_END - X_OVER_L_START)
+
+    # --- Labeling rules ---
+    # First line: xL_0p03
+    # Last line:  xL1
+    # Intermediate: xL_0pXX where XX are two digits of 100*x/L (e.g., 0.11 -> xL_0p11)
+    if i == 0:
+        label = "xL_0p03"
+    elif i == N_PROBE_LINES - 1:
+        label = "xL1"
+    else:
+        val = int(round(x_over_L * 100))   # e.g., 0.11 -> 11
+        label = f"xL_0p{val:02d}"
 
     PROBE_LINES[label] = {
         "start": start_interp,
@@ -105,7 +120,7 @@ for label, line_def in PROBE_LINES.items():
 
     output_file = os.path.join(OUTPUT_DIR, f"{label}.csv")
 
-    # Export to CSV 
+    # Export to CSV
     SaveData(
         output_file,
         proxy=pol,
