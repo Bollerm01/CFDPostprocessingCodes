@@ -6,7 +6,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, simpledialog
 
 # ========= File Header (Update Prior to Running) ============
-FILE_IDENTIFIER = "RD52"
+FILE_IDENTIFIER = "RD00"
 
 # ============================================================
 # ================= COLUMN DEFINITIONS =======================
@@ -29,13 +29,13 @@ COLUMN_RENAME_MAP = {
     "U_velocity_m_s": "U_zone1",
 
     # Zone 2 U and coordinates
-    "zone2/U_velocity_m_s": "U_zone2",
+    "zone2/U_velocity_m_s": "Velocity_X",
     "zone2/X": "X_zone2",
     "zone2/Y": "Y_zone2",
     "zone2/Z": "Z_zone2",
 
     # Normalized velocity (from zone2)
-    "U_velocity_norm": "U_zone2_norm",
+    "U_velocity_norm": "Velocity_X_Norm",
 }
 
 # Final columns we want to keep (only those that actually exist in each CSV will be kept)
