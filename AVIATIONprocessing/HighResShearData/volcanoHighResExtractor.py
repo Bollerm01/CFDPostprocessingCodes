@@ -46,7 +46,7 @@ end_0   = [2.15058, 0.03719, 0.0]
 
 # xL1
 start_1 = [2.21695, 0.0,     0.0]
-end_1   = [2.21695, 0.4648, 0.0]  # Down to floor even though on ramp
+end_1   = [2.21695, 0.04648, 0.0]  # Down to floor even though on ramp
 
 # Build PROBE_LINES by linear interpolation between (start_0, end_0) and (start_1, end_1)
 # parameter t runs from 0 to 1 over N_PROBE_LINES points.
