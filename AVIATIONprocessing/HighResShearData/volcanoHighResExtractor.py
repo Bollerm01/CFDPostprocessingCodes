@@ -15,16 +15,12 @@ OUTPUT_DIR = r"/home/bollerma/LESdata/SSWT/fullCav/RDsteps/highResShearOutput/RD
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # --- Variables to load from the volcano file ---
-# Reduced to only the requested arrays
 POINT_ARRAYS = [
     "velocitymag",
     "velocitymagavg",
     "velocityx",
     "velocityxavg",
 ]
-
-# --- Z-plane slice location ---
-SLICE_Z = 0.0
 
 # --- Line resolution ---
 LINE_RESOLUTION = 500
@@ -36,10 +32,21 @@ N_PROBE_LINES = 25
 X_OVER_L_START = 0.03
 X_OVER_L_END   = 1.0
 
+# --- Z planes and filename tags ---
+# z = -0.0381  -> "_z75"
+# z =  0.0     -> "_MP"
+# z = +0.0381  -> "_z25"
+PLANES = [
+    ("_z75", -0.0381),
+    ("_MP",   0.0),
+    ("_z25",  0.0381),
+]
+
 # ============================================================
 # ========== BASELINE LINES TO INTERPOLATE BETWEEN ===========
 # ============================================================
 
+# Base definition at z = 0; we'll adjust z per plane later.
 # xL_0p03
 start_0 = [2.15058, 0.0,     0.0]
 end_0   = [2.15058, 0.03719, 0.0]
@@ -97,37 +104,49 @@ volcano = FileSeriesReader(
 volcano.CellArrayStatus = POINT_ARRAYS
 
 # ============================================================
-# ====================== Z=0 SLICE ===========================
-# ============================================================
-
-slice_z0 = VolcanoSlice(registrationName="Z0_Slice", Input=volcano)
-slice_z0.SlicePoint = [0.0, 0.0, SLICE_Z]
-slice_z0.SliceNormal = [0.0, 0.0, 1.0]
-
-# ============================================================
 # =================== PROBE EXTRACTION =======================
 # ============================================================
 
-for label, line_def in PROBE_LINES.items():
-    print(f"Extracting {label}...")
+for plane_tag, plane_z in PLANES:
+    print(f"Creating slice at z = {plane_z} ({plane_tag})")
 
-    pol = PlotOverLine(Input=slice_z0)
-    pol.Point1 = line_def["start"]
-    pol.Point2 = line_def["end"]
-    pol.Resolution = LINE_RESOLUTION
-
-    RenameSource(label, pol)
-
-    output_file = os.path.join(OUTPUT_DIR, f"{label}.csv")
-
-    # Export to CSV
-    SaveData(
-        output_file,
-        proxy=pol,
-        Precision=6,
+    # Create slice for this z-plane
+    slice_plane = VolcanoSlice(
+        registrationName=f"Slice_{plane_tag}",
+        Input=volcano
     )
+    slice_plane.SlicePoint = [0.0, 0.0, plane_z]
+    slice_plane.SliceNormal = [0.0, 0.0, 1.0]
 
-    # Cleanup
-    Delete(pol)
+    # Extract probe lines on this slice
+    for label, line_def in PROBE_LINES.items():
+        full_label = f"{label}{plane_tag}"
+        print(f"  Extracting {full_label}...")
 
-print("All probe lines extracted successfully.")
+        # Copy start/end and set their z to the plane z to be explicit
+        start_pt = [line_def["start"][0], line_def["start"][1], plane_z]
+        end_pt   = [line_def["end"][0],   line_def["end"][1],   plane_z]
+
+        pol = PlotOverLine(Input=slice_plane)
+        pol.Point1 = start_pt
+        pol.Point2 = end_pt
+        pol.Resolution = LINE_RESOLUTION
+
+        RenameSource(full_label, pol)
+
+        output_file = os.path.join(OUTPUT_DIR, f"{full_label}.csv")
+
+        # Export to CSV
+        SaveData(
+            output_file,
+            proxy=pol,
+            Precision=6,
+        )
+
+        # Cleanup probe filter
+        Delete(pol)
+
+    # Cleanup slice for this plane
+    Delete(slice_plane)
+
+print("All probe lines extracted successfully for all z-planes.")
