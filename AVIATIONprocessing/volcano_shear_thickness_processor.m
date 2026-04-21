@@ -77,8 +77,13 @@ for iLoc = 1:numel(LOCATIONS)
     df_fs = sortrows(df_fs, Y_COL);
 
     % tail (second half)
+    % Low res
+    % nRows = height(df_fs);
+    % df_fs_tail = df_fs( floor(nRows/2)+1 : end, : );
+    %High res
     nRows = height(df_fs);
-    df_fs_tail = df_fs( floor(nRows/2)+1 : end, : );
+    df_fs_tail = df_fs( 490 : end, : ); % takes the last 10 rows (hard coded)
+
 
     if ~ismember(VELMAGAVG_COL, df_fs_tail.Properties.VariableNames)
         errordlg(['Column "' VELMAGAVG_COL '" not found in sheet "' fs_sheet '".'], 'Error');
@@ -415,13 +420,13 @@ for iNorm = 1:numel(avg_norm_cols)
     ylabel('Normalized Shear Layer Thickness', 'Interpreter', 'latex');
     title(sprintf('%s Thickness, %s', nice_name, geoLabel), 'Interpreter', 'latex');
     grid on;
-    
+    legend('Location', 'best', 'Interpreter','latex');  % let MATLAB choose best in-axes position
     % Catch to display legend not overtop Vx avg data
     if strcmp(norm_col, 'velocityxavg_norm') && strcmp(geometryType, 'RD00')
-        ylim([0.4 1.6])
-        legend('Location', 'best', 'Interpreter','latex');  % let MATLAB choose best in-axes position
+        % ylim([0.4 1.6])
+        % legend('Location', 'best', 'Interpreter','latex');  % let MATLAB choose best in-axes position
     else
-        ylim([0.4 1.6])
+        % ylim([0.4 1.6])
     end
 
     hold off;
