@@ -438,6 +438,7 @@ for iNorm = 1:numel(avg_norm_cols)
     close(hfig);
 end
 
+
 fprintf('Processing complete.\nFiles stored at: %s\n', output_dir);
 
 
@@ -524,84 +525,86 @@ function df_pruned = prune_profile_keep_first_y_MATLAB(df, y_col, velocity_cols,
 end
 
 function [thickness, lower_vel_for_dat] = find_thickness_robust_MATLAB(y, vel_norm, upper, lower, min_sep)
+    % FIND_THICKNESS_ROBUST_MATLAB
+    %   Computes the thickness between 'lower' and 'upper' velocity thresholds.
+    %   1) Determines the upper boundary first:
+    %        - Uses interpolation at the first crossing of 'upper' if possible.
+    %        - If no value exceeds 'upper' but the last 4 points are strictly
+    %          increasing and still below 'upper', uses extrapolation based on
+    %          a linear fit through the last 3 points.
+    %   2) From the determined upper boundary index, searches backward in the
+    %      data to find the last crossing of 'lower' below that.
+    %   3) The thickness is the vertical distance between the lower and upper
+    %      crossing locations.
+    %
+    %   Inputs:
+    %     y         - positions (vector)
+    %     vel_norm  - velocities at y (vector)
+    %     upper     - upper velocity threshold
+    %     lower     - lower velocity threshold
+    %     min_sep   - minimum allowed thickness (optional, default 1e-9)
+    %
+    %   Outputs:
+    %     thickness          - thickness between lower and upper thresholds
+    %     lower_vel_for_dat  - velocity at the lower boundary crossing
+    %                          (set to the interpolated value, equal to 'lower')
+
     if nargin < 5
         min_sep = 1e-9;
     end
 
+    % Ensure column vectors for consistent indexing
     y   = y(:);
     vel = vel_norm(:);
 
-    below = vel < lower;
-    above = vel > upper;
-
+    n = numel(vel);
     lower_vel_for_dat = NaN;
 
-    % ---------- LOWER BOUNDARY ----------
-    if any(below)
-        idx_below = find(below);
-        i_low = idx_below(end);
-        if i_low >= numel(vel)
-            thickness = NaN;
-            lower_vel_for_dat = NaN;
-            return;
-        end
+    % Logical masks for thresholds
+    above_upper = vel > upper;
+    below_lower = vel < lower;
 
-        y1 = y(i_low);
-        y2 = y(i_low + 1);
-        v1 = vel(i_low);
-        v2 = vel(i_low + 1);
-        if v2 == v1
-            thickness = NaN;
-            lower_vel_for_dat = NaN;
-            return;
-        end
-        y_lower = y1 + (lower - v1) * (y2 - y1) / (v2 - v1);
-        lower_vel_for_dat = NaN;
-    else
-        if numel(vel) <= 5
-            thickness = NaN;
-            lower_vel_for_dat = NaN;
-            return;
-        end
-        vel_tail = vel(6:end);
-        [~, idx_min_tail] = min(vel_tail);
-        i_min = idx_min_tail + 5;
-        i_low = i_min;
+    % ================================================================
+    % STEP 1: FIND UPPER BOUNDARY (INTERPOLATION OR EXTRAPOLATION)
+    % ================================================================
 
-        y_lower = y(i_low);
-        lower_vel_for_dat = vel(i_low);
-    end
-
-    % ---------- UPPER BOUNDARY WITH EXTRAPOLATION ----------
-    idx_above = find(above);
+    idx_above = find(above_upper);
 
     if ~isempty(idx_above)
-        % Normal case: at least one point above upper -> interpolate to crossing
+        % -------- Case 1: At least one point exceeds 'upper' --------
+        % Use the first index where vel > upper for interpolation.
         i_up = idx_above(1);
+
+        % Interpolation requires a point before i_up
         if i_up == 1
             thickness = NaN;
             return;
         end
 
+        % Interpolate between (i_up-1) and i_up to determine y_upper
         y1 = y(i_up - 1);
         y2 = y(i_up);
         v1 = vel(i_up - 1);
         v2 = vel(i_up);
+
+        % Avoid division by zero in interpolation
         if v2 == v1
             thickness = NaN;
             return;
         end
 
+        % Linear interpolation for the upper crossing
         y_upper = y1 + (upper - v1) * (y2 - y1) / (v2 - v1);
 
-    else
-        % No point is above 'upper' -> try extrapolation if conditions are met
-        n = numel(vel);
+        % Store an index near the upper crossing to bound the lower search
+        upper_index_for_search = i_up;
 
-        % Conditions:
-        %  1) Need at least 4 points total
-        %  2) Last point is below 'upper'
-        %  3) Last 4 points are strictly increasing in velocity
+    else
+        % -------- Case 2: No point exceeds 'upper' -> try extrapolation --------
+        % Conditions for extrapolation:
+        %   1) At least 4 points in total.
+        %   2) Last point is below 'upper'.
+        %   3) Last 4 velocities are strictly increasing.
         can_extrap = false;
         if n >= 4 && vel(end) < upper
             v_last4 = vel(end-3:end);
@@ -611,41 +614,93 @@ function [thickness, lower_vel_for_dat] = find_thickness_robust_MATLAB(y, vel_no
         end
 
         if ~can_extrap
-            % Original behavior: cannot determine upper boundary
+            % No valid upper boundary can be determined
             thickness = NaN;
             return;
         end
 
-        % Use last 3 points for a linear fit v(y) = a*y + b
+        % Use the last 3 points for a least-squares linear fit v(y) = a*y + b
         y_fit = y(end-2:end);
         v_fit = vel(end-2:end);
 
-        % Least-squares line fit
-        p = polyfit(y_fit, v_fit, 1);   % p(1) = a (slope), p(2) = b (intercept)
+        % Perform linear regression
+        p = polyfit(y_fit, v_fit, 1);   % p(1) = slope a, p(2) = intercept b
         a = p(1);
         b = p(2);
 
+        % Require a positive slope for a meaningful upward extrapolation
         if a <= 0
-            % Increasing trend failed in fit (shouldn't happen with strictly increasing points,
-            % but keep this as a safety check)
             thickness = NaN;
             return;
         end
 
-        % Solve upper = a*y_upper + b  ->  y_upper = (upper - b)/a
+        % Solve for y where the extrapolated velocity equals 'upper':
+        % upper = a*y_upper + b -> y_upper = (upper - b) / a
         y_upper = (upper - b) / a;
 
-        % Optional sanity check: crossing should be at or beyond last y point
+        % Sanity check: crossing should occur at or beyond the last data point in y
         if y_upper <= y(end)
             thickness = NaN;
             return;
         end
+
+        % For backward search toward lower threshold, use the last index
+        upper_index_for_search = n;
     end
 
-    % ---------- THICKNESS AND MINIMUM SEPARATION ----------
+    % ================================================================
+    % STEP 2: FIND LOWER BOUNDARY BY WORKING BACKWARD
+    % ================================================================
+
+    % Search for the last index below 'upper_index_for_search' where vel < lower.
+    indices_below_upper_region = (1:n)' < upper_index_for_search;
+    candidate_below = below_lower & indices_below_upper_region;
+
+    idx_below = find(candidate_below);
+
+    if isempty(idx_below)
+        % No point below the lower threshold before the upper boundary
+        thickness = NaN;
+        return;
+    end
+
+    % Last index (closest to the upper boundary region) where vel < lower
+    i_low_below = idx_below(end);
+
+    % Need at least one subsequent point to interpolate up through 'lower'
+    if i_low_below >= n
+        thickness = NaN;
+        return;
+    end
+
+    % Interpolate between (i_low_below) and (i_low_below+1) to determine y_lower
+    y1 = y(i_low_below);
+    y2 = y(i_low_below + 1);
+    v1 = vel(i_low_below);
+    v2 = vel(i_low_below + 1);
+
+    % Avoid division by zero in interpolation
+    if v2 == v1
+        thickness = NaN;
+        return;
+    end
+
+    % Linear interpolation for the lower crossing
+    y_lower = y1 + (lower - v1) * (y2 - y1) / (v2 - v1);
+
+    % Velocity at the lower boundary crossing is, by definition, 'lower'
+    lower_vel_for_dat = lower;
+
+    % ================================================================
+    % STEP 3: COMPUTE THICKNESS AND APPLY MINIMUM SEPARATION
+    % ================================================================
+
     thickness = y_upper - y_lower;
+
+    % Discard non-physical or numerically unreliable thickness values
     if thickness <= min_sep
         thickness = NaN;
+        lower_vel_for_dat = NaN;
     end
 end
 
