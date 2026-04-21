@@ -1,6 +1,6 @@
 %% Processing code for Exp Boundary Layer Data vs. CFD (Volcano)
 % Inputs: 3x SSWT BL run data (processed from process_BL_sweep_multiRun.m)
-% Output: Processed, combined Excel sheet and cross-plotted Y vs. Mach figures
+% Output: Processed, combined Excel sheet and cross-plotted Y/D vs. Mach figures
 
 % --- Select Excel files (3 files) ---
 [excelNames, excelPath] = uigetfile(...
@@ -56,12 +56,28 @@ pngFile_nd  = fullfile(output_dir, baseName + "_MachND.png");
 %% Constants
 maxY_cm = 2.59;   % 1.02 inches ≈ 2.59 cm
 
+%% NEW: Ask user for characteristic length D (in cm)
+% prompt   = {'Enter characteristic length D (cm) for Y/D:'};
+% dlgtitle = 'Characteristic Length Input';
+% dims     = [1 50];
+% definput = {'2.59'};  % default example; adjust as desired
+% answer   = inputdlg(prompt, dlgtitle, dims, definput);
+% 
+% if isempty(answer)
+%     error('No characteristic length D provided. Script terminated.');
+% end
+
+D_cm = 1.8593; %cavity depth, cm
+if isnan(D_cm) || D_cm <= 0
+    error('Characteristic length D must be a positive number (cm).');
+end
+
 %% Storage for processed datasets
-excelY        = cell(1, numel(excelFiles));
+excelY        = cell(1, numel(excelFiles));   % will store Y/D
 excelMach     = cell(1, numel(excelFiles));   % dimensional Mach_BL
 excelMach_nd  = cell(1, numel(excelFiles));   % non-dimensional Mach_BL / Mach_FS
 
-csvY          = [];
+csvY          = [];   % will store Y/D
 csvMach       = [];   % dimensional
 csvMach_nd    = [];   % non-dimensional
 
@@ -98,8 +114,11 @@ for k = 1:numel(excelFiles)
     M_BL_avg = M_BL_avg(keep);
     M_nd_avg = M_nd_avg(keep);
 
+    %% NEW: Non-dimensionalize Y by D (still using cm)
+    Y_over_D = yUnique./ D_cm;
+
     % Store
-    excelY{k}       = yUnique;
+    excelY{k}       = Y_over_D;
     excelMach{k}    = M_BL_avg;
     excelMach_nd{k} = M_nd_avg;
 end
@@ -155,7 +174,7 @@ end
 
 % ---- Now shift Y, apply cutoff, and interpolate ----
 
-% Make lowest y-value zero
+% Make lowest y-value zero (still in cm)
 Y_cm = Y_cm - min(Y_cm);
 
 % Keep only values <= 2.59 cm (1.02 in)
@@ -171,7 +190,7 @@ Mcsv = Mcsv(sortIdx);
 interpFactor = 10;  % e.g., 10× more points than current
 nInterp = max(interpFactor * numel(Y_cm), 2); % ensure at least 2 points
 
-% New Y grid for interpolation (column vector)
+% New Y grid for interpolation (cm)
 Y_cm_interp = linspace(min(Y_cm), max(Y_cm), nInterp).';
 
 % Interpolate dimensional Mach onto this new Y grid
@@ -180,8 +199,11 @@ Mcsv_interp = interp1(Y_cm, Mcsv, Y_cm_interp, 'pchip');
 % Non-dimensional Mach using freestream Mach
 Mcsv_nd_interp = Mcsv_interp./ M_FS_csv;
 
+%% NEW: Non-dimensionalize the interpolated Y by D
+Y_over_D_csv = Y_cm_interp./ D_cm;
+
 % Store for later saving/plotting
-csvY       = Y_cm_interp;
+csvY       = Y_over_D_csv;   % Y/D
 csvMach    = Mcsv_interp;
 csvMach_nd = Mcsv_nd_interp;
 
@@ -189,15 +211,16 @@ csvMach_nd = Mcsv_nd_interp;
 
 % Excel sheets for each processed dataset
 for k = 1:numel(excelFiles)
+    % Save both Y_cm and Y_over_D if you want; here we save Y_over_D
     TblOut = table(excelY{k}, excelMach{k}, excelMach_nd{k},...
-        'VariableNames', {'Y_cm', 'Mach', 'Mach_nd'});
+        'VariableNames', {'Y_over_D', 'Mach', 'Mach_nd'});
     sheetName = sprintf('Excel_%d', k);
     writetable(TblOut, outputExcel, 'Sheet', sheetName, 'WriteMode', 'overwrite');
 end
 
 % CSV processed (interpolated) data
 TblCSV = table(csvY, csvMach, csvMach_nd,...
-    'VariableNames', {'Y_cm', 'Mach', 'Mach_nd'});
+    'VariableNames', {'Y_over_D', 'Mach', 'Mach_nd'});
 writetable(TblCSV, outputExcel, 'Sheet', 'CSV', 'WriteMode', 'overwrite');
 
 %% ---- Build legend labels from Excel filenames ----
@@ -211,7 +234,7 @@ end
 % CSV legend label (custom)
 csvLegendLabel = 'Volcano';
 
-%% ---- Plot 1: Dimensional Mach vs Y ----
+%% ---- Plot 1: Dimensional Mach vs Y/D ----
 fig_dim = figure;
 hold on; grid on; box on;
 
@@ -226,14 +249,14 @@ for k = 1:numel(excelFiles)
 end
 
 % CSV dataset (dimensional Mach) as a continuous line
-plot(csvMach, csvY, '-',...
+plot(csvMach, csvY, '-sq',...
     'Color', colors(end,:),...
-    'LineWidth', 1.5,...
+    'MarkerSize', 5,...
     'DisplayName', csvLegendLabel);
 
-xlabel('Mach number');
-ylabel('Y (cm)');
-title('Boundary-Layer Mach Profiles (Dimensional Mach vs Y)');
+xlabel('Mach number');                          % unchanged (dimensional)
+ylabel('Y/D');                                  % NEW
+title('Experimental versus CFD Incident Boundary Layers');  % NEW
 legend('Location', 'best');
 set(gca, 'YDir', 'normal');
 
@@ -241,7 +264,7 @@ set(gca, 'YDir', 'normal');
 savefig(fig_dim, figFile_dim);
 saveas(fig_dim, pngFile_dim);
 
-%% ---- Plot 2: Non-dimensional Mach vs Y ----
+%% ---- Plot 2: Non-dimensional Mach vs Y/D ----
 fig_nd = figure;
 hold on; grid on; box on;
 
@@ -256,14 +279,14 @@ for k = 1:numel(excelFiles)
 end
 
 % CSV dataset (non-dimensional Mach) as a continuous line
-plot(csvMach_nd, csvY, '-',...
+plot(csvMach_nd, csvY, '-sq',...
     'Color', colors(end,:),...
-    'LineWidth', 1.5,...
+    'MarkerSize', 5,...
     'DisplayName', csvLegendLabel);
 
-xlabel('M / M_\infty (non-dimensional)');
-ylabel('Y (cm)');
-title('Boundary-Layer Mach Profiles (Non-Dimensional Mach vs Y)');
+xlabel('M / M_\infty');                         % NEW: removed "(non-dimensional)"
+ylabel('Y/D');                                  % NEW
+title('Experimental versus CFD Incident Boundary Layers');  % NEW
 legend('Location', 'best');
 set(gca, 'YDir', 'normal');
 
