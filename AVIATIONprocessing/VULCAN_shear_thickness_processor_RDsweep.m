@@ -225,6 +225,10 @@ for iFile = 1:numel(filenames)
         plot_path_fig = fullfile(plots_dir,...
             sprintf('shearThick_%s_overlaid_MP_%s_VULCAN.fig', VEL_USED_COL, geometryType));
         savefig(hfig, plot_path_fig);
+
+        plot_path_pdf = fullfile(plots_dir,...
+            sprintf('shearThick_%s_overlaid_MP_%s_VULCAN.pdf', VEL_USED_COL, geometryType));
+        exportgraphics(hfig, plot_path_pdf, 'ContentType','vector');
     end
     if isvalid(hfig)
         close(hfig);
@@ -335,9 +339,11 @@ for iThr = 1:size(THRESHOLDS,1)
     plot_name_png = sprintf('shearThick_%s_MP_upper%d_lower%d_allGeometries_VULCAN.png',...
         VEL_USED_COL, round(upper*100), round(lower*100));
     plot_name_fig = strrep(plot_name_png, '.png', '.fig');
+    plot_name_pdf = strrep(plot_name_png, '.png', '.pdf');
 
     print(hfig, '-dpng', '-r300', fullfile(plots_dir_global, plot_name_png));
     savefig(hfig, fullfile(plots_dir_global, plot_name_fig));
+    exportgraphics(hfig, fullfile(plots_dir_global, plot_name_pdf), 'ContentType','vector');
     close(hfig);
 end
 

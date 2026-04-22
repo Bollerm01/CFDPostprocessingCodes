@@ -18,7 +18,7 @@ legendEntries = {...
 };
 
 % Output image filename (change as desired)
-outputFile = 'SSWT_Urms_Validation.jpg';  % <-- New output name
+outputFile = 'SSWT_Urms_Validation';  % <-- New output name
 outputDPI  = 300;                                      % Resolution in DPI
 
 % === READ SHEETS ===
@@ -111,6 +111,7 @@ sgtitle(mainTitle, 'FontSize', 14, 'FontWeight', 'bold');
 
 % === SAVE HIGH-RES JPG ===
 set(fig, 'PaperPositionMode', 'auto');  % Ensure proper sizing
-exportgraphics(fig, outputFile, 'Resolution', outputDPI);
+exportgraphics(fig, [outputFile '.jpg'], 'Resolution', outputDPI);
+exportgraphics(fig, [outputFile '.pdf'], 'ContentType', 'vector');
 
 fprintf('Figure saved as "%s" at %d DPI.\n', outputFile, outputDPI);

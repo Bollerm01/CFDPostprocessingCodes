@@ -241,7 +241,7 @@ for g = 1:numel(dataTypes)
     
     % Axes labels and title
     xlabel(ax, dtPlot, 'Interpreter', 'latex');          % X axis: data type
-    ylabel(ax, 'Y/D', 'Interpreter', 'latex');       % Y axis
+    ylabel(ax, 'y/D', 'Interpreter', 'latex');       % Y axis
     title(ax, sprintf('Volcano vs. VULCAN: %s at %s', dtPlot2, axialStr),...
         'Interpreter', 'latex');
     xlim([0 20000])
@@ -260,6 +260,7 @@ for g = 1:numel(dataTypes)
     outBaseChar = char(outBase);  % convert to char vector for I/O functions
     savefig(overlayFig, [outBaseChar '.fig']);
     saveas(overlayFig, [outBaseChar '.png']);
+    exportgraphics(overlayFig, [outBaseChar '.pdf'], 'ContentType','vector');
     
     hold(ax, 'off');
 end

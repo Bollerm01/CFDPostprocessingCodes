@@ -248,6 +248,7 @@ outBase = fullfile(outFolder, sprintf('%s_vs_%s_velocityx_overlay', solType1, so
 outBaseChar = char(outBase);
 savefig(overlayFig, [outBaseChar '.fig']);
 exportgraphics(overlayFig, [outBaseChar '.png']);
+exportgraphics(overlayFig, [outBaseChar '.pdf'], 'ContentType','vector');
 
 %% ------------------------------------------------------------------------
 %% BUILD NORMALIZED PLOT
@@ -332,7 +333,7 @@ end
 
 % Labels and title for normalized plot
 xlabel(axN, origXLabelStr, 'Interpreter', origXLabelObj.Interpreter);
-ylabel(axN, '$$Y / Y_{0,R/D=0}$$', 'Interpreter', 'latex');
+ylabel(axN, '$$y / y_{0,R/D=0}$$', 'Interpreter', 'latex');
 
 normTitleStr = sprintf('Normalized: %s vs. %s - %s', solType1, solType2, origTitleStr);
 title(axN, normTitleStr, 'Interpreter', 'latex');
@@ -349,6 +350,7 @@ outBaseNorm = fullfile(outFolder, sprintf('%s_vs_%s_velocityx_overlay_normalized
 outBaseNormChar = char(outBaseNorm);
 savefig(normFig, [outBaseNormChar '.fig']);
 exportgraphics(normFig, [outBaseNormChar '.png']);
+exportgraphics(normFig, [outBaseNormChar '.pdf'], 'ContentType','vector');
 
 hold(axN, 'off');
 hold(ax, 'off');

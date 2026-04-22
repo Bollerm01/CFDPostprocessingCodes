@@ -264,14 +264,16 @@ for iP = 1:numel(planeNames)
                 case 'Rzz'
                     xLabelStr = '$$R_{zz}$$ (Pa)';
             end
-            yLabelStr = '$$ Y/D$$';
+            yLabelStr = '$$ y/D$$';
 
             xlabel(xLabelStr, 'Interpreter','latex');
             ylabel(yLabelStr, 'Interpreter','latex');
+            % Sets them all from [-1 1]
+            ylim([-1 1]);
 
             % Title with formatted axial ID and span label
             % Example: 'TKE vs Y_norm at x/L = 0.17, z/w = 0.50'
-            titleStr = sprintf('%s vs $$ Y/D$$ at %s, %s',...
+            titleStr = sprintf('%s vs $$ y/D$$ at %s, %s',...
                                qName, axialLabelLatex, spanTitle);
             title(titleStr, 'Interpreter','latex');
 
@@ -284,9 +286,11 @@ for iP = 1:numel(planeNames)
             baseName  = sprintf('%s_%s_%s_RDsweep_volcano', qName, plane, safeAxial);
             pngFile   = fullfile(planeOutDir, [baseName '.png']);
             figFile   = fullfile(planeOutDir, [baseName '.fig']);
+            pdfFile   = fullfile(planeOutDir, [baseName '.pdf']);
 
             saveas(fig, pngFile);
             savefig(fig, figFile);
+            exportgraphics(fig, pdfFile, 'ContentType','vector');
             close(fig);
         end
     end

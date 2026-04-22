@@ -1,6 +1,8 @@
 %% Processing code for Exp Boundary Layer Data vs. CFD (Volcano)
-% Inputs: 3x SSWT BL run data (processed from process_BL_sweep_multiRun.m)
-% Output: Processed, combined Excel sheet and cross-plotted Y/D vs. Mach figures
+% Adapted to:
+% - Non-dimensionalize Mach by the average of the last 5 points.
+% - Plot: Y/D vs. Mach and Y/D vs. M/M_max.
+% - Save plots as vectorized PDFs.
 
 % --- Select Excel files (3 files) ---
 [excelNames, excelPath] = uigetfile(...
@@ -34,7 +36,6 @@ end
 csvFile = fullfile(csvPath, csvName);
 
 %% Ask where to save outputs (Excel + figures)
-% Uses the same directory as the workbook
 output_dir = fullfile(excelPath, 'BoundaryLayerComparison');
 if ~exist(output_dir, 'dir')
     mkdir(output_dir);
@@ -43,43 +44,30 @@ end
 % Base name (no extension)
 baseName = "BoundaryLayerComparison";
 
-% Specifies the output Excel file name (with extension)
+% Output Excel file name
 outputExcel = fullfile(output_dir, baseName + ".xlsx");
 
-% Figure files for dimensional and non-dimensional Mach
-figFile_dim = fullfile(output_dir, baseName + "_Mach.fig");
-pngFile_dim = fullfile(output_dir, baseName + "_Mach.png");
-
-figFile_nd  = fullfile(output_dir, baseName + "_MachND.fig");
-pngFile_nd  = fullfile(output_dir, baseName + "_MachND.png");
+% Figure files (vectorized PDFs)
+pdfFile_dim = fullfile(output_dir, baseName + "_Mach.pdf");
+pdfFile_nd  = fullfile(output_dir, baseName + "_MachND.pdf");
 
 %% Constants
 maxY_cm = 2.59;   % 1.02 inches ≈ 2.59 cm
 
-%% NEW: Ask user for characteristic length D (in cm)
-% prompt   = {'Enter characteristic length D (cm) for Y/D:'};
-% dlgtitle = 'Characteristic Length Input';
-% dims     = [1 50];
-% definput = {'2.59'};  % default example; adjust as desired
-% answer   = inputdlg(prompt, dlgtitle, dims, definput);
-% 
-% if isempty(answer)
-%     error('No characteristic length D provided. Script terminated.');
-% end
-
-D_cm = 1.8593; %cavity depth, cm
+%% Characteristic length D (cm) for Y/D
+D_cm = 1.8593; % cavity depth, cm
 if isnan(D_cm) || D_cm <= 0
     error('Characteristic length D must be a positive number (cm).');
 end
 
 %% Storage for processed datasets
-excelY        = cell(1, numel(excelFiles));   % will store Y/D
-excelMach     = cell(1, numel(excelFiles));   % dimensional Mach_BL
-excelMach_nd  = cell(1, numel(excelFiles));   % non-dimensional Mach_BL / Mach_FS
+excelY        = cell(1, numel(excelFiles));   % Y/D
+excelMach     = cell(1, numel(excelFiles));   % Mach (dimensional)
+excelMach_nd  = cell(1, numel(excelFiles));   % M / M_max
 
-csvY          = [];   % will store Y/D
-csvMach       = [];   % dimensional
-csvMach_nd    = [];   % non-dimensional
+csvY          = [];   % Y/D
+csvMach       = [];   % Mach (dimensional)
+csvMach_nd    = [];   % M / M_max
 
 %% ---- Process the Excel files ----
 for k = 1:numel(excelFiles)
@@ -87,34 +75,37 @@ for k = 1:numel(excelFiles)
 
     % Extract columns (assumed names)
     y_cm   = T.Y_shift_cm;   % already in cm
-    M_BL   = T.Mach_BL;
-    M_FS   = T.Mach_FS;      % freestream Mach column
+    M_BL   = T.Mach_BL;      % boundary-layer Mach
 
-    % Remove NaNs (any NaN in Y, BL, or FS)
-    valid = ~isnan(y_cm) & ~isnan(M_BL) & ~isnan(M_FS);
+    % Remove NaNs
+    valid = ~isnan(y_cm) & ~isnan(M_BL);
     y_cm = y_cm(valid);
     M_BL = M_BL(valid);
-    M_FS = M_FS(valid);
 
-    % Average Mach_BL and Mach_FS at duplicated Y locations
+    % Average Mach_BL at duplicated Y locations
     [yUnique, ~, idxGrp] = unique(y_cm);
 
     M_BL_avg = accumarray(idxGrp, M_BL, [], @mean);
-    M_FS_avg = accumarray(idxGrp, M_FS, [], @mean);
-
-    % Non-dimensional Mach after averaging
-    M_nd_avg = M_BL_avg./ M_FS_avg;
 
     % Make lowest y-value zero
     yUnique = yUnique - min(yUnique);
 
-    % Keep only values <= 2.59 cm (1.02 in)
+    % Keep only values <= 2.59 cm
     keep = yUnique <= maxY_cm;
     yUnique  = yUnique(keep);
     M_BL_avg = M_BL_avg(keep);
-    M_nd_avg = M_nd_avg(keep);
 
-    %% NEW: Non-dimensionalize Y by D (still using cm)
+    % Sort by y (just to be safe)
+    [yUnique, sortIdx] = sort(yUnique);
+    M_BL_avg = M_BL_avg(sortIdx);
+
+    % --- NEW: Non-dimensionalize by average of last 5 points ---
+    nPts = numel(M_BL_avg);
+    nTail = min(5, nPts);
+    M_max_BL = mean(M_BL_avg(end-nTail+1:end));   % average of last up-to-5 points
+    M_nd_avg = M_BL_avg./ M_max_BL;
+
+    % Non-dimensionalize Y by D
     Y_over_D = yUnique./ D_cm;
 
     % Store
@@ -140,53 +131,33 @@ Mcsv  = Mcsv(valid);
 % Convert Y from meters to cm
 Y_cm = Y_m * 100;
 
-% ---- Remove duplicate Y values first (keep first occurrence) ----
+% Remove duplicate Y values (keep first occurrence)
 [~, idxFirstY] = unique(Y_cm, 'stable');
 Y_cm  = Y_cm(idxFirstY);
 Mcsv  = Mcsv(idxFirstY);
 
-% ---- Sort by Y for consistency ----
+% Sort by Y for consistency
 [Y_cm, sortIdx] = sort(Y_cm);
 Mcsv = Mcsv(sortIdx);
 
-% ---- Optionally remove duplicate Mach values (now in Y-sorted order) ----
+% Optionally remove duplicate Mach values (now in Y-sorted order)
 [~, idxFirstM] = unique(Mcsv, 'stable');
 Y_cm  = Y_cm(idxFirstM);
 Mcsv  = Mcsv(idxFirstM);
 
-% ---- Compute freestream Mach from middle 20 points of this de-duplicated set ----
-Ndedup = numel(Mcsv);
-if Ndedup >= 20
-    midStart = floor(Ndedup/2) - 9;  % attempt center 20
-    if midStart < 1
-        midStart = 1;
-    end
-    midEnd = midStart + 19;
-    if midEnd > Ndedup
-        midEnd = Ndedup;
-        midStart = max(1, midEnd - 19);
-    end
-    M_FS_csv = mean(Mcsv(midStart:midEnd));
-else
-    % Fallback: average all if fewer than 20 points
-    M_FS_csv = mean(Mcsv);
-end
-
-% ---- Now shift Y, apply cutoff, and interpolate ----
-
-% Make lowest y-value zero (still in cm)
+% Make lowest y-value zero
 Y_cm = Y_cm - min(Y_cm);
 
-% Keep only values <= 2.59 cm (1.02 in)
+% Keep only values <= 2.59 cm
 keep = Y_cm <= maxY_cm;
 Y_cm  = Y_cm(keep);
 Mcsv  = Mcsv(keep);
 
-% Ensure ascending Y (should already be, but keep it explicit)
+% Ensure ascending Y (should already be)
 [Y_cm, sortIdx] = sort(Y_cm);
 Mcsv = Mcsv(sortIdx);
 
-% ---- Interpolate CSV data to more points (dimensional & non-dimensional) ----
+% Interpolate CSV data to more points (dimensional & non-dimensional)
 interpFactor = 10;  % e.g., 10× more points than current
 nInterp = max(interpFactor * numel(Y_cm), 2); % ensure at least 2 points
 
@@ -196,29 +167,29 @@ Y_cm_interp = linspace(min(Y_cm), max(Y_cm), nInterp).';
 % Interpolate dimensional Mach onto this new Y grid
 Mcsv_interp = interp1(Y_cm, Mcsv, Y_cm_interp, 'pchip');
 
-% Non-dimensional Mach using freestream Mach
-Mcsv_nd_interp = Mcsv_interp./ M_FS_csv;
+% --- NEW: Non-dimensional Mach using average of last 5 interpolated points ---
+nPts_csv = numel(Mcsv_interp);
+nTail_csv = min(5, nPts_csv);
+M_max_csv = mean(Mcsv_interp(end-nTail_csv+1:end));  % average of last up-to-5 points
+Mcsv_nd_interp = Mcsv_interp./ M_max_csv;
 
-%% NEW: Non-dimensionalize the interpolated Y by D
+% Non-dimensionalize Y by D
 Y_over_D_csv = Y_cm_interp./ D_cm;
 
 % Store for later saving/plotting
 csvY       = Y_over_D_csv;   % Y/D
-csvMach    = Mcsv_interp;
-csvMach_nd = Mcsv_nd_interp;
+csvMach    = Mcsv_interp;    % dimensional Mach
+csvMach_nd = Mcsv_nd_interp; % M / M_max
 
 %% ---- Save processed data to a single Excel file (multiple sheets) ----
 
-% Excel sheets for each processed dataset
 for k = 1:numel(excelFiles)
-    % Save both Y_cm and Y_over_D if you want; here we save Y_over_D
     TblOut = table(excelY{k}, excelMach{k}, excelMach_nd{k},...
         'VariableNames', {'Y_over_D', 'Mach', 'Mach_nd'});
     sheetName = sprintf('Excel_%d', k);
     writetable(TblOut, outputExcel, 'Sheet', sheetName, 'WriteMode', 'overwrite');
 end
 
-% CSV processed (interpolated) data
 TblCSV = table(csvY, csvMach, csvMach_nd,...
     'VariableNames', {'Y_over_D', 'Mach', 'Mach_nd'});
 writetable(TblCSV, outputExcel, 'Sheet', 'CSV', 'WriteMode', 'overwrite');
@@ -254,17 +225,16 @@ plot(csvMach, csvY, '-sq',...
     'MarkerSize', 5,...
     'DisplayName', csvLegendLabel);
 
-xlabel('Mach number');                          % unchanged (dimensional)
-ylabel('Y/D');                                  % NEW
-title('Experimental versus CFD Incident Boundary Layers');  % NEW
+xlabel('$$M$$','Interpreter','latex');
+ylabel('$$y/D$$','Interpreter','latex');
+title('Experimental vs. CFD Incident Boundary Layers','Interpreter','none');
 legend('Location', 'best');
 set(gca, 'YDir', 'normal');
 
-% Save dimensional Mach figure
-savefig(fig_dim, figFile_dim);
-saveas(fig_dim, pngFile_dim);
+% Save dimensional Mach figure as vectorized PDF
+exportgraphics(fig_dim, pdfFile_dim, 'ContentType', 'vector');
 
-%% ---- Plot 2: Non-dimensional Mach vs Y/D ----
+%% ---- Plot 2: Non-dimensional Mach vs Y/D (M/M_max) ----
 fig_nd = figure;
 hold on; grid on; box on;
 
@@ -284,17 +254,16 @@ plot(csvMach_nd, csvY, '-sq',...
     'MarkerSize', 5,...
     'DisplayName', csvLegendLabel);
 
-xlabel('M / M_\infty');                         % NEW: removed "(non-dimensional)"
-ylabel('Y/D');                                  % NEW
-title('Experimental versus CFD Incident Boundary Layers');  % NEW
+xlabel('$$M/M_{max}$$','Interpreter','latex');
+ylabel('$$y/D$$','Interpreter','latex');
+title('Non-Dimensional Experimental vs. CFD Incident Boundary Layers','Interpreter','none');
 legend('Location', 'best');
 set(gca, 'YDir', 'normal');
 
-% Save non-dimensional Mach figure
-savefig(fig_nd, figFile_nd);
-saveas(fig_nd, pngFile_nd);
+% Save non-dimensional Mach figure as vectorized PDF
+exportgraphics(fig_nd, pdfFile_nd, 'ContentType', 'vector');
 
 %% ---- Summary messages ----
 disp(['Processed data saved to: ' char(outputExcel)]);
-disp(['Dimensional Mach figure saved as: ' char(figFile_dim) ' and ' char(pngFile_dim)]);
-disp(['Non-dimensional Mach figure saved as: ' char(figFile_nd) ' and ' char(pngFile_nd)]);
+disp(['Dimensional Mach PDF saved as: ' char(pdfFile_dim)]);
+disp(['Non-dimensional Mach PDF saved as: ' char(pdfFile_nd)]);

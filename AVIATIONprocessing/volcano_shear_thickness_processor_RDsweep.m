@@ -322,6 +322,11 @@ for iFile = 1:numel(filenames)
                 sprintf('shearThick_%s_overlaid_%s_%s_Volcano.fig', norm_col, loc, geometryType));
             savefig(hfig, plot_path_fig);
 
+            plot_path_pdf = fullfile(plots_dir,...
+                sprintf('shearThick_%s_overlaid_%s_%s_Volcano.pdf', norm_col, loc, geometryType));
+            exportgraphics(hfig, plot_path_pdf, 'ContentType','vector');
+
+
             close(hfig);
         end
     end
@@ -564,9 +569,11 @@ for iNorm = 1:numel(avg_norm_cols)
             plot_name_png = sprintf('shearThick_%s_%s_upper%d_lower%d_allGeometries_Volcano.png',...
                 norm_col, locLabelPlain, round(upper*100), round(lower*100));
             plot_name_fig = strrep(plot_name_png, '.png', '.fig');
+            plot_name_pdf = strrep(plot_name_png, '.png', '.pdf');
 
             print(hfig, '-dpng', '-r300', fullfile(plots_dir_global, plot_name_png));
             savefig(hfig, fullfile(plots_dir_global, plot_name_fig));
+            exportgraphics(hfig, fullfile(plots_dir_global, plot_name_pdf), 'ContentType','vector');
             close(hfig);
         end
     end
