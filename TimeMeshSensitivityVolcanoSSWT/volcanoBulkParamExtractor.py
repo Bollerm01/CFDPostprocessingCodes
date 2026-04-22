@@ -14,11 +14,11 @@ import os
 # ============================================================
 
 # --- Input volcano file ---
-VOLCANO_FILE = r"/home/bollerma/LESdata/SSWT/fullCav/meshStudy/test4/test4M2SSWT_000/latest.volcano"
+VOLCANO_FILE = r"/home/bollerma/LESdata/SSWT/fullCav/meshStudy/test5/test5M2SSWT_001/latest.volcano"
 #VOLCANO_FILE = r"E:\Boller CFD\AVIATION CFD\MeshSensitivityData\test14M2SSWT_000\checkpoint.1193017.volcano"
 
 # --- Output directory ---
-OUTPUT_DIR = r"/home/bollerma/LESdata/SSWT/fullCav/meshStudy/bulkProbeOutput/test4"
+OUTPUT_DIR = r"/home/bollerma/LESdata/SSWT/fullCav/meshStudy/bulkProbeOutput/test5"
 #OUTPUT_DIR = r"E:\Boller CFD\AVIATION CFD\MeshSensitivityData\bulkFloorCeilingMidlineData\test14"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
