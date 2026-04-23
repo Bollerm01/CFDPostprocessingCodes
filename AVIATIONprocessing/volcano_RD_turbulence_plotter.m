@@ -86,7 +86,7 @@ legendLabels = {'$$R/D = 0.0$$','$$R/D = 0.17$$','$$R/D = 0.52$$'};
 % 3) Axial locations of interest
 %    Must match the axial ID portion in the sheet names
 % -------------------------------------------------------------------------
-axialLocs = {'xL0p17', 'xL0p59', 'xL0p86', 'xL1p2'};
+axialLocs = {'xL0p17', 'xL0p59', 'xL0p86', 'xL1'};
 
 % Optional: GUI prompt for axial locations
 % prompt   = {'Axial location 1 (sheet prefix):',...

@@ -1,7 +1,8 @@
 %% ==========================================================
 %  Script: plot_normalized_axial_profiles.m
 %  Description:
-%    - Reads up to 3 Excel files of identical format.
+%    - Reads up to 3 Excel files of identical format (output from the 'High
+%    Res Shear Data' processing)
 %    - Each file represents a different geometry (encoded in filename).
 %    - Each file contains multiple sheets at different axial locations
 %      (e.g., xL0p03, xL0p31, xL0p72, xL1) plus a "US_MP" sheet.
@@ -20,10 +21,10 @@ clear; clc; close all;
 variableName = 'velocityxavg';  % <-- CHANGE the variable name here if needed
 
 % Data files (geometries)
-path  = "E:\Boller CFD\AVIATION CFD\Paper Results\finalData\Volcano\CompleteData\High Res Shear Data\All RD\";
-files = {'CondensedProbeData_RD00.xlsx',...
-         'CondensedProbeData_RD17.xlsx',...
-         'CondensedProbeData_RD52.xlsx'};
+path  = "E:\Boller CFD\AVIATION CFD\Paper Results\finalData\VULCAN\CompleteData\HighResShearData\All Data\";
+files = {'VULCANCondensedProbeData_RD00.xlsx',...
+         'VULCANCondensedProbeData_RD17.xlsx',...
+         'VULCANCondensedProbeData_RD52.xlsx'};
 filePaths = fullfile(path, files);
 
 % Axial location sheet names (edit if your sheet names differ)
@@ -34,7 +35,7 @@ normSheetName = 'US_MP';
 
 % ---- Figure / export settings (style section) --------------
 mainTitle  = 'Y/D vs Normalized $$\bar{V_x}$$';   % <-- MAIN TITLE (sgtitle)
-outputFile = 'AxialProfiles_VxNorm.jpg';       % <-- OUTPUT FILENAME
+outputFile = 'AxialProfiles_VxNorm_VULCAN.jpg';       % <-- OUTPUT FILENAME
 outputDPI  = 600;                              % <-- EXPORT RESOLUTION (dpi)
 
 %% ------------- PLOT APPEARANCE SETTINGS -------------------
@@ -159,7 +160,7 @@ end
 fig = figure('Name', 'Overlayed y/d vs U/Uinf', 'NumberTitle', 'off');
 
 % Make the figure wider and somewhat shorter to get wider tiles
-set(fig, 'Units', 'normalized', 'Position', [0.05 0.25 0.6 0.5]);
+set(fig, 'Units', 'normalized', 'Position', [0.05 0.25 0.5 0.5]);
 % [left bottom width height]; increase width to 0.9, reduce height to 0.5
 
 % Match example style: 1 x numSheets layout and use fig handle
@@ -247,5 +248,8 @@ sgtitle(tl, mainTitle, 'FontSize', 14, 'FontWeight', 'bold', 'Interpreter','late
 %% ----------------- SAVE HIGH-RES FIGURE --------------------
 set(fig, 'PaperPositionMode', 'auto');  % Ensure proper sizing
 exportgraphics(fig, outputFile, 'Resolution', outputDPI);
+outputFile = 'AxialProfiles_VxNorm_VULCAN.pdf';  % <-- vector PDF
+exportgraphics(fig, outputFile,...
+    'ContentType', 'vector');             % forces vector output
 
 %% ----------------- END OF SCRIPT ---------------------------

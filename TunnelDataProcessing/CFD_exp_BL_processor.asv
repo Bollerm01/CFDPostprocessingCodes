@@ -308,7 +308,7 @@ plot(zone2Mach, zone2Y, '-^',...
 
 xlabel('$$M$$','Interpreter','latex');
 ylabel('$$y/D$$','Interpreter','latex');
-title('Experimental versus CFD Incident Boundary Layers','Interpreter','none');
+title('Experimental vs. CFD Incident Boundary Layers','Interpreter','none');
 legend('Location', 'best');
 set(gca, 'YDir', 'normal');
 
@@ -335,19 +335,19 @@ plot(csvMach_nd, csvY, '-sq',...
     'MarkerSize', 5,...
     'DisplayName', csvLegendLabel);
 
-% zone2 dataset (non-dimensional Mach) as a continuous line
-plot(zone2Mach_nd, zone2Y, '-^',...
+% VULCAN dataset (non-dimensional Mach) as a continuous line
+plot(zone2Mach_nd, zone2Y, '-',...
     'Color', colors(idxZone2,:),...
     'MarkerSize', 5,...
     'DisplayName', zone2LegendLabel);
 
 % --- NEW: Vertical line at M/M_max = 0.95 ---
 M_target = 0.95;
-xline(M_target, 'r--', 'LineWidth', 1.5, 'HandleVisibility', 'off');
+xline(M_target, 'r--', 'LineWidth', 1.5, 'HandleVisibility', 'off', 'DisplayName','$$95%% M/M_{max}$$', 'Interpreter','latex');
 
 xlabel('$$M/M_{max}$$','Interpreter','latex');
 ylabel('$$y/D$$','Interpreter','latex');
-title('Experimental versus CFD Incident Boundary Layers (Non-dimensional Mach)','Interpreter','none');
+title('Experimental vs. CFD Incident Boundary Layers','Interpreter','none');
 legend('Location', 'best');
 set(gca, 'YDir', 'normal');
 

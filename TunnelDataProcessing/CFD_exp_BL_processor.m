@@ -283,6 +283,12 @@ hold on; grid on; box on;
 nSeries = numel(excelFiles) + 2;
 colors  = lines(nSeries);
 
+% VULCAN dataset (dimensional Mach) as a continuous line
+plot(zone2Mach, zone2Y, '-',...
+    'Color', colors(idxZone2,:),...
+    'LineWidth', 2,...
+    'DisplayName', zone2LegendLabel);
+
 % Excel datasets (dimensional Mach)
 for k = 1:numel(excelFiles)
     plot(excelMach{k}, excelY{k}, '-o',...
@@ -300,12 +306,6 @@ plot(csvMach, csvY, '-sq',...
     'MarkerSize', 5,...
     'DisplayName', csvLegendLabel);
 
-% zone2 dataset (dimensional Mach) as a continuous line
-plot(zone2Mach, zone2Y, '-^',...
-    'Color', colors(idxZone2,:),...
-    'MarkerSize', 5,...
-    'DisplayName', zone2LegendLabel);
-
 xlabel('$$M$$','Interpreter','latex');
 ylabel('$$y/D$$','Interpreter','latex');
 title('Experimental vs. CFD Incident Boundary Layers','Interpreter','none');
@@ -321,6 +321,12 @@ hold on; grid on; box on;
 
 colors = lines(nSeries);
 
+% VULCAN dataset (non-dimensional Mach) as a continuous line
+plot(zone2Mach_nd, zone2Y, '-',...
+    'Color', colors(idxZone2,:),...
+    'LineWidth', 2,...
+    'DisplayName', zone2LegendLabel);
+
 % Excel datasets (non-dimensional Mach)
 for k = 1:numel(excelFiles)
     plot(excelMach_nd{k}, excelY{k}, '-o',...
@@ -335,19 +341,13 @@ plot(csvMach_nd, csvY, '-sq',...
     'MarkerSize', 5,...
     'DisplayName', csvLegendLabel);
 
-% zone2 dataset (non-dimensional Mach) as a continuous line
-plot(zone2Mach_nd, zone2Y, '-^',...
-    'Color', colors(idxZone2,:),...
-    'MarkerSize', 5,...
-    'DisplayName', zone2LegendLabel);
-
 % --- NEW: Vertical line at M/M_max = 0.95 ---
 M_target = 0.95;
 xline(M_target, 'r--', 'LineWidth', 1.5, 'HandleVisibility', 'off', 'DisplayName','$$95%% M/M_{max}$$', 'Interpreter','latex');
 
 xlabel('$$M/M_{max}$$','Interpreter','latex');
 ylabel('$$y/D$$','Interpreter','latex');
-title('Non-Dimensional Experimental vs. CFD Incident Boundary Layers','Interpreter','none');
+title('Experimental vs. CFD Incident Boundary Layers','Interpreter','none');
 legend('Location', 'best');
 set(gca, 'YDir', 'normal');
 

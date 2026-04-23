@@ -5,22 +5,22 @@ import os
 # ======================= USER INPUT =========================
 # ============================================================
 
-# INPUT_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD00/RD00_004/latest.volcano"
+INPUT_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD00/RD00_004/latest.volcano"
 # INPUT_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD17/RD17_022/latest.volcano" # RD17 Path
-INPUT_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD52/RD52_057/latest.volcano" # RD52 Path
+# INPUT_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD52/RD52_057/latest.volcano" # RD52 Path
 
-OUTPUT_DIR = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/contourOutput/RD52" # CHANGE PER RUN
+OUTPUT_DIR = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/contourOutput/RD00/vorticityShots" # CHANGE PER RUN
 folder_path = os.path.dirname(INPUT_FILE) # /home/user/project
 file_name = os.path.basename(folder_path) # project
-SCALARS = [
-    "reynoldsstressxx", "reynoldsstressyy", "reynoldsstresszz",
-    "reynoldsstressxy", "reynoldsstressxz", "reynoldsstressyz",
-    "velocityx", "velocityxavg", "tke", "pressure", "pressureavg", 
-    "vorticitymag", "vorticitymagavg"
-]
+# SCALARS = [
+#     "reynoldsstressxx", "reynoldsstressyy", "reynoldsstresszz",
+#     "reynoldsstressxy", "reynoldsstressxz", "reynoldsstressyz",
+#     "velocityx", "velocityxavg", "tke", "pressure", "pressureavg", 
+#     "vorticitymag", "vorticitymagavg"
+# ]
 
 # Debugging scalars
-# SCALARS = ["reynoldsstressyy"]
+SCALARS = ["vorticitymag", "vorticitymagavg"]
 ENABLE_SCHLIEREN = True # Change to true if desired
 DENSITY_NAME = "density"
 
@@ -47,8 +47,8 @@ SCALAR_RANGES = {
     "pressureavg": (13000.0, 32000.0),
 
     # Vorticity
-    "vorticitymag":    (0.0, 1.1e6),
-    "vorticitymagavg": (0.0, 1.1e6),
+    "vorticitymag":    (0.0, 1.1e5),
+    "vorticitymagavg": (0.0, 1.1e5),
 
     # Schlieren outputs (only used if ENABLE_SCHLIEREN is True)
     "magDelRho":         (0.0, 120.0),

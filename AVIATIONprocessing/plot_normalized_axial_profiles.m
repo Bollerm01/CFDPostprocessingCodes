@@ -18,24 +18,37 @@ clear; clc; close all;
 
 %% ---------------- USER INPUT SECTION -----------------------
 % Specify the variable/column name to plot (must match Excel header)
-variableName = 'velocityxavg';  % <-- CHANGE the variable name here if needed
+% variableName = 'velocityxavg';  % Volcano
+variableName = 'Velocity_X';  % VULCAN
 
 % Data files (geometries)
-path  = "E:\Boller CFD\AVIATION CFD\Paper Results\finalData\Volcano\CompleteData\High Res Shear Data\All RD\";
-files = {'CondensedProbeData_RD00.xlsx',...
-         'CondensedProbeData_RD17.xlsx',...
-         'CondensedProbeData_RD52.xlsx'};
+% VULCAN PATHS
+path  = "E:\Boller CFD\AVIATION CFD\Paper Results\finalData\VULCAN\CompleteData\HighResShearData\All Data\";
+files = {'VULCANCondensedProbeData_RD00.xlsx',...
+         'VULCANCondensedProbeData_RD17.xlsx',...
+         'VULCANCondensedProbeData_RD52.xlsx'};
+
+% Volcano paths
+% path  = "E:\Boller CFD\AVIATION CFD\Paper Results\finalData\Volcano\CompleteData\High Res Shear Data\All RD\";
+% files = {'CondensedProbeData_RD00.xlsx',...
+%          'CondensedProbeData_RD17.xlsx',...
+%          'CondensedProbeData_RD52.xlsx'};
+
 filePaths = fullfile(path, files);
 
 % Axial location sheet names (edit if your sheet names differ)
-axialSheets = {'xL_0p03_MP', 'xL_0p31_MP', 'xL_0p72_MP', 'xL1_MP'};
+% Volcano
+% axialSheets = {'xL_0p03_MP', 'xL_0p31_MP', 'xL_0p72_MP', 'xL1_MP'};
+% VULCAN
+axialSheets = {'xL_0p03', 'xL_0p31', 'xL_0p72', 'xL1'};
 
 % Sheet name for normalization reference
-normSheetName = 'US_MP';
+% normSheetName = 'US_MP'; % Volcano
+normSheetName = 'xL1'; % VULCAN
 
 % ---- Figure / export settings (style section) --------------
-mainTitle  = 'Y/D vs Normalized $$\bar{V_x}$$';   % <-- MAIN TITLE (sgtitle)
-outputFile = 'AxialProfiles_VxNorm.jpg';       % <-- OUTPUT FILENAME
+mainTitle  = 'y/D vs Normalized $$\bar{V_x}$$';   % <-- MAIN TITLE (sgtitle)
+outputFile = 'AxialProfiles_VxNorm_VULCAN.jpg';       % <-- OUTPUT FILENAME
 outputDPI  = 600;                              % <-- EXPORT RESOLUTION (dpi)
 
 %% ------------- PLOT APPEARANCE SETTINGS -------------------
@@ -51,13 +64,13 @@ lineStyles = {'-', '--', ':'};
 
 % Axis labels (LaTeX interpreter in the plots)
 xLabelStr = '$$\bar{V_x}/V_{x,\infty}$$';   % <-- CHANGE X label text
-yLabelStr = '$$Y/D$$';                      % <-- CHANGE Y label text
+yLabelStr = '$$y/D$$';                      % <-- CHANGE Y label text
 
 % Per-tile titles
 subplotTitles = {...
     'x/L = 0.03',...
-    'x/L = 0.31',...
-    'x/L = 0.72',...
+    'x/L = 0.30',...
+    'x/L = 0.73',...
     'x/L = 1.0'...
 }; % <-- EDIT titles to match your sheet meaning
 
@@ -248,7 +261,7 @@ sgtitle(tl, mainTitle, 'FontSize', 14, 'FontWeight', 'bold', 'Interpreter','late
 %% ----------------- SAVE HIGH-RES FIGURE --------------------
 set(fig, 'PaperPositionMode', 'auto');  % Ensure proper sizing
 exportgraphics(fig, outputFile, 'Resolution', outputDPI);
-outputFile = 'AxialProfiles_VxNorm.pdf';  % <-- vector PDF
+outputFile = 'AxialProfiles_VxNorm_VULCAN.pdf';  % <-- vector PDF
 exportgraphics(fig, outputFile,...
     'ContentType', 'vector');             % forces vector output
 

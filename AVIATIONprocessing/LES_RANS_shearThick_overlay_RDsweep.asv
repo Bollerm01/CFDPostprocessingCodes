@@ -356,7 +356,7 @@ end
 
 % Labels and title for normalized plot
 xlabel(axN, origXLabelStr, 'Interpreter', origXLabelObj.Interpreter);
-ylabel(axN, '$$\delta_{SL} / \delta_{SL,R/D=0}$$', 'Interpreter', 'latex');
+ylabel(axN, '$$y / y_{0,R/D=0}$$', 'Interpreter', 'latex');
 
 normTitleStr = sprintf('Normalized: %s vs. %s - %s', solType1, solType2, origTitleStr);
 title(axN, normTitleStr, 'Interpreter', 'latex');
@@ -365,7 +365,7 @@ if ~isempty(normLineHandles)
     lgdN = legend(axN, normLineHandles);
     set(lgdN, 'Interpreter', 'latex');
     set(lgdN, 'Location', 'southoutside');
-    set(lgdN, 'NumColumns', 2); 
+    set(lgdN, 'NumColumns', 2); -
 end
 
 % Save normalized figure
