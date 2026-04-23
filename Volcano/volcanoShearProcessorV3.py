@@ -21,7 +21,7 @@ file_name = os.path.basename(folder_path) # project
 
 # Debugging scalars
 SCALARS = ["vorticitymag", "vorticitymagavg"]
-ENABLE_SCHLIEREN = True # Change to true if desired
+ENABLE_SCHLIEREN = False # Change to true if desired
 DENSITY_NAME = "density"
 
 # <<< NEW: Optional, user-defined scalar ranges (min, max) per array name >>>
@@ -47,8 +47,8 @@ SCALAR_RANGES = {
     "pressureavg": (13000.0, 32000.0),
 
     # Vorticity
-    "vorticitymag":    (0.0, 1.1e5),
-    "vorticitymagavg": (0.0, 1.1e5),
+    "vorticitymag":    (0.0, 5.0e5),
+    "vorticitymagavg": (0.0, 5.0e5),
 
     # Schlieren outputs (only used if ENABLE_SCHLIEREN is True)
     "magDelRho":         (0.0, 120.0),
