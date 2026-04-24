@@ -12,12 +12,6 @@ INPUT_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD00/RD00_004/latest.v
 OUTPUT_DIR = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/contourOutput/RD00/vorticityShots" # CHANGE PER RUN
 folder_path = os.path.dirname(INPUT_FILE) # /home/user/project
 file_name = os.path.basename(folder_path) # project
-# SCALARS = [
-#     "reynoldsstressxx", "reynoldsstressyy", "reynoldsstresszz",
-#     "reynoldsstressxy", "reynoldsstressxz", "reynoldsstressyz",
-#     "velocityx", "velocityxavg", "tke", "pressure", "pressureavg", 
-#     "vorticitymag", "vorticitymagavg"
-# ]
 
 # Debugging scalars
 SCALARS = ["vorticitymag", "vorticitymagavg"]
@@ -57,15 +51,51 @@ SCALAR_RANGES = {
 }
 # <<< END NEW >>>
 
+# ============================================================
+# =========== OPTIONAL: COLORMAP PRESETS PER SCALAR ==========
+# ============================================================
+
+# Default colormap if a scalar is not listed here
+DEFAULT_COLORMAP_PRESET = "Cool to Warm (Extended)"
+
+# Per-scalar colormap presets
+SCALAR_COLORMAPS = {
+    # Reynolds stresses (example assignments)
+    "reynoldsstressxx": "Turbo",
+    "reynoldsstressyy": "Turbo",
+    "reynoldsstresszz": "Turbo",
+    "reynoldsstressxy": "Turbo",
+    "reynoldsstressxz": "Turbo",
+    "reynoldsstressyz": "Turbo",
+
+    # Velocities
+    "velocityx":    "Cool to Warm (Extended)",
+    "velocityxavg": "Cool to Warm (Extended)",
+
+    # Turbulence / pressure
+    "tke":         "Viridis (matplotlib)",
+    "pressure":    "Linear Blue (8_31f)",
+    "pressureavg": "Linear Blue (8_31f)",
+
+    # Vorticity
+    "vorticitymag":    "Inferno (matplotlib)",
+    "vorticitymagavg": "Inferno (matplotlib)",
+
+    # Schlieren (if/when used)
+    "magDelRho":         "Grayscale",
+    "Schlieren_dRho_dX": "Grayscale",
+    "Schlieren_dRho_dY": "Grayscale",
+}
+
 # Debugging loop
-# YZ_SLICE_X = [2.15057954, 2.1793151, 2.216945]
-# XY_SLICE_Z = [0.0381]
-# XZ_SLICE_Y = [0.0093,0.001]
+YZ_SLICE_X = [2.15057954, 2.1793151, 2.20736648, 2.216945]
+XY_SLICE_Z = [0.00, 0.0381]
+XZ_SLICE_Y = [0.0093, 0.001]
 
 # full loop
-YZ_SLICE_X = [2.011691, 2.080109, 2.114318, 2.15057954, 2.16015806, 2.1690524, 2.1793151, 2.18889362, 2.19847214, 2.20736648, 2.216945, 2.223063, 2.307804104]
-XY_SLICE_Z = [-0.0381, 0.00, 0.0381]
-XZ_SLICE_Y = [0.0182, 0.0093, 0.003, 0.001]
+# YZ_SLICE_X = [2.011691, 2.080109, 2.114318, 2.15057954, 2.16015806, 2.1690524, 2.1793151, 2.18889362, 2.19847214, 2.20736648, 2.216945, 2.223063, 2.307804104]
+# XY_SLICE_Z = [-0.0381, 0.00, 0.0381]
+# XZ_SLICE_Y = [0.0182, 0.0093, 0.003, 0.001]
 
 # 3D slices group
 YZ_SLICE_X_3D = [2.15057954, 2.1793151, 2.216945] #x/L = 0.03, 0.45, 1
@@ -73,7 +103,6 @@ XY_SLICE_Z_3D = [0.0381]
 XZ_SLICE_Y_3D = [0.0093,0.001]
 
 IMG_RES = [1920, 1080]
-COLORMAP_PRESET = "Cool to Warm (Extended)"
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
@@ -199,6 +228,14 @@ def apply_lut_range(lut, array_name):
         # Use data range if not specified
         lut.RescaleTransferFunctionToDataRange()
 
+def apply_lut_preset(lut, array_name):
+    """
+    Choose the colormap preset based on the array name.
+    Falls back to DEFAULT_COLORMAP_PRESET if not specified.
+    """
+    preset = SCALAR_COLORMAPS.get(array_name, DEFAULT_COLORMAP_PRESET)
+    lut.ApplyPreset(preset, True)
+
 def apply_camera_and_colorbar(lut, preset, array_name):
 
     p = CAMERA_PRESETS[preset]
@@ -317,9 +354,10 @@ def create_slice(origin, normal, preset, fname, scalar, schlieren=False):
         ColorBy(disp, (loc, scalar))
 
         lut = GetColorTransferFunction(scalar)
-        # <<< CHANGED: use helper for manual/automatic range >>>
+        # Use helper for manual/automatic range
         apply_lut_range(lut, scalar)
-        lut.ApplyPreset(COLORMAP_PRESET, True)
+        # Use per-variable colormap
+        apply_lut_preset(lut, scalar)
 
         apply_camera_and_colorbar(lut, preset, scalar)
         Render(view)
@@ -337,9 +375,9 @@ def create_slice(origin, normal, preset, fname, scalar, schlieren=False):
 
         ColorBy(disp, (loc, name))
         lut = GetColorTransferFunction(name)
-        # <<< CHANGED: use helper here too >>>
         apply_lut_range(lut, name)
-        lut.ApplyPreset(COLORMAP_PRESET, True)
+        apply_lut_preset(lut, name)
+
         # NEW BAR HIDING #
         bar = GetScalarBar(lut, view)
         bar.Visibility = 1
@@ -367,9 +405,8 @@ def make_3D_slice_view(slices, preset, fname, scalar):
         ColorBy(disp, (loc, scalar))
 
     # Configure shared LUT once
-    # <<< CHANGED: use helper for manual/automatic range >>>
     apply_lut_range(lut, scalar)
-    lut.ApplyPreset(COLORMAP_PRESET, True)
+    apply_lut_preset(lut, scalar)
 
     apply_camera_and_colorbar(lut, preset, scalar)
     Render(view)

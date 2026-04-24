@@ -63,6 +63,8 @@ outputExcel = fullfile(output_dir, baseName + ".xlsx");
 % Figure files (vectorized PDFs)
 pdfFile_dim = fullfile(output_dir, baseName + "_Mach.pdf");
 pdfFile_nd  = fullfile(output_dir, baseName + "_MachND.pdf");
+figFile_dim = fullfile(output_dir, baseName + "_Mach.fig");
+figFile_nd  = fullfile(output_dir, baseName + "_MachND.fig");
 
 %% Constants
 maxY_cm = 2.59;             % 1.02 inches ≈ 2.59 cm
@@ -284,10 +286,10 @@ nSeries = numel(excelFiles) + 2;
 colors  = lines(nSeries);
 
 % VULCAN dataset (dimensional Mach) as a continuous line
-plot(zone2Mach, zone2Y, '-',...
-    'Color', colors(idxZone2,:),...
-    'LineWidth', 2,...
-    'DisplayName', zone2LegendLabel);
+% plot(zone2Mach, zone2Y, '-',...
+%     'Color', colors(idxZone2,:),...
+%     'LineWidth', 2,...
+%     'DisplayName', zone2LegendLabel);
 
 % Excel datasets (dimensional Mach)
 for k = 1:numel(excelFiles)
@@ -314,6 +316,7 @@ set(gca, 'YDir', 'normal');
 
 % Save dimensional Mach figure as vectorized PDF
 exportgraphics(fig_dim, pdfFile_dim, 'ContentType', 'vector');
+saveas(fig_dim, figFile_dim);
 
 %% ---- Plot 2: Non-dimensional Mach vs Y/D (M/M_max) + 0.95 intersections ----
 fig_nd = figure;
@@ -391,7 +394,7 @@ end
 
 % Save non-dimensional Mach figure as vectorized PDF
 exportgraphics(fig_nd, pdfFile_nd, 'ContentType', 'vector');
-
+saveas(fig_nd, figFile_nd);
 %% ---- Summary messages ----
 disp(['Processed data saved to: ' char(outputExcel)]);
 disp(['Dimensional Mach PDF saved as: ' char(pdfFile_dim)]);
