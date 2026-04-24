@@ -127,21 +127,21 @@ DEFAULT_COLORMAP_PRESET = "Cool to Warm (Extended)"
 # Colormap presets keyed by LOGICAL scalar name (keys of SCALAR_MAP / SCALAR_TITLES)
 SCALAR_COLORMAPS = {
     # Pressure: sequential
-    "Pressure_Pa": "Cool to Warm (Extended)",
+    "Pressure_Pa": "Linear Blue (8_31f)",
 
     # Velocity: rainbow / sequential
-    "U_velocity_m_s": "Rainbow Desaturated",
+    "U_velocity_m_s": "Cool to Warm (Extended)",
 
     # TKE: perceptually uniform sequential
     "Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup": "Viridis (matplotlib)",
 
     # Normalized Reynolds stresses: diverging
-    "greekt_greeksubxx_subsupt_sup": "Cool to Warm (Extended)",
-    "greekt_greeksubxy_subsupt_sup": "Cool to Warm (Extended)",
-    "greekt_greeksubxz_subsupt_sup": "Cool to Warm (Extended)",
-    "greekt_greeksubyy_subsupt_sup": "Cool to Warm (Extended)",
-    "greekt_greeksubyz_subsupt_sup": "Cool to Warm (Extended)",
-    "greekt_greeksubzz_subsupt_sup": "Cool to Warm (Extended)",
+    "greekt_greeksubxx_subsupt_sup": "Turbo",
+    "greekt_greeksubxy_subsupt_sup": "Turbo",
+    "greekt_greeksubxz_subsupt_sup": "Turbo",
+    "greekt_greeksubyy_subsupt_sup": "Turbo",
+    "greekt_greeksubyz_subsupt_sup": "Turbo",
+    "greekt_greeksubzz_subsupt_sup": "Turbo",
 
     # Schlieren (if you use it)
     "Schlieren_magDelRho": "Grayscale",
