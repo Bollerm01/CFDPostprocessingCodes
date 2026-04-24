@@ -16,7 +16,7 @@ import os
 # Linux System Roots
 CASE = "RD00" #Change this prior to every run
 INPUT_FILE = rf"/home/bollerma/RANSdata/VULCAN/SolutionFilesRDSweep/{CASE}/vulcan_solution.plt"
-OUTPUT_DIR = rf"/home/bollerma/RANSdata/VULCAN/SolutionFilesRDSweep/{CASE}/output"
+OUTPUT_DIR = rf"/home/bollerma/RANSdata/VULCAN/SolutionFilesRDSweep/{CASE}/output/AVIATIONfigs"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # Full loop Slice positions
