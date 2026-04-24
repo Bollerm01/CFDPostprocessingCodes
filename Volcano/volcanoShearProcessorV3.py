@@ -14,8 +14,15 @@ folder_path = os.path.dirname(INPUT_FILE) # /home/user/project
 file_name = os.path.basename(folder_path) # project
 
 # Debugging scalars
-SCALARS = ["vorticitymag", "vorticitymagavg"]
-ENABLE_SCHLIEREN = False # Change to true if desired
+# SCALARS = ["vorticitymag", "vorticitymagavg"]
+SCALARS = [
+    "reynoldsstressxx", "reynoldsstressyy", "reynoldsstresszz",
+    "reynoldsstressxy", "reynoldsstressxz", "reynoldsstressyz",
+    "velocityx", "velocityxavg", "tke", "pressure", "pressureavg", 
+    "vorticitymag", "vorticitymagavg"
+]
+
+ENABLE_SCHLIEREN = True # Change to true if desired
 DENSITY_NAME = "density"
 
 # <<< NEW: Optional, user-defined scalar ranges (min, max) per array name >>>
