@@ -47,7 +47,7 @@ normSheetName = 'US_MP'; % Volcano
 % normSheetName = 'xL1'; % VULCAN
 
 % ---- Figure / export settings (style section) --------------
-mainTitle  = 'Volcano y/D vs Normalized $$\bar{V_x}$$';   % <-- MAIN TITLE (sgtitle)
+mainTitle  = '\textbf{Volcano y/D vs Normalized $$\bar{V_x}$$}';   % <-- MAIN TITLE (sgtitle)
 outputFile = 'AxialProfiles_VxNorm_Volcano.jpg';       % <-- OUTPUT FILENAME
 outputDPI  = 600;                              % <-- EXPORT RESOLUTION (dpi)
 
@@ -63,8 +63,8 @@ colorOrder = [
 lineStyles = {'-', '--', ':'};
 
 % Axis labels (LaTeX interpreter in the plots)
-xLabelStr = '$$\bar{V_x}/V_{x,\infty}$$';   % <-- CHANGE X label text
-yLabelStr = '$$y/D$$';                      % <-- CHANGE Y label text
+xLabelStr = '$$\mathbf{\bar{V_x}/V_{x,\infty}}$$';   % <-- CHANGE X label text
+yLabelStr = '$$\mathbf{y/D}$$';                      % <-- CHANGE Y label text
 
 % Per-tile titles
 subplotTitles = {...
@@ -200,7 +200,7 @@ for a = 1:nAxial
         localLineHandles(g) = plot(Xnorm, Y,...
             'Color', color,...
             'LineStyle', ls,...
-            'LineWidth', 2);
+            'LineWidth', 3);
     end
     
     % Save handles from FIRST subplot only (for shared legend)

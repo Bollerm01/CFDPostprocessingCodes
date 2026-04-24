@@ -14,12 +14,18 @@ import os
 # OUTPUT_DIR = os.path.join(OUTPUT_ROOT, "RD00")#Change this prior to every run
 
 # Linux System Roots
-CASE = "RD52" #Change this prior to every run
+CASE = "RD00" #Change this prior to every run
 INPUT_FILE = rf"/home/bollerma/RANSdata/VULCAN/SolutionFilesRDSweep/{CASE}/vulcan_solution.plt"
 OUTPUT_DIR = rf"/home/bollerma/RANSdata/VULCAN/SolutionFilesRDSweep/{CASE}/output"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # Full loop Slice positions
+# YZ_SLICE_X = [0.327131, 0.395304, 0.4293905, 0.46552219, 0.47506641, 0.4839289,
+#               0.49415485, 0.50369907, 0.51324329, 0.52210578, 0.53165, 0.5452846,
+#               0.622183744]
+# XZ_SLICE_Y = [-0.0215, -0.01556]
+# XY_SLICE_Z = [0.0001, 0.0127]
+
 YZ_SLICE_X = [0.327131, 0.395304, 0.4293905, 0.46552219, 0.47506641, 0.4839289,
               0.49415485, 0.50369907, 0.51324329, 0.52210578, 0.53165, 0.5452846,
               0.622183744]
@@ -45,7 +51,7 @@ SCALAR_MAP = {
         "zone2": "zone2/Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup",
     },
 
-    # <<< CHANGED: zone2 entries now point to normalized arrays >>>
+    # zone2 entries point to normalized arrays
     "greekt_greeksubxx_subsupt_sup": {
         "zone1": "greekt_greeksubxx_subsupt_sup",
         "zone2": "Rxx_norm"
@@ -111,11 +117,42 @@ SCALAR_RANGES = {
 }
 # <<< END NEW >>>
 
+# ============================================================
+# =========== OPTIONAL: COLORMAP PRESETS PER SCALAR ==========
+# ============================================================
+
+# Default colormap if a logical scalar is not listed here
+DEFAULT_COLORMAP_PRESET = "Cool to Warm (Extended)"
+
+# Colormap presets keyed by LOGICAL scalar name (keys of SCALAR_MAP / SCALAR_TITLES)
+SCALAR_COLORMAPS = {
+    # Pressure: sequential
+    "Pressure_Pa": "Cool to Warm (Extended)",
+
+    # Velocity: rainbow / sequential
+    "U_velocity_m_s": "Rainbow Desaturated",
+
+    # TKE: perceptually uniform sequential
+    "Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup": "Viridis (matplotlib)",
+
+    # Normalized Reynolds stresses: diverging
+    "greekt_greeksubxx_subsupt_sup": "Cool to Warm (Extended)",
+    "greekt_greeksubxy_subsupt_sup": "Cool to Warm (Extended)",
+    "greekt_greeksubxz_subsupt_sup": "Cool to Warm (Extended)",
+    "greekt_greeksubyy_subsupt_sup": "Cool to Warm (Extended)",
+    "greekt_greeksubyz_subsupt_sup": "Cool to Warm (Extended)",
+    "greekt_greeksubzz_subsupt_sup": "Cool to Warm (Extended)",
+
+    # Schlieren (if you use it)
+    "Schlieren_magDelRho": "Grayscale",
+    "Schlieren_dRho_dX": "Grayscale",
+    "Schlieren_dRho_dY": "Grayscale",
+}
+
 DENSITY_ZONE2 = "zone2/Density_kg_msup3_sup"
 ENABLE_SCHLIEREN = False
 
 IMG_RES = [1920, 1080]
-COLORMAP_PRESET = "Cool to Warm (Extended)"
 
 # ============================================================
 # ===================== LOAD DATA ===========================
@@ -152,8 +189,7 @@ reader.UpdatePipeline()
 
 zone1 = reader  # edges / surface variables
 
-# <<< NEW: build normalized Reynolds-stress fields on zone2 via Calculator chain >>>
-# Start with the raw zone2 data as base
+# Build normalized Reynolds-stress fields on zone2 via Calculator chain
 zone2 = reader
 
 # Rxx_norm = (zone2/greekt_xx) / (- zone2/Density)
@@ -194,7 +230,6 @@ calc_Rzz.UpdatePipeline()
 
 # Use the final calculator output as zone2 source everywhere else
 zone2 = calc_Rzz
-# <<< END NEW >>>
 
 # ============================================================
 # ===================== VIEW SETUP ===========================
@@ -259,7 +294,7 @@ def array_location(src, name):
         return "CELLS"
     raise RuntimeError(f"Array '{name}' not found on source {src.GetXMLName()}")
 
-# Map 'zone2/...' back to logical key for SCALAR_RANGES lookup
+# Map 'zone2/...' back to logical key for SCALAR_RANGES lookup if needed
 def normalize_scalar_name(array_name):
     if "/" in array_name:
         return array_name.split("/", 1)[1]
@@ -272,6 +307,14 @@ def apply_lut_range(lut, array_name):
         lut.RescaleTransferFunction(vmin, vmax)
     else:
         lut.RescaleTransferFunctionToDataRange()
+
+def apply_lut_preset_for_logical(lut, logical_scalar_name):
+    """
+    Choose the colormap preset based on the logical scalar name
+    (keys in SCALAR_MAP / SCALAR_TITLES / SCALAR_COLORMAPS).
+    """
+    preset = SCALAR_COLORMAPS.get(logical_scalar_name, DEFAULT_COLORMAP_PRESET)
+    lut.ApplyPreset(preset, True)
 
 def apply_camera_and_colorbar(lut, preset, title):
     p = CAMERA_PRESETS[preset]
@@ -335,17 +378,18 @@ def render_overlay_slice(origin, normal, preset, fname, logical_scalar, hide_sli
     # Volume slice (zone2)
     vol_disp = Show(zone2_slice, view)
     vol_disp.Representation = "Surface"
+    lut = None
     try:
         loc2 = array_location(zone2_slice, scalar_zone2)
         ColorBy(vol_disp, (loc2, scalar_zone2))
         lut = GetColorTransferFunction(scalar_zone2)
         apply_lut_range(lut, scalar_zone2)
-        lut.ApplyPreset(COLORMAP_PRESET, True)
+        # use logical scalar name to pick colormap
+        apply_lut_preset_for_logical(lut, logical_scalar)
     except RuntimeError:
         print(f"Warning: {scalar_zone2} not found on zone2 slice")
-        lut = None
 
-    # Edge slice (zone1) – still black edges; scalar there is visually irrelevant
+    # Edge slice (zone1) – black edges
     edge_disp = Show(zone1_slice, view)
     edge_disp.Representation = "Surface With Edges"
     edge_disp.DiffuseColor = [0, 0, 0]
@@ -384,7 +428,7 @@ def make_3D_slice_view(slices, preset, fname, scalar_zone2, logical_scalar):
         ColorBy(disp, (loc, scalar_zone2))
 
     apply_lut_range(lut, scalar_zone2)
-    lut.ApplyPreset(COLORMAP_PRESET, True)
+    apply_lut_preset_for_logical(lut, logical_scalar)
 
     title = SCALAR_TITLES.get(logical_scalar, logical_scalar)
     apply_camera_and_colorbar(lut, preset, title)
@@ -443,7 +487,9 @@ def render_schlieren(origin, normal, preset, fname):
 
         lut = GetColorTransferFunction(calc.ResultArrayName)
         apply_lut_range(lut, calc.ResultArrayName)
-        lut.ApplyPreset(COLORMAP_PRESET, True)
+        # For Schlieren, use logical-style keys in SCALAR_COLORMAPS
+        logical_name = calc.ResultArrayName
+        apply_lut_preset_for_logical(lut, logical_name)
 
         apply_camera_and_colorbar(lut, preset, calc.ResultArrayName)
 

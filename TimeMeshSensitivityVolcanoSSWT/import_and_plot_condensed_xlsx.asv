@@ -79,7 +79,7 @@ function import_and_plot_condensed_xlsx(varargin)
     % col 2: base title text
     % col 3: file tag (for saving files)
     quantitiesPlot = {...
-        'Pressure (Pa)',          'Pressure vs Axial Location',        'pressure';...
+        'Pressure (Pa)',          '\textbf{Pressure vs Axial Location}',        'pressure';...
         '$$|\bar{V}|$$ (m/s)',    '$$|\bar{V}|$$ vs Axial Location',   'velocitymag';...
         '$$\bar{V_{x}}$$ (m/s)',  '$$\bar{V_{x}}$$ vs Axial Location', 'velocityx' };
 
@@ -171,20 +171,17 @@ function import_and_plot_condensed_xlsx(varargin)
             % Title formatting 
             switch sheetName
                 case 'CL'
-                    sheetT = '$$TKE$$ (J/kg)';
-                    dtPlot2 = '$$TKE$$';
+                    sheetTitle = 'Ceiling Line';
                 case 'CTRL'
-                    dtPlot = '$$R_{xx}$$ (Pa)';
-                    dtPlot2 = '$$R_{xx}$$';
+                    sheetTitle = 'Centerline';
                 case 'FL'
-                    dtPlot = '$$R_{yy}$$ (Pa)';
-                    dtPlot2 = '$$R_{yy}$$';
+                    sheetTitle = 'Floor Line';
             end
         
 
             % Build title: optional prefix + base title + (sheet)
             baseTitle    = quantitiesPlot{q,2};
-            defaultTitle = sprintf('%s (%s)', baseTitle, sheetName);
+            defaultTitle = sprintf('%s (%s)', baseTitle, sheetTitle);
             fullTitle    = [titlePrefix, defaultTitle];
 
             % Decide on legend text: custom or from file names
