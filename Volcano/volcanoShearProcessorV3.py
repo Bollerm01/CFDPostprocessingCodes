@@ -5,11 +5,11 @@ import os
 # ======================= USER INPUT =========================
 # ============================================================
 
-# INPUT_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD00/RD00_004/latest.volcano"
+INPUT_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD00/RD00_004/latest.volcano"
 # INPUT_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD17/RD17_022/latest.volcano" # RD17 Path
-INPUT_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD52/RD52_057/latest.volcano" # RD52 Path
+# INPUT_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD52/RD52_057/latest.volcano" # RD52 Path
 
-OUTPUT_DIR = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/contourOutput/AVIATIONmanuscript/RD52" # CHANGE PER RUN
+OUTPUT_DIR = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/contourOutput/AVIATIONmanuscript/RD00/noBars" # CHANGE PER RUN
 
 folder_path = os.path.dirname(INPUT_FILE) # /home/user/project
 file_name = os.path.basename(folder_path) # project
@@ -259,8 +259,8 @@ def apply_camera_and_colorbar(lut, preset, array_name):
 
     # ---- Scalar bar ----
     bar = GetScalarBar(lut, view)
-    bar.Visibility = 1
-    # bar.Visibility = 0 # hides bar
+    # bar.Visibility = 1
+    bar.Visibility = 0 # hides bar
 
     # --- Reset cached geometry ----
     bar.AutomaticLabelFormat = 0
@@ -388,7 +388,8 @@ def create_slice(origin, normal, preset, fname, scalar, schlieren=False):
 
         # NEW BAR HIDING #
         bar = GetScalarBar(lut, view)
-        bar.Visibility = 1
+        # bar.Visibility = 1
+        bar.Visibility = 0
         ##################
         apply_camera_and_colorbar(lut, preset, name)
         Render(view)
