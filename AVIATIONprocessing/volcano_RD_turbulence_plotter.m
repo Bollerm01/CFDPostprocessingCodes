@@ -59,27 +59,6 @@ if numel(geomLabels) ~= numel(excelFiles)
     error('geomLabels must have the same length as the number of selected files (3).');
 end
 
-% Legend labels (customizable by user if desired)
-% (Currently hard-coded; uncomment inputdlg section if you want GUI input)
-
-% prompt   = {...
-%     'Legend label for geometry 1:',...
-%     'Legend label for geometry 2:',...
-%     'Legend label for geometry 3:'...
-%     };
-% dlgTitle = 'Customize Legend Labels (optional)';
-% numLines = 1;
-% defaultAns = geomLabels;
-% 
-% answer = inputdlg(prompt, dlgTitle, numLines, defaultAns);
-% 
-% if isempty(answer)
-%     % If user cancels, fall back to geomLabels
-%     legendLabels = geomLabels;
-% else
-%     legendLabels = answer(:)';   % row cell array
-% end
-
 legendLabels = {'$$R/D = 0.0$$','$$R/D = 0.17$$','$$R/D = 0.52$$'};
 
 %% ------------------------------------------------------------------------
@@ -87,23 +66,6 @@ legendLabels = {'$$R/D = 0.0$$','$$R/D = 0.17$$','$$R/D = 0.52$$'};
 %    Must match the axial ID portion in the sheet names
 % -------------------------------------------------------------------------
 axialLocs = {'xL0p17', 'xL0p59', 'xL0p86', 'xL1'};
-
-% Optional: GUI prompt for axial locations
-% prompt   = {'Axial location 1 (sheet prefix):',...
-%             'Axial location 2 (sheet prefix):',...
-%             'Axial location 3 (sheet prefix):'};
-% dlgTitle = 'Specify 3 axial locations';
-% defAns   = axialLocs;
-% answerAx = inputdlg(prompt, dlgTitle, 1, defAns);
-% if isempty(answerAx)
-%     disp('User canceled axial location input. Exiting script.');
-%     return;
-% end
-% axialLocs = answerAx(:)';
-
-% if numel(axialLocs) ~= 3
-%     error('You must specify exactly 3 axial locations.');
-% end
 
 fprintf('Using axial locations:\n  %s\n\n', strjoin(axialLocs, ', '));
 
@@ -149,15 +111,7 @@ end
 
 %% ------------------------------------------------------------------------
 % 6) PLOTTING: OVERLAYS ACROSS GEOMETRIES
-% For each plane (MP,z25,z75), axial location, and quantity:
-%   plot quantity vs Y_norm for all 3 geometries on the same figure
-%   Using interpolation and de-duplication consistent with volcano script:
-%     1) Remove duplicates in quantity
-%     2) Sort by Y_norm
-%     3) Remove NaNs
-%     4) Interpolate vs Y_norm
 % -------------------------------------------------------------------------
-
 geomColors = lines(nGeom);   % nGeom x 3 RGB matrix
 lineWidth  = 1.8;
 
@@ -196,14 +150,6 @@ for iP = 1:numel(planeNames)
 
                 y  = T.Y_norm;
                 qv = T.(qField);
-
-                % ---------------------------------------------------------
-                % Cleaning and Interpolation Logic:
-                %   1) Remove duplicates in quantity
-                %   2) Sort by Y_norm
-                %   3) Remove NaN
-                %   4) Interpolate to smooth Y_norm grid
-                % ---------------------------------------------------------
 
                 % 1) Remove duplicates in the quantity (keep first occurrence)
                 [qv_unique, ia] = unique(qv, 'stable');
@@ -266,16 +212,15 @@ for iP = 1:numel(planeNames)
             end
             yLabelStr = '$$ y/D$$';
 
-            xlabel(xLabelStr, 'Interpreter','latex');
-            ylabel(yLabelStr, 'Interpreter','latex');
-            % Sets them all from [-1 1]
+            % *** UPDATED: make labels bold ***
+            xlabel(xLabelStr, 'Interpreter','latex', 'FontWeight','bold');
+            ylabel(yLabelStr, 'Interpreter','latex', 'FontWeight','bold');
             ylim([-1 1]);
 
-            % Title with formatted axial ID and span label
-            % Example: 'TKE vs Y_norm at x/L = 0.17, z/w = 0.50'
+            % *** UPDATED: make title bold ***
             titleStr = sprintf('%s vs $$ y/D$$ at %s, %s',...
                                qName, axialLabelLatex, spanTitle);
-            title(titleStr, 'Interpreter','latex');
+            title(titleStr, 'Interpreter','latex', 'FontWeight','bold');
 
             if ~isempty(legendEntries)
                 legend(legendEntries, 'Interpreter','latex', 'Location','best');
@@ -302,15 +247,6 @@ fprintf('\nAll figures saved under:\n  %s\n', rootOutDir);
 % LOCAL FUNCTION: READ ONE WORKBOOK
 % ========================================================================
 function geomData = readWorkbookForPlanes(excelFile, axialLocs)
-% readWorkbookForPlanes
-%   Reads a single Excel workbook, extracts tables for requested axial
-%   locations and three spanwise planes (MP, z25, z75).
-%
-%   geomData.MP.(axialID)  = table(...)
-%   geomData.z25.(axialID) = table(...)
-%   geomData.z75.(axialID) = table(...)
-
-    % Initialize empty structures
     geomData.MP  = struct();
     geomData.z25 = struct();
     geomData.z75 = struct();
@@ -331,13 +267,11 @@ function geomData = readWorkbookForPlanes(excelFile, axialLocs)
     for iS = 1:numel(sheetNames)
         sName = sheetNames{iS};
 
-        % Skip upstream/downstream sheets starting with US/DS
         if startsWith(sName, 'US', 'IgnoreCase', true) ||...
            startsWith(sName, 'DS', 'IgnoreCase', true)
             continue;
         end
 
-        % Parse axialID and plane suffix
         underscoreIdx = strfind(sName, '_');
         if isempty(underscoreIdx)
             continue;
@@ -346,17 +280,14 @@ function geomData = readWorkbookForPlanes(excelFile, axialLocs)
         axialPart   = sName(1:underscoreIdx(end)-1);
         planeSuffix = sName(underscoreIdx(end)+1:end);   % MP, z25, z75, etc.
 
-        % Only keep the three planes of interest
         if ~ismember(planeSuffix, {'MP','z25','z75'})
             continue;
         end
 
-        % Only keep requested axial locations
         if ~ismember(axialPart, axialLocs)
             continue;
         end
 
-        % Read sheet
         try
             T = readtable(excelFile, 'Sheet', sName);
         catch ME
@@ -364,7 +295,6 @@ function geomData = readWorkbookForPlanes(excelFile, axialLocs)
             continue;
         end
 
-        % Ensure needed columns exist
         missing = setdiff(neededCols, T.Properties.VariableNames);
         if ~isempty(missing)
             warning('Sheet "%s" missing columns (%s). Skipping.', sName, strjoin(missing, ', '));
@@ -373,7 +303,6 @@ function geomData = readWorkbookForPlanes(excelFile, axialLocs)
 
         Tsel = T(:, neededCols);
 
-        % Store in geomData
         switch planeSuffix
             case 'MP'
                 geomData.MP.(axialPart) = Tsel;
@@ -389,21 +318,13 @@ end
 % LOCAL FUNCTION: FORMAT AXIAL LABEL
 % ========================================================================
 function lbl = formatAxialLabel(axialID)
-% formatAxialLabel
-% Convert an axial ID like 'xL0p03' to a LaTeX string '$$x/L = 0.03$$'.
-% If the pattern is not recognized, just return the raw axialID.
-%
-% Expected pattern: 'xL' + number with 'p' as decimal point
-%   e.g., 'xL0p03' -> 0.03, 'xL1p00' -> 1.00
-
     axialID = strtrim(axialID);
 
     if startsWith(axialID, 'xL')
-        numStr = axialID(3:end);           % strip 'xL'
-        numStr = strrep(numStr, 'p', '.'); % replace 'p' with '.'
+        numStr = axialID(3:end);           
+        numStr = strrep(numStr, 'p', '.'); 
         lbl = sprintf('$$x/L = %s$$', numStr);
     else
-        % Fallback: return the axialID as-is (no special formatting)
         lbl = axialID;
     end
 end

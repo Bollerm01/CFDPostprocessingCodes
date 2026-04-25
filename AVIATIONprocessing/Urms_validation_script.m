@@ -72,11 +72,12 @@ for i = 1:numSheets
     % Axis and labels
     xlim([-0.1, 0.3]);   % Extended x-bounds
     ylim([-1, 1]);
-    xlabel('V_{x,rms} / V_{x,\infty}');
+    h = xlabel('V_{x,rms} / V_{x,\infty}');
+    set(h, 'FontWeight', 'bold');
     
     % Labels the first y-axis only
     if i == 1
-        ylabel('Y/D', 'Interpreter', 'latex');
+        ylabel('y/D', 'Interpreter', 'none', 'FontWeight','bold');
     else
         % Other subplots: hide y-axis ticks and labels
         %set(gca, 'YTickLabel', []);   % hides tick marks & labels

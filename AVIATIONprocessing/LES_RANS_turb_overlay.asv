@@ -17,7 +17,7 @@ clear all; close all; clc;
 % if isequal(figFolder, 0)
 %     error('No folder selected. Script terminated.');
 % end
-xLloc = 'xL86'; % Sets axial position
+xLloc = 'xL17'; % Sets axial position
 figFolder = fullfile("E:\Boller CFD\AVIATION CFD\Paper Results\finalData\LESRANScompare\", xLloc);
 
 figFiles = dir(fullfile(figFolder, '*.fig'));
@@ -227,26 +227,26 @@ for g = 1:numel(dataTypes)
     % dt formatting case structure
     switch dt
         case 'TKE'
-            dtPlot  = '\boldmath$\mathbf{TKE}$ \textbf{(J/kg)}';
-            dtPlot2 = '\boldmath$\mathbf{TKE}$';
+            dtPlot  = '$\mathbf{TKE}$ /textbf{(J/kg)}';
+            dtPlot2 = '$\mathbf{TKE}$';
         case 'Rxx'
-            dtPlot  = '\boldmath$\mathbf{R}_{xx}$ \textbf{(Pa)}';
-            dtPlot2 = '\boldmath$\mathbf{R}_{xx}$';
+            dtPlot  = '$\mathbf{R}_{xx}$ /textbf{(Pa)}';
+            dtPlot2 = '$\mathbf{R}_{xx}$';
         case 'Ryy'
-            dtPlot  = '\boldmath$\mathbf{R}_{yy}$ \textbf{(Pa)}';
-            dtPlot2 = '\boldmath$\mathbf{R}_{yy}$';
+            dtPlot  = '$\mathbf{R}_{yy}$ /textbf{(Pa)}';
+            dtPlot2 = '$\mathbf{R}_{yy}$';
         case 'Rzz'
-            dtPlot  = '\boldmath$\mathbf{R}_{zz}$ \textbf{(Pa)}';
-            dtPlot2 = '\boldmath$\mathbf{R}_{zz}$';
+            dtPlot  = '$\mathbf{R}_{zz}$ /textbf{(Pa)}';
+            dtPlot2 = '$\mathbf{R}_{zz}$';
     end
     
     % Axes labels and title
     xlabel(ax, dtPlot, 'Interpreter', 'latex');          % X axis: data type
     ylabel(ax, 'y/D', 'Interpreter', 'none', 'FontWeight','bold');     % Y axis
-    titleStr = sprintf('Volcano vs. VULCAN: %s at %s', dtPlot2, axialStr);
-    title(ax, ['\textbf{' titleStr '}'], 'Interpreter', 'latex');
+    title(ax, sprintf('\textbf{Volcano vs. VULCAN: %s at %s', dtPlot2, axialStr),...
+        'Interpreter', 'latex');
     xlim([0 20000])
-    ylim([-1 1.5])
+    ylim([-1 2])
     
     if ~isempty(allLineHandles)
         lgd = legend(ax, allLineHandles, 'Interpreter', 'none');
