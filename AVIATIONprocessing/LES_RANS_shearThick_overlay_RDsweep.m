@@ -234,10 +234,16 @@ end
 xlabel(ax, origXLabelStr, 'Interpreter', origXLabelObj.Interpreter);
 ylabel(ax, origYLabelStr, 'Interpreter', origYLabelObj.Interpreter);
 
-% Override title to a LaTeX-style thickness label
+% Override title to a LaTeX-style thickness label (stored as string)
 origTitleStr = '$$V_x/V_{x,\infty}$$ Thickness';
-newTitleStr  = sprintf('%s vs. %s - %s', solType1, solType2, origTitleStr);
-title(ax, newTitleStr, 'Interpreter', 'latex');
+
+% Make a plain-text version for a bold, non-LaTeX title
+plainCoreTitle = regexprep(origTitleStr, '[$]', '');  % remove $$
+
+newTitleStr = sprintf('%s vs. %s - %s', solType1, solType2, plainCoreTitle);
+
+% Bold title, no LaTeX interpreter (so FontWeight works)
+title(ax, newTitleStr, 'Interpreter', 'none', 'FontWeight', 'bold');
 
 if ~isempty(allLineHandles)
     lgd = legend(ax, allLineHandles);
@@ -358,8 +364,9 @@ end
 xlabel(axN, origXLabelStr, 'Interpreter', origXLabelObj.Interpreter);
 ylabel(axN, '$$\delta_{SL} / \delta_{SL,R/D=0}$$', 'Interpreter', 'latex');
 
-normTitleStr = sprintf('Normalized: %s vs. %s - %s', solType1, solType2, origTitleStr);
-title(axN, normTitleStr, 'Interpreter', 'latex');
+% Use the same plainCoreTitle (no $$) to build a bold, non-LaTeX title
+normTitleStr = sprintf('Normalized: %s vs. %s - %s', solType1, solType2, plainCoreTitle);
+title(axN, normTitleStr, 'Interpreter', 'none', 'FontWeight', 'bold');
 
 if ~isempty(normLineHandles)
     lgdN = legend(axN, normLineHandles);
@@ -439,8 +446,8 @@ end
 xlabel(axNO, origXLabelStr, 'Interpreter', origXLabelObj.Interpreter);
 ylabel(axNO, '$$(y - \Delta_{sol}) / y_{0,R/D=0}$$', 'Interpreter', 'latex');
 
-normOffTitleStr = sprintf('Offset Normalized: %s vs. %s - %s', solType1, solType2, origTitleStr);
-title(axNO, normOffTitleStr, 'Interpreter', 'latex');
+normOffTitleStr = sprintf('Offset Normalized: %s vs. %s - %s', solType1, solType2, plainCoreTitle);
+title(axNO, normOffTitleStr, 'Interpreter', 'none', 'FontWeight', 'bold');
 
 if ~isempty(normOffLineHandles)
     lgdNO = legend(axNO, normOffLineHandles);

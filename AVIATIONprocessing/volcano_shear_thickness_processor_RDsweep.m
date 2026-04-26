@@ -43,6 +43,7 @@ THRESHOLDS = [0.95 0.05];
 LOCATIONS = {'MP'}; 
 
 %% MAP OF NORMALIZED COLS (LABELS)
+% These use $$...$$, but we strip $$ before putting into $...$ for titles.
 normalized_cols = containers.Map();
 normalized_cols('velocityx_norm')      = '$$V_x/V_{x,\infty}$$';
 normalized_cols('velocityxavg_norm')   = '$$\bar{V_x}/V_{x,\infty}$$';
@@ -307,9 +308,21 @@ for iFile = 1:numel(filenames)
                     locLabel = loc;
             end
 
-            xlabel('x/L', 'Interpreter', 'latex');
+            % Axes labels (you can keep or adjust these)
+            xlabel('$x/L$', 'Interpreter', 'latex');
             ylabel('Normalized Shear Layer Thickness', 'Interpreter', 'latex');
-            title(sprintf('%s Thickness, %s (%s)', nice_name, locLabel, geometryType), 'Interpreter', 'latex');
+
+            % -------- TITLE (FIXED LATEX) --------
+            % nice_name and locLabel contain $$...$$; strip and embed in $...$
+            nice_core = regexprep(nice_name, '[$]', '');   % e.g. 'V_x/V_{x,\infty}'
+            loc_core  = regexprep(locLabel,  '[$]', '');   % e.g. 'z/w = 0.50'
+
+            % Put main quantity in math, rest as text
+            % Example: '$V_x/V_{x,\infty}$ Thickness, z/w = 0.50 (RD00)'
+            title_str = sprintf('$%s$ Thickness, %s (%s)',...
+                                nice_core, loc_core, geometryType);
+            title(title_str, 'Interpreter', 'latex');
+
             grid on;
             legend('Location', 'best');
             hold off;
@@ -325,7 +338,6 @@ for iFile = 1:numel(filenames)
             plot_path_pdf = fullfile(plots_dir,...
                 sprintf('shearThick_%s_overlaid_%s_%s_Volcano.pdf', norm_col, loc, geometryType));
             exportgraphics(hfig, plot_path_pdf, 'ContentType','vector');
-
 
             close(hfig);
         end
@@ -415,9 +427,17 @@ for iFile = 1:numel(filenames)
                 geoLabel = geometryType;
         end
 
-        xlabel('x/L', 'Interpreter', 'latex');
+        xlabel('$x/L$', 'Interpreter', 'latex');
         ylabel('$$\delta_{SL}/D$$', 'Interpreter', 'latex');
-        title(sprintf('%s Thickness, %s', nice_name, geoLabel), 'Interpreter', 'latex');
+
+        % -------- TITLE (FIXED LATEX) --------
+        % nice_name has $$...$$; strip and embed
+        nice_core = regexprep(nice_name, '[$]', '');   % e.g. 'V_x/V_{x,\infty}'
+
+        % Example: '$V_x/V_{x,\infty}$ Thickness, R/D = 0.17'
+        title_str = sprintf('$%s$ Thickness, %s', nice_core, geoLabel);
+        title(title_str, 'Interpreter', 'latex');
+
         grid on;
         legend('Location', 'best', 'Interpreter','latex');
         hold off;
@@ -558,9 +578,18 @@ for iNorm = 1:numel(avg_norm_cols)
                 continue;
             end
 
-            xlabel('x/L', 'Interpreter', 'latex');
+            xlabel('$x/L$', 'Interpreter', 'latex');
             ylabel('$$\delta_{SL}/D$$', 'Interpreter', 'latex');
-            title(sprintf('%s Thickness, %s', nice_name, locLabelLatex), 'Interpreter', 'latex');
+
+            % -------- TITLE (FIXED LATEX) --------
+            % nice_name & locLabelLatex: strip $$, embed core in $...$
+            nice_core = regexprep(nice_name,     '[$]', '');
+            loc_core  = regexprep(locLabelLatex, '[$]', '');
+
+            % Example: '$V_x/V_{x,\infty}$ Thickness, z/w = 0.50'
+            title_str = sprintf('$%s$ Thickness, %s', nice_core, loc_core);
+            title(title_str, 'Interpreter', 'latex');
+
             grid on;
             legend('Location', 'best', 'Interpreter','latex');
             hold off;

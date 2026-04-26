@@ -202,25 +202,35 @@ for iP = 1:numel(planeNames)
             % Axis labeling (quantity on x, Y_norm on y)
             switch qName
                 case 'TKE'
-                    xLabelStr = '$$TKE$$ (J/kg)';
+                    % Bold LaTeX for x-label
+                    xLabelStr = '$\mathbf{TKE\ (J/kg)}$';
                 case 'Rxx'
-                    xLabelStr = '$$R_{xx}$$ (Pa)';
+                    xLabelStr = '$\mathbf{R_{xx}\ (Pa)}$';
                 case 'Ryy'
-                    xLabelStr = '$$R_{yy}$$ (Pa)';
+                    xLabelStr = '$\mathbf{R_{yy}\ (Pa)}$';
                 case 'Rzz'
-                    xLabelStr = '$$R_{zz}$$ (Pa)';
+                    xLabelStr = '$\mathbf{R_{zz}\ (Pa)}$';
             end
-            yLabelStr = '$$ y/D$$';
+            % Bold LaTeX for y-label
+            yLabelStr = '$\mathbf{y/D}$';
 
-            % *** UPDATED: make labels bold ***
-            xlabel(xLabelStr, 'Interpreter','latex', 'FontWeight','bold');
-            ylabel(yLabelStr, 'Interpreter','latex', 'FontWeight','bold');
+            % These are now bold because of \mathbf in the string
+            xlabel(xLabelStr, 'Interpreter','latex');
+            ylabel(yLabelStr, 'Interpreter','latex');
+
+            % Sets them all from [-1 1]
             ylim([-1 1]);
 
-            % *** UPDATED: make title bold ***
-            titleStr = sprintf('%s vs $$ y/D$$ at %s, %s',...
-                               qName, axialLabelLatex, spanTitle);
-            title(titleStr, 'Interpreter','latex', 'FontWeight','bold');
+            % -------- Title (bold, non-LaTeX) --------
+            % axialLabelLatex and spanTitle are LaTeX strings; extract plain parts
+            % Example axialLabelLatex: '$$x/L = 0.17$$' -> 'x/L = 0.17'
+            axialPlain = regexprep(axialLabelLatex, '[$]', '');
+            spanPlain  = regexprep(spanTitle,      '[$]', '');
+
+            % Build plain-text title and use FontWeight to make it bold
+            % Example: 'TKE vs y/D at x/L = 0.17, z/w = 0.50'
+            titleStr = sprintf('%s vs y/D at %s, %s', qName, axialPlain, spanPlain);
+            title(titleStr, 'Interpreter','none', 'FontWeight','bold');
 
             if ~isempty(legendEntries)
                 legend(legendEntries, 'Interpreter','latex', 'Location','best');
