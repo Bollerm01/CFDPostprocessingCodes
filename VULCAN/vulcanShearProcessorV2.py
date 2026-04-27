@@ -16,7 +16,8 @@ import os
 # Linux System Roots
 CASE = "RD00" #Change this prior to every run
 INPUT_FILE = rf"/home/bollerma/RANSdata/VULCAN/SolutionFilesRDSweep/{CASE}/vulcan_solution.plt"
-OUTPUT_DIR = rf"/home/bollerma/RANSdata/VULCAN/SolutionFilesRDSweep/{CASE}/output/AVIATIONfigs/noBars"
+# INPUT_FILE = rf"/home/bollerma/RANSdata/VULCAN/SolutionFilesRDSweep/RD00/No_inject_r0_vorticity_add.plt" # specific for new vorticity plotting
+OUTPUT_DIR = rf"/home/bollerma/RANSdata/VULCAN/SolutionFilesRDSweep/{CASE}/output/AVIATIONfigs"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # Full loop Slice positions
@@ -643,20 +644,20 @@ for logical_scalar in SCALAR_MAP.keys():
         )
 
     # 3D FIGS - Near 3D (zone2 slices)
-    sliceGroup = make_slice_group(
-        xySlices=XY_SLICE_Z_3D,
-        xzSlices=XZ_SLICE_Y_3D,
-        yzSlices=YZ_SLICE_X_3D,
-        scalar_zone2=scalar_zone2
-    )
-    outputFileName = "3D_Near_Group"
-    make_3D_slice_view(
-        slices=sliceGroup,
-        preset="3D_NEAR",
-        fname=outputFileName,
-        scalar_zone2=scalar_zone2,
-        logical_scalar=logical_scalar
-    )
+    # sliceGroup = make_slice_group(
+    #     xySlices=XY_SLICE_Z_3D,
+    #     xzSlices=XZ_SLICE_Y_3D,
+    #     yzSlices=YZ_SLICE_X_3D,
+    #     scalar_zone2=scalar_zone2
+    # )
+    # outputFileName = "3D_Near_Group"
+    # make_3D_slice_view(
+    #     slices=sliceGroup,
+    #     preset="3D_NEAR",
+    #     fname=outputFileName,
+    #     scalar_zone2=scalar_zone2,
+    #     logical_scalar=logical_scalar
+    # )
 
 if ENABLE_SCHLIEREN:
     for z in XY_SLICE_Z:
