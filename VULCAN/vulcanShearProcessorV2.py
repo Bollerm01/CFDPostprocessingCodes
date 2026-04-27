@@ -362,7 +362,7 @@ def apply_camera_and_colorbar(lut, preset, title):
     view.CameraParallelScale = p["ParallelScale"]
 
     sb = GetScalarBar(lut, view)
-    sb.Visibility = 1
+    sb.Visibility = 1 # 0 for hidden
     sb.WindowLocation = "Any Location"
     sb.Orientation = p["Colorbar"]["Orientation"]
     sb.Position = p["Colorbar"]["Position"]
