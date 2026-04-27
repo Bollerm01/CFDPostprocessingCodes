@@ -14,7 +14,7 @@ import os
 # OUTPUT_DIR = os.path.join(OUTPUT_ROOT, "RD00")#Change this prior to every run
 
 # Linux System Roots
-CASE = "RD00" #Change this prior to every run
+CASE = "RD00"  # Change this prior to every run
 INPUT_FILE = rf"/home/bollerma/RANSdata/VULCAN/SolutionFilesRDSweep/{CASE}/vulcan_solution.plt"
 # INPUT_FILE = rf"/home/bollerma/RANSdata/VULCAN/SolutionFilesRDSweep/RD00/No_inject_r0_vorticity_add.plt" # specific for new vorticity plotting
 OUTPUT_DIR = rf"/home/bollerma/RANSdata/VULCAN/SolutionFilesRDSweep/{CASE}/output/AVIATIONfigs"
@@ -27,60 +27,57 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 # XZ_SLICE_Y = [-0.0215, -0.01556]
 # XY_SLICE_Z = [0.0001, 0.0127]
 
-YZ_SLICE_X = [0.46552219, 0.49415485, 0.52210578, 0.53165 ]
+YZ_SLICE_X = [0.46552219, 0.49415485, 0.52210578, 0.53165]
 XZ_SLICE_Y = [-0.0215, -0.01556]
 XY_SLICE_Z = [0.0001, 0.0127]
 
-
 # 3D slices group
-YZ_SLICE_X_3D = [0.46552219, 0.49415485, 0.53165] #x/L = 0.03, 0.45, 1
+YZ_SLICE_X_3D = [0.46552219, 0.49415485, 0.53165]  # x/L = 0.03, 0.45, 1
 XY_SLICE_Z_3D = [0.0001]
 XZ_SLICE_Y_3D = [-0.0215, -0.01556]
 
 SCALAR_MAP = {
     "Pressure_Pa": {
         "zone1": "Pressure_Pa",
-        "zone2": "zone2/Pressure_Pa"
+        "zone2": "zone2/Pressure_Pa",
     },
     "U_velocity_m_s": {
         "zone1": "U_velocity_m_s",
-        "zone2": "zone2/U_velocity_m_s"
+        "zone2": "zone2/U_velocity_m_s",
     },
     "Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup": {
         "zone1": "Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup",
         "zone2": "zone2/Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup",
     },
-
     # zone2 entries point to normalized arrays
     "greekt_greeksubxx_subsupt_sup": {
         "zone1": "greekt_greeksubxx_subsupt_sup",
-        "zone2": "Rxx_norm"
+        "zone2": "Rxx_norm",
     },
     "greekt_greeksubxy_subsupt_sup": {
         "zone1": "greekt_greeksubxy_subsupt_sup",
-        "zone2": "Rxy_norm"
+        "zone2": "Rxy_norm",
     },
     "greekt_greeksubxz_subsupt_sup": {
         "zone1": "greekt_greeksubxz_subsupt_sup",
-        "zone2": "Rxz_norm"
+        "zone2": "Rxz_norm",
     },
     "greekt_greeksubyy_subsupt_sup": {
         "zone1": "greekt_greeksubyy_subsupt_sup",
-        "zone2": "Ryy_norm"
+        "zone2": "Ryy_norm",
     },
     "greekt_greeksubyz_subsupt_sup": {
         "zone1": "greekt_greeksubyz_subsupt_sup",
-        "zone2": "Ryz_norm"
+        "zone2": "Ryz_norm",
     },
     "greekt_greeksubzz_subsupt_sup": {
         "zone1": "greekt_greeksubzz_subsupt_sup",
-        "zone2": "Rzz_norm"
+        "zone2": "Rzz_norm",
     },
-
-    # === VORTICITY MOD ===
+    # Vorticity magnitude (computed via PythonCalculator curl pipeline)
     "Vorticity_mag": {
-        "zone1": "Vorticity_mag",
-        "zone2": "Vorticity_mag"
+        "zone1": "Vorticity_mag",  # may not exist on zone1; edges will still draw
+        "zone2": "Vorticity_mag",
     },
 }
 
@@ -88,15 +85,13 @@ SCALAR_TITLES = {
     "Pressure_Pa": "Pressure [Pa]",
     "U_velocity_m_s": "U Velocity [m/s]",
     "Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup": "Turbulence Kinetic Energy [m²/s²]",
-    # Titles still correspond to logical names τ_ij, now interpreted as normalized τ_ij / (-ρ)
+    # Titles correspond to normalized τ_ij / (-ρ)
     "greekt_greeksubxx_subsupt_sup": r"$\tau_{xx}$",
     "greekt_greeksubxy_subsupt_sup": r"$\tau_{xy}$",
     "greekt_greeksubxz_subsupt_sup": r"$\tau_{xz}$",
     "greekt_greeksubyy_subsupt_sup": r"$\tau_{yy}$",
     "greekt_greeksubyz_subsupt_sup": r"$\tau_{yz}$",
     "greekt_greeksubzz_subsupt_sup": r"$\tau_{zz}$",
-
-    # === VORTICITY MOD ===
     "Vorticity_mag": r"$|\omega|$",
 }
 
@@ -104,27 +99,22 @@ SCALAR_TITLES = {
 SCALAR_RANGES = {
     # Pressure
     "Pressure_Pa": (13000.0, 32000.0),
-
     # Velocity
     "U_velocity_m_s": (-160.0, 730.0),
-
     # TKE
     "Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup": (0.0, 20000.0),
-
-    # Reynolds stresses (now normalized by -rho)
+    # Reynolds stresses (now normalized by -ρ)
     "greekt_greeksubxx_subsupt_sup": (0.0, 2.4e4),
     "greekt_greeksubxy_subsupt_sup": (-5e3, 1.5e3),
     "greekt_greeksubxz_subsupt_sup": (-400.0, 250.0),
     "greekt_greeksubyy_subsupt_sup": (0.0, 6500.0),
     "greekt_greeksubyz_subsupt_sup": (-400.0, 250.0),
     "greekt_greeksubzz_subsupt_sup": (-100.0, 100.0),
-
-    # Optional Schlieren
+    # Schlieren optional
     "Schlieren_magDelRho": (0.0, 120.0),
     "Schlieren_dRho_dX": (0.0, 90.0),
     "Schlieren_dRho_dY": (0.0, 90.0),
-
-    # === VORTICITY MOD ===
+    # Vorticity magnitude – adjust as appropriate
     "Vorticity_mag": (0.0, 5.0e5),
 }
 # <<< END NEW >>>
@@ -148,7 +138,6 @@ SCALAR_COLORMAPS = {
     "Schlieren_magDelRho": "Grayscale",
     "Schlieren_dRho_dX": "Grayscale",
     "Schlieren_dRho_dY": "Grayscale",
-    # === VORTICITY MOD ===
     "Vorticity_mag": "Inferno (matplotlib)",
 }
 
@@ -165,31 +154,31 @@ reader = VisItTecplotBinaryReader(
     registrationName=CASE,
     FileName=[INPUT_FILE],
     PointArrayStatus=[
-        'Pressure_Pa',
-        'U_velocity_m_s',
-        'V_velocity_m_s',
-        'W_velocity_m_s',
-        'Density_kg_msup3_sup',
-        'Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup',
-        'greekt_greeksubxx_subsupt_sup',
-        'greekt_greeksubxy_subsupt_sup',
-        'greekt_greeksubxz_subsupt_sup',
-        'greekt_greeksubyy_subsupt_sup',
-        'greekt_greeksubyz_subsupt_sup',
-        'greekt_greeksubzz_subsupt_sup',
-        'zone2/Pressure_Pa',
-        'zone2/U_velocity_m_s',
-        'zone2/V_velocity_m_s',
-        'zone2/W_velocity_m_s',
-        'zone2/Density_kg_msup3_sup',
-        'zone2/Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup',
-        'zone2/greekt_greeksubxx_subsupt_sup',
-        'zone2/greekt_greeksubxy_subsupt_sup',
-        'zone2/greekt_greeksubxz_subsupt_sup',
-        'zone2/greekt_greeksubyy_subsupt_sup',
-        'zone2/greekt_greeksubyz_subsupt_sup',
-        'zone2/greekt_greeksubzz_subsupt_sup',
-    ]
+        "Pressure_Pa",
+        "U_velocity_m_s",
+        "V_velocity_m_s",
+        "W_velocity_m_s",
+        "Density_kg_msup3_sup",
+        "Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup",
+        "greekt_greeksubxx_subsupt_sup",
+        "greekt_greeksubxy_subsupt_sup",
+        "greekt_greeksubxz_subsupt_sup",
+        "greekt_greeksubyy_subsupt_sup",
+        "greekt_greeksubyz_subsupt_sup",
+        "greekt_greeksubzz_subsupt_sup",
+        "zone2/Pressure_Pa",
+        "zone2/U_velocity_m_s",
+        "zone2/V_velocity_m_s",
+        "zone2/W_velocity_m_s",
+        "zone2/Density_kg_msup3_sup",
+        "zone2/Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup",
+        "zone2/greekt_greeksubxx_subsupt_sup",
+        "zone2/greekt_greeksubxy_subsupt_sup",
+        "zone2/greekt_greeksubxz_subsupt_sup",
+        "zone2/greekt_greeksubyy_subsupt_sup",
+        "zone2/greekt_greeksubyz_subsupt_sup",
+        "zone2/greekt_greeksubzz_subsupt_sup",
+    ],
 )
 reader.MeshStatus = ["zone1", "zone2"]
 reader.UpdatePipeline()
@@ -229,49 +218,49 @@ calc_Rzz.ResultArrayName = "Rzz_norm"
 calc_Rzz.Function = '"zone2/greekt_greeksubzz_subsupt_sup" / (-"zone2/Density_kg_msup3_sup")'
 calc_Rzz.UpdatePipeline()
 
-# === VORTICITY MOD ===
+# === VORTICITY MOD (trace-based) ===
+# Start from the end of the Rij_norm chain
 zone2 = calc_Rzz
 
-vel_calc = Calculator(Input=zone2)
-vel_calc.ResultArrayName = "Velocity"
-vel_calc.Function = "make_vector(\"zone2/U_velocity_m_s\", " \
-                    "\"zone2/V_velocity_m_s\", " \
-                    "\"zone2/W_velocity_m_s\")"
+# 1) Build velocity vector Velocity_Vect = (U, V, W) using Calculator
+vel_calc = Calculator(registrationName="Velocity_Vect", Input=zone2)
+vel_calc.ResultArrayName = "Velocity_Vect"
+vel_calc.Function = (
+    'iHat*"zone2/U_velocity_m_s"'
+    '+jHat*"zone2/V_velocity_m_s"'
+    '+kHat*"zone2/W_velocity_m_s"'
+)
 vel_calc.UpdatePipeline()
 
-vort_deriv = ComputeDerivatives(Input=vel_calc)
-vort_deriv.Vectors = ["POINTS", "Velocity"]
-vort_deriv.OutputVectorType = "Vorticity"
-vort_deriv.UpdatePipeline()
+# 2) PythonCalculator: vorticity vector = curl(Velocity_Vect)
+vorticity_calc = PythonCalculator(registrationName="vorticity", Input=vel_calc)
+vorticity_calc.Expression = "curl(Velocity_Vect)"
+vorticity_calc.ArrayName = "vorticity"
+vorticity_calc.UpdatePipeline()
 
-vort_mag_calc = Calculator(Input=vort_deriv)
+# 3) Calculator: vorticity magnitude
+vort_mag_calc = Calculator(registrationName="vorticitymagavg", Input=vorticity_calc)
 vort_mag_calc.ResultArrayName = "Vorticity_mag"
-vort_mag_calc.Function = "mag(Vorticity)"
+vort_mag_calc.Function = "mag(vorticity)"
 vort_mag_calc.UpdatePipeline()
 
-# final zone2 source for everything
+# final zone2 source for everything downstream (Rij_norm + Vorticity_mag)
 zone2 = vort_mag_calc
-# === END VORTICITY MOD ===
+# === END VORTICITY MOD (trace-based) ===
 
-# >>> CHANGED: map logical scalars to the pipeline *source* to slice
+# Map logical scalars to the pipeline *source* to slice
 SCALAR_SOURCES = {
-    # basic fields: still okay to slice straight from final zone2 (they pass through)
     "Pressure_Pa": zone2,
     "U_velocity_m_s": zone2,
     "Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup": zone2,
-
-    # Rij_norm: explicitly slice from calculator-based pipeline (zone2 == vort_mag_calc)
     "greekt_greeksubxx_subsupt_sup": zone2,
     "greekt_greeksubxy_subsupt_sup": zone2,
     "greekt_greeksubxz_subsupt_sup": zone2,
     "greekt_greeksubyy_subsupt_sup": zone2,
     "greekt_greeksubyz_subsupt_sup": zone2,
     "greekt_greeksubzz_subsupt_sup": zone2,
-
-    # Vorticity: from vorticity calculator
     "Vorticity_mag": zone2,
 }
-# If a logical scalar is missing here, we'll fall back to zone2 in the slice routines.
 
 # ============================================================
 # ===================== VIEW SETUP ===========================
@@ -336,10 +325,12 @@ def array_location(src, name):
         return "CELLS"
     raise RuntimeError(f"Array '{name}' not found on source {src.GetXMLName()}")
 
+
 def normalize_scalar_name(array_name):
     if "/" in array_name:
         return array_name.split("/", 1)[1]
     return array_name
+
 
 def apply_lut_range(lut, array_name):
     logical_name = normalize_scalar_name(array_name)
@@ -349,9 +340,11 @@ def apply_lut_range(lut, array_name):
     else:
         lut.RescaleTransferFunctionToDataRange()
 
+
 def apply_lut_preset_for_logical(lut, logical_scalar_name):
     preset = SCALAR_COLORMAPS.get(logical_scalar_name, DEFAULT_COLORMAP_PRESET)
     lut.ApplyPreset(preset, True)
+
 
 def apply_camera_and_colorbar(lut, preset, title):
     p = CAMERA_PRESETS[preset]
@@ -362,7 +355,7 @@ def apply_camera_and_colorbar(lut, preset, title):
     view.CameraParallelScale = p["ParallelScale"]
 
     sb = GetScalarBar(lut, view)
-    sb.Visibility = 1 # 0 for hidden
+    sb.Visibility = 1
     sb.WindowLocation = "Any Location"
     sb.Orientation = p["Colorbar"]["Orientation"]
     sb.Position = p["Colorbar"]["Position"]
@@ -375,9 +368,10 @@ def apply_camera_and_colorbar(lut, preset, title):
     sb.LabelColor = [0.0, 0.0, 0.0]
     sb.TitleColor = [0.0, 0.0, 0.0]
 
-    colorPalette = GetSettingsProxy('ColorPalette')
+    colorPalette = GetSettingsProxy("ColorPalette")
     colorPalette.Background = [1.0, 1.0, 1.0]
     view.OrientationAxesLabelColor = [0.0, 0.0, 0.0]
+
 
 def make_slice(src, origin, normal, scalar_name=None, loc_identifier=None):
     if scalar_name and loc_identifier:
@@ -410,12 +404,12 @@ def render_overlay_slice(origin, normal, preset, fname, logical_scalar, hide_sli
 
     loc_id = fname.replace(" ", "_")
 
-    # zone1: still from reader (just edges)
-    zone1_slice = make_slice(zone1, origin, normal, scalar_zone1, loc_id)
+    # zone1: from reader (edges)
+    zone1_slice = make_slice(zone1, origin, normal, scalar_name=scalar_zone1, loc_identifier=loc_id)
 
-    # >>> CHANGED: zone2 slice source chosen from SCALAR_SOURCES
+    # zone2: from appropriate calculator pipeline source
     src_for_logical = SCALAR_SOURCES.get(logical_scalar, zone2)
-    zone2_slice = make_slice(src_for_logical, origin, normal, scalar_zone2, loc_id)
+    zone2_slice = make_slice(src_for_logical, origin, normal, scalar_name=scalar_zone2, loc_identifier=loc_id)
 
     # Volume slice (zone2)
     vol_disp = Show(zone2_slice, view)
@@ -439,7 +433,7 @@ def render_overlay_slice(origin, normal, preset, fname, logical_scalar, hide_sli
         loc1 = array_location(zone1_slice, scalar_zone1)
         ColorBy(edge_disp, (loc1, scalar_zone1))
     except RuntimeError:
-        # Expected for vorticity and Rij_norm if not present on zone1
+        # Expected for fields not present on zone1
         pass
 
     if lut:
@@ -452,12 +446,14 @@ def render_overlay_slice(origin, normal, preset, fname, logical_scalar, hide_sli
     SaveScreenshot(
         os.path.join(OUTPUT_DIR, f"{fname}_{logical_scalar}_VULCAN.png"),
         view,
-        ImageResolution=IMG_RES, TransparentBackground=1
+        ImageResolution=IMG_RES,
+        TransparentBackground=1,
     )
 
     if hide_slice:
         Hide(zone1_slice, view)
         Hide(zone2_slice, view)
+
 
 def make_3D_slice_view(slices, preset, fname, scalar_zone2, logical_scalar):
     lut = GetColorTransferFunction(scalar_zone2)
@@ -482,7 +478,7 @@ def make_3D_slice_view(slices, preset, fname, scalar_zone2, logical_scalar):
         os.path.join(OUTPUT_DIR, f"{fname}_{logical_scalar}_VULCAN.png"),
         view,
         ImageResolution=IMG_RES,
-        TransparentBackground=1
+        TransparentBackground=1,
     )
 
     for sl in slices:
@@ -515,6 +511,7 @@ def schlieren_pipeline_full_domain():
 
     return [mag, dx, dy]
 
+
 def render_schlieren(origin, normal, preset, fname):
     for calc in schlieren_pipeline_full_domain():
         slice_calc = make_slice(calc, origin, normal)
@@ -538,14 +535,16 @@ def render_schlieren(origin, normal, preset, fname):
         SaveScreenshot(
             os.path.join(OUTPUT_DIR, f"{fname}_{calc.ResultArrayName}_VULCAN.png"),
             view,
-            ImageResolution=IMG_RES, TransparentBackground=1
+            ImageResolution=IMG_RES,
+            TransparentBackground=1,
         )
 
         Hide(slice_calc, view)
 
+
 def make_slice_group(xySlices, xzSlices, yzSlices, scalar_zone2, logical_scalar):
     group = []
-    src_for_logical = SCALAR_SOURCES.get(logical_scalar, zone2)  # >>> CHANGED
+    src_for_logical = SCALAR_SOURCES.get(logical_scalar, zone2)
 
     if xySlices:
         for z in xySlices:
@@ -555,7 +554,7 @@ def make_slice_group(xySlices, xzSlices, yzSlices, scalar_zone2, logical_scalar)
                 origin=[0, 0, z],
                 normal=[0, 0, 1],
                 scalar_name=scalar_zone2,
-                loc_identifier=loc_ID
+                loc_identifier=loc_ID,
             )
             group.append(sl)
 
@@ -567,7 +566,7 @@ def make_slice_group(xySlices, xzSlices, yzSlices, scalar_zone2, logical_scalar)
                 origin=[0, y, 0],
                 normal=[0, 1, 0],
                 scalar_name=scalar_zone2,
-                loc_identifier=loc_ID
+                loc_identifier=loc_ID,
             )
             group.append(sl)
 
@@ -579,7 +578,7 @@ def make_slice_group(xySlices, xzSlices, yzSlices, scalar_zone2, logical_scalar)
                 origin=[x, 0, 0],
                 normal=[1, 0, 0],
                 scalar_name=scalar_zone2,
-                loc_identifier=loc_ID
+                loc_identifier=loc_ID,
             )
             group.append(sl)
 
@@ -600,7 +599,7 @@ for logical_scalar in SCALAR_MAP.keys():
             normal=[1, 0, 0],
             preset="YZ",
             fname=f"YZ_x{x:+0.5f}",
-            logical_scalar=logical_scalar
+            logical_scalar=logical_scalar,
         )
 
     for y in XZ_SLICE_Y:
@@ -609,7 +608,7 @@ for logical_scalar in SCALAR_MAP.keys():
             normal=[0, 1, 0],
             preset="XZ",
             fname=f"XZ_y{y:+0.5f}",
-            logical_scalar=logical_scalar
+            logical_scalar=logical_scalar,
         )
 
     for z in XY_SLICE_Z:
@@ -618,23 +617,23 @@ for logical_scalar in SCALAR_MAP.keys():
             normal=[0, 0, 1],
             preset="XY_NEAR",
             fname=f"XY_near_z{z:+0.5f}",
-            logical_scalar=logical_scalar
+            logical_scalar=logical_scalar,
         )
         render_overlay_slice(
             origin=[0, 0, z],
             normal=[0, 0, 1],
             preset="XY_FAR",
             fname=f"XY_far_z{z:+0.5f}",
-            logical_scalar=logical_scalar
+            logical_scalar=logical_scalar,
         )
 
-    # 3D FIGS - Near 3D (zone2 slices) – if you want these active, just uncomment
+    # 3D FIGS - Near 3D (zone2 slices) – enable if desired
     # sliceGroup = make_slice_group(
     #     xySlices=XY_SLICE_Z_3D,
     #     xzSlices=XZ_SLICE_Y_3D,
     #     yzSlices=YZ_SLICE_X_3D,
     #     scalar_zone2=scalar_zone2,
-    #     logical_scalar=logical_scalar
+    #     logical_scalar=logical_scalar,
     # )
     # outputFileName = "3D_Near_Group"
     # make_3D_slice_view(
@@ -642,7 +641,7 @@ for logical_scalar in SCALAR_MAP.keys():
     #     preset="3D_NEAR",
     #     fname=outputFileName,
     #     scalar_zone2=scalar_zone2,
-    #     logical_scalar=logical_scalar
+    #     logical_scalar=logical_scalar,
     # )
 
 if ENABLE_SCHLIEREN:
@@ -651,13 +650,13 @@ if ENABLE_SCHLIEREN:
             origin=[0, 0, z],
             normal=[0, 0, 1],
             preset="XY_NEAR",
-            fname=f"XY_near_z{z:+0.5f}"
+            fname=f"XY_near_z{z:+0.5f}",
         )
         render_schlieren(
             origin=[0, 0, z],
             normal=[0, 0, 1],
             preset="XY_FAR",
-            fname=f"XY_far_z{z:+0.5f}"
+            fname=f"XY_far_z{z:+0.5f}",
         )
 
 print("\nAll slices rendered successfully.")
