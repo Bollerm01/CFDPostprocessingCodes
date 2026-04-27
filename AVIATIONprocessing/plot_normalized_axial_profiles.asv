@@ -2,7 +2,7 @@
 %  Script: plot_normalized_axial_profiles.m
 %  Description:
 %    - Reads up to 3 Excel files of identical format (output from the 'High
-%    Res Shear Data' processing)
+%      Res Shear Data' processing)
 %    - Each file represents a different geometry (encoded in filename).
 %    - Each file contains multiple sheets at different axial locations
 %      (e.g., xL0p03, xL0p31, xL0p72, xL1) plus a "US_MP" sheet.
@@ -11,45 +11,45 @@
 %    - Plots Y_norm (Y-axis) vs normalized variable (X-axis) for 4 axial
 %      locations in a 1x4 tiled layout.
 %    - Overlays multiple geometries in each subplot with a shared legend
-%      below all tiles (horizontal, box off).
-% ===========================================================
+%      in the top-left of the first tiled subplot.
+%% ==========================================================
 
 clear; clc; close all;
 
 %% ---------------- USER INPUT SECTION -----------------------
 % Specify the variable/column name to plot (must match Excel header)
-variableName = 'velocityxavg';  % Volcano
-% variableName = 'Velocity_X';  % VULCAN
+% variableName = 'velocityxavg';  % Volcano
+variableName = 'Velocity_X';  % VULCAN
 
 % Data files (geometries)
 % VULCAN PATHS
-% path  = "E:\Boller CFD\AVIATION CFD\Paper Results\finalData\VULCAN\CompleteData\HighResShearData\All Data\";
-% files = {'VULCANCondensedProbeData_RD00.xlsx',...
-%          'VULCANCondensedProbeData_RD17.xlsx',...
-%          'VULCANCondensedProbeData_RD52.xlsx'};
+path  = "E:\Boller CFD\AVIATION CFD\Paper Results\finalData\VULCAN\CompleteData\HighResShearData\All Data\";
+files = {'VULCANCondensedProbeData_RD00.xlsx',...
+         'VULCANCondensedProbeData_RD17.xlsx',...
+         'VULCANCondensedProbeData_RD52.xlsx'};
 
 % Volcano paths
-path  = "E:\Boller CFD\AVIATION CFD\Paper Results\finalData\Volcano\CompleteData\High Res Shear Data\All RD\";
-files = {'CondensedProbeData_RD00.xlsx',...
-         'CondensedProbeData_RD17.xlsx',...
-         'CondensedProbeData_RD52.xlsx'};
+% path  = "E:\Boller CFD\AVIATION CFD\Paper Results\finalData\Volcano\CompleteData\High Res Shear Data\All RD\";
+% files = {'CondensedProbeData_RD00.xlsx',...
+%          'CondensedProbeData_RD17.xlsx',...
+%          'CondensedProbeData_RD52.xlsx'};
 
 filePaths = fullfile(path, files);
 
 % Axial location sheet names (edit if your sheet names differ)
 % Volcano
-axialSheets = {'xL_0p03_MP', 'xL_0p31_MP', 'xL_0p72_MP', 'xL1_MP'};
+% axialSheets = {'xL_0p03_MP', 'xL_0p31_MP', 'xL_0p72_MP', 'xL1_MP'};
 % VULCAN
-% axialSheets = {'xL_0p03', 'xL_0p31', 'xL_0p72', 'xL1'};
+axialSheets = {'xL_0p03', 'xL_0p31', 'xL_0p72', 'xL1'};
 
 % Sheet name for normalization reference
-normSheetName = 'US_MP'; % Volcano
-% normSheetName = 'xL1'; % VULCAN
+% normSheetName = 'US_MP'; % Volcano
+normSheetName = 'xL1'; % VULCAN
 
 % ---- Figure / export settings (style section) --------------
-mainTitle  = '\mathbf{Volcano y/D vs Normalized $$\mathbf{\bar{V_x}}$$';   % <-- MAIN TITLE (sgtitle)
-outputFile = 'AxialProfiles_VxNorm_Volcano.jpg';       % <-- OUTPUT FILENAME
-outputDPI  = 600;                              % <-- EXPORT RESOLUTION (dpi)
+mainTitle  = '\textbf{VULCAN y/D vs Normalized $$\bar{V_x}$$}';   % <-- MAIN TITLE (sgtitle)
+outputFile = 'AxialProfiles_VxNorm_VULCAN.jpg';       % <-- OUTPUT FILENAME
+outputDPI  = 600;                                      % <-- EXPORT RESOLUTION (dpi)
 
 %% ------------- PLOT APPEARANCE SETTINGS -------------------
 % ------------ CHANGE COLOR / STYLE / LABELS HERE -----------
@@ -176,15 +176,21 @@ fig = figure('Name', 'Overlayed y/d vs U/Uinf', 'NumberTitle', 'off');
 set(fig, 'Units', 'normalized', 'Position', [0.05 0.25 0.5 0.5]);
 % [left bottom width height]; increase width to 0.9, reduce height to 0.5
 
-% Match example style: 1 x numSheets layout and use fig handle
+% 1 x numSheets layout
 tl = tiledlayout(fig, 1, numSheets, 'TileSpacing', 'tight', 'Padding', 'compact');
 
 allLineHandles = [];   % to store one line per geometry from first tile
+firstAx = [];          % to store handle to first subplot axes
 
 %% ---------------------- PLOTTING LOOP ----------------------
 for a = 1:nAxial
     nexttile;
     hold on; grid on; box on;
+    
+    % Store handle to first subplot axes
+    if a == 1
+        firstAx = gca;
+    end
     
     localLineHandles = gobjects(1, nGeom);
     
@@ -218,8 +224,8 @@ for a = 1:nAxial
         ylabel(yLabelStr, 'FontSize', labelFontSize, 'Interpreter', 'latex');
     else
         % Other subplots: hide y-axis ticks and labels
-        set(gca, 'YTickLabel', []);   % hides tick marks & labels
-        ylabel('');                                % ensure no individual y-label
+        set(gca, 'YTickLabel', []);   % hides tick labels
+        ylabel('');                   % ensure no individual y-label
     end
     
     % Tile title
@@ -244,15 +250,12 @@ ylabel(axShared, yLabelStr, 'FontSize', labelFontSize+1,...
        'Interpreter', 'latex', 'Rotation', 90, 'VerticalAlignment', 'middle');
 uistack(axShared, 'bottom');  % keep plots and legend on top
 
-%% ----------------- SHARED LEGEND (BELOW TILES) -------------
-if ~isempty(allLineHandles)
-    lg = legend(allLineHandles, legendEntries,...
-                'Orientation', 'horizontal',...
-                'Box', 'off');   % <-- CHANGE legend box/orientation here if desired
-    
-    % Place legend under all tiles
-    lg.Layout.Tile = 'south';
-    lg.FontSize    = legendFontSize;
+%% ----------------- SHARED LEGEND (FIRST TILE, TOP-LEFT) ----
+if ~isempty(allLineHandles) && ~isempty(firstAx) && isvalid(firstAx)
+    lg = legend(firstAx, allLineHandles, legendEntries,...
+                'Location', 'northwest',...  % top-left of first subplot
+                'Box', 'on');                % box
+    lg.FontSize = legendFontSize;
 end
 
 %% ----------------- SHARED MAIN TITLE -----------------------
@@ -260,9 +263,12 @@ sgtitle(tl, mainTitle, 'FontSize', 14, 'FontWeight', 'bold', 'Interpreter','late
 
 %% ----------------- SAVE HIGH-RES FIGURE --------------------
 set(fig, 'PaperPositionMode', 'auto');  % Ensure proper sizing
+
+% Raster export
 exportgraphics(fig, outputFile, 'Resolution', outputDPI);
+
+% Vector PDF export
 outputFile = 'AxialProfiles_VxNorm_Volcano.pdf';  % <-- vector PDF
-exportgraphics(fig, outputFile,...
-    'ContentType', 'vector');             % forces vector output
+exportgraphics(fig, outputFile, 'ContentType', 'vector');  % forces vector output
 
 %% ----------------- END OF SCRIPT ---------------------------

@@ -59,7 +59,8 @@ if numel(geomLabels) ~= numel(excelFiles)
     error('geomLabels must have the same length as the number of selected files (3).');
 end
 
-legendLabels = {'$$R/D = 0.0$$','$$R/D = 0.17$$','$$R/D = 0.52$$'};
+% Legend labels: plain text (no LaTeX, no bold)
+legendLabels = {'R/D = 0.0','R/D = 0.17','R/D = 0.52'};
 
 %% ------------------------------------------------------------------------
 % 3) Axial locations of interest
@@ -187,18 +188,6 @@ for iP = 1:numel(planeNames)
                 legendEntries{end+1} = legendLabels{g}; %#ok<AGROW>
             end
 
-            % Spanwise label for title (LaTeX)
-            switch plane
-                case 'z25'
-                    spanTitle = '$$z/w = 0.25$$';
-                case 'MP'
-                    spanTitle = '$$z/w = 0.50$$';
-                case 'z75'
-                    spanTitle = '$$z/w = 0.75$$';
-                otherwise
-                    spanTitle = plane;
-            end
-
             % Axis labeling (quantity on x, Y_norm on y)
             switch qName
                 case 'TKE'
@@ -221,22 +210,25 @@ for iP = 1:numel(planeNames)
             % Sets them all from [-1 1]
             ylim([-1 1]);
 
-            % -------- Title (bold, non-LaTeX) --------
-            % axialLabelLatex and spanTitle are LaTeX strings; extract plain parts
+            % -------- Title (bold, non-LaTeX, no plane in text) --------
+            % axialLabelLatex is a LaTeX string; extract plain part
             % Example axialLabelLatex: '$$x/L = 0.17$$' -> 'x/L = 0.17'
             axialPlain = regexprep(axialLabelLatex, '[$]', '');
-            spanPlain  = regexprep(spanTitle,      '[$]', '');
 
-            % Build plain-text title and use FontWeight to make it bold
-            % Example: 'TKE vs y/D at x/L = 0.17, z/w = 0.50'
-            titleStr = sprintf('%s vs y/D at %s, %s', qName, axialPlain, spanPlain);
+            % Build plain-text title (no plane)
+            % Example: 'TKE vs y/D at x/L = 0.17'
+            titleStr = sprintf('y/D vs %s at %s', qName, axialPlain);
             title(titleStr, 'Interpreter','none', 'FontWeight','bold');
 
+            % Legend: plain text, no LaTeX, not bold
             if ~isempty(legendEntries)
-                legend(legendEntries, 'Interpreter','latex', 'Location','best');
+                lgd = legend(legendEntries,...
+                             'Interpreter','none',...
+                             'Location','best');
+                set(lgd, 'FontWeight','normal');
             end
 
-            % Filename pattern: <Q>_<plane>_<axial>_RDsweep
+            % Filename pattern: <Q>_<plane>_<axial>_RDsweep (plane only in filename)
             safeAxial = strrep(axialID, '/', '_');
             baseName  = sprintf('%s_%s_%s_RDsweep_volcano', qName, plane, safeAxial);
             pngFile   = fullfile(planeOutDir, [baseName '.png']);

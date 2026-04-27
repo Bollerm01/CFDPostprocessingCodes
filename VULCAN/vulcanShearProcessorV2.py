@@ -75,6 +75,15 @@ SCALAR_MAP = {
         "zone1": "greekt_greeksubzz_subsupt_sup",
         "zone2": "Rzz_norm"
     },
+
+    # === VORTICITY MOD ===
+    # Treat vorticity magnitude as a scalar on zone2. zone1 entry is
+    # only used for edge coloring; if it doesn't exist there, edges
+    # will just stay black (the error is already caught).
+    "Vorticity_mag": {
+        "zone1": "Vorticity_mag",
+        "zone2": "Vorticity_mag"
+    },
 }
 
 SCALAR_TITLES = {
@@ -88,6 +97,9 @@ SCALAR_TITLES = {
     "greekt_greeksubyy_subsupt_sup": r"$\tau_{yy}$",
     "greekt_greeksubyz_subsupt_sup": r"$\tau_{yz}$",
     "greekt_greeksubzz_subsupt_sup": r"$\tau_{zz}$",
+
+    # === VORTICITY MOD ===
+    "Vorticity_mag": r"$|\omega|$",
 }
 
 # <<< NEW: Optional per-logical-scalar ranges (min, max) >>>
@@ -113,6 +125,10 @@ SCALAR_RANGES = {
     "Schlieren_magDelRho": (0.0, 120.0),
     "Schlieren_dRho_dX": (0.0, 90.0),
     "Schlieren_dRho_dY": (0.0, 90.0),
+
+    # === VORTICITY MOD ===
+    # Adjust to whatever range makes sense for your case
+    "Vorticity_mag": (0.0, 5.0e5),
 }
 # <<< END NEW >>>
 
@@ -146,6 +162,9 @@ SCALAR_COLORMAPS = {
     "Schlieren_magDelRho": "Grayscale",
     "Schlieren_dRho_dX": "Grayscale",
     "Schlieren_dRho_dY": "Grayscale",
+
+    # === VORTICITY MOD ===
+    "Vorticity_mag": "Inferno (matplotlib)",
 }
 
 DENSITY_ZONE2 = "zone2/Density_kg_msup3_sup"
@@ -163,6 +182,11 @@ reader = VisItTecplotBinaryReader(
     PointArrayStatus=[
         'Pressure_Pa',
         'U_velocity_m_s',
+        # === VORTICITY MOD ===
+        # Make sure V and W components are loaded (adjust names if different)
+        'V_velocity_m_s',
+        'W_velocity_m_s',
+
         'Density_kg_msup3_sup',
         'Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup',
         'greekt_greeksubxx_subsupt_sup',
@@ -173,6 +197,10 @@ reader = VisItTecplotBinaryReader(
         'greekt_greeksubzz_subsupt_sup',
         'zone2/Pressure_Pa',
         'zone2/U_velocity_m_s',
+        # === VORTICITY MOD ===
+        'zone2/V_velocity_m_s',
+        'zone2/W_velocity_m_s',
+
         'zone2/Density_kg_msup3_sup',
         'zone2/Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup',
         'zone2/greekt_greeksubxx_subsupt_sup',
@@ -227,8 +255,36 @@ calc_Rzz.ResultArrayName = "Rzz_norm"
 calc_Rzz.Function = '"zone2/greekt_greeksubzz_subsupt_sup" / (-"zone2/Density_kg_msup3_sup")'
 calc_Rzz.UpdatePipeline()
 
+# === VORTICITY MOD ===
 # Use the final calculator output as zone2 source everywhere else
+# and build a velocity vector + vorticity magnitude on it.
 zone2 = calc_Rzz
+
+# 1) Build velocity vector U = (U, V, W) on zone2
+vel_calc = Calculator(Input=zone2)
+vel_calc.ResultArrayName = "Velocity"
+# Adjust names if your Tecplot fields differ
+vel_calc.Function = "make_vector(\"zone2/U_velocity_m_s\", " \
+                    "\"zone2/V_velocity_m_s\", " \
+                    "\"zone2/W_velocity_m_s\")"
+vel_calc.UpdatePipeline()
+
+# 2) Compute curl(Velocity) as vorticity using ComputeDerivatives
+vort_deriv = ComputeDerivatives(Input=vel_calc)
+# Tell it which vector field to use
+vort_deriv.Vectors = ["POINTS", "Velocity"]
+vort_deriv.OutputVectorType = "Vorticity"
+vort_deriv.UpdatePipeline()
+
+# 3) Compute vorticity magnitude as a scalar
+vort_mag_calc = Calculator(Input=vort_deriv)
+vort_mag_calc.ResultArrayName = "Vorticity_mag"
+vort_mag_calc.Function = "mag(Vorticity)"
+vort_mag_calc.UpdatePipeline()
+
+# Now *this* is the zone2 source with vorticity magnitude available
+zone2 = vort_mag_calc
+# === END VORTICITY MOD ===
 
 # ============================================================
 # ===================== VIEW SETUP ===========================
@@ -397,6 +453,7 @@ def render_overlay_slice(origin, normal, preset, fname, logical_scalar, hide_sli
         loc1 = array_location(zone1_slice, scalar_zone1)
         ColorBy(edge_disp, (loc1, scalar_zone1))
     except RuntimeError:
+        # For vorticity, it's expected that zone1 might not have this scalar
         pass
 
     if lut:
