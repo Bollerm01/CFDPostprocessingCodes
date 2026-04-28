@@ -14,7 +14,7 @@ import os
 # OUTPUT_DIR = os.path.join(OUTPUT_ROOT, "RD00")#Change this prior to every run
 
 # Linux System Roots
-CASE = "RD52"  # Change this prior to every run
+CASE = "RD00"  # Change this prior to every run
 INPUT_FILE = rf"/home/bollerma/RANSdata/VULCAN/SolutionFilesRDSweep/{CASE}/vulcan_solution.plt"
 # INPUT_FILE = rf"/home/bollerma/RANSdata/VULCAN/SolutionFilesRDSweep/RD00/No_inject_r0_vorticity_add.plt" # specific for new vorticity plotting
 OUTPUT_DIR = rf"/home/bollerma/RANSdata/VULCAN/SolutionFilesRDSweep/{CASE}/output/AVIATIONfigs"
@@ -27,7 +27,7 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 # XZ_SLICE_Y = [-0.0215, -0.01556]
 # XY_SLICE_Z = [0.0001, 0.0127]
 
-YZ_SLICE_X = [0.46552219, 0.49415485, 0.52210578, 0.53165]
+YZ_SLICE_X = [0.46552219, 0.47506641, 0.49415485, 0.52210578, 0.53165]
 XZ_SLICE_Y = [-0.0215, -0.01556]
 XY_SLICE_Z = [0.0001, 0.0127]
 
