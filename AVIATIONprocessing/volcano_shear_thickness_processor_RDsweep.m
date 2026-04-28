@@ -472,9 +472,9 @@ avg_norm_cols = {'velocityxavg_norm', 'velocitymagavg_norm'};
 
 % Colors per geometry
 colorMapGeom = containers.Map();
-colorMapGeom('RD00') = [1.00, 0.80, 0.20];  % yellow
-colorMapGeom('RD17') = [0.85, 0.33, 0.10];  % red
-colorMapGeom('RD52') = [0.00, 0.45, 0.74];  % blue
+colorMapGeom('RD00') = [0.00, 0.45, 0.74];  % blue  (R/D = 0.0)
+colorMapGeom('RD17') = [0.85, 0.33, 0.10];  % red   (R/D = 0.17)
+colorMapGeom('RD52') = [1.00, 0.80, 0.20];  % yellow (R/D = 0.52)
 
 % Line styles for different thresholds
 lineStyles = {'-', '--', ':'};
