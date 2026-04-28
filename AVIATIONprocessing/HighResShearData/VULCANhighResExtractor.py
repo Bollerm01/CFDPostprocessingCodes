@@ -88,7 +88,8 @@ pa.PointDataArrays = [
     'zone2/Y',
     'zone2/Z',
     'U_velocity_norm',
-    'zone2/U_velocity_m_s'     # normalized U from zone2
+    'zone2/U_velocity_m_s',     # normalized U from zone2
+    'zone2/Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup'
 ]
 pa.UpdatePipeline()
 
