@@ -17,7 +17,7 @@ import os
 CASE = "RD00"  # Change this prior to every run
 INPUT_FILE = rf"/home/bollerma/RANSdata/VULCAN/SolutionFilesRDSweep/{CASE}/vulcan_solution.plt"
 # INPUT_FILE = rf"/home/bollerma/RANSdata/VULCAN/SolutionFilesRDSweep/RD00/No_inject_r0_vorticity_add.plt" # specific for new vorticity plotting
-OUTPUT_DIR = rf"/home/bollerma/RANSdata/VULCAN/SolutionFilesRDSweep/{CASE}/output/AVIATIONfigs"
+OUTPUT_DIR = rf"/home/bollerma/RANSdata/VULCAN/SolutionFilesRDSweep/{CASE}/output/AVIATIONfigs/noBars"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # Full loop Slice positions
@@ -355,7 +355,7 @@ def apply_camera_and_colorbar(lut, preset, title):
     view.CameraParallelScale = p["ParallelScale"]
 
     sb = GetScalarBar(lut, view)
-    sb.Visibility = 1
+    sb.Visibility = 0 # 1 for colorbar
     sb.WindowLocation = "Any Location"
     sb.Orientation = p["Colorbar"]["Orientation"]
     sb.Position = p["Colorbar"]["Position"]

@@ -36,6 +36,7 @@ FINAL_COLUMNS = [
     "velocitymagavg",
     "velocityx",
     "velocityxavg",
+    "tke",
 ]
 
 # Velocity columns used for blank-row and duplicate detection
@@ -44,6 +45,7 @@ VELOCITY_COLUMNS = [
     "velocitymagavg",
     "velocityx",
     "velocityxavg",
+    "tke"
 ]
 
 # ============================================================

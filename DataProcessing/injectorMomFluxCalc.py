@@ -175,7 +175,7 @@ if __name__ == "__main__":
     T0j = 300.0           # plenum stagnation temperature [K]
 
     # Target momentum flux ratio (per injector)
-    J_target = 0.7      # example value
+    J_target = 0.4855    # example value
 
     # Injector configuration
     N_injectors = 5

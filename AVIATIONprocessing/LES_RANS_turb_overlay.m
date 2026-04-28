@@ -2,11 +2,16 @@
 %  - Groups by first underscore-delimited token (data type: Rxx, Rxy, etc.)
 %  - Overlays all.fig of a given data type into a single figure
 %  - Each unique R/D gets a distinct line style (consistent across files)
+%       * R/D = 0    -> solid   '-'
+%       * R/D = 0.17 -> dashed  '--'
+%       * R/D = 0.52 -> dotted  ':'
 %  - Legend entry: (x/L =...) - (R/D =...) - (Solution type)
 %  - Title: "Volcano vs. VULCAN: (data type) at x/L =..., x/L =..."
 %  - Y axis: "Y/D"
 %  - X axis: data type
-%  - Colors: for each solution type, axial locations use related shades
+%  - Colors: from lines() colormap
+%       * Volcano = lines(2)(1,:)
+%       * VULCAN  = lines(2)(2,:)
 %  - Saves overlays into subfolder "VulcanVolcanoOverlays" under figFolder
 
 clear all; close all; clc;
@@ -17,7 +22,7 @@ clear all; close all; clc;
 % if isequal(figFolder, 0)
 %     error('No folder selected. Script terminated.');
 % end
-xLloc = 'xL86'; % Sets axial position
+xLloc = 'xL17'; % Sets axial position
 figFolder = fullfile("E:\Boller CFD\AVIATION CFD\Paper Results\finalData\LESRANScompare\", xLloc);
 
 figFiles = dir(fullfile(figFolder, '*.fig'));
@@ -105,33 +110,21 @@ for g = 1:numel(dataTypes)
     axialKeysSorted = axialKeys(idxSort);
     
     %----------------------------------------------------------
-    % Build color maps: shades per axial location, per solution type
+    % Build color map: use lines() for solver colors (no axial shading)
     %----------------------------------------------------------
-    nAx = numel(axialKeysSorted);
+    nAx = numel(axialKeysSorted); %#ok<NASGU>
     colorMap = containers.Map;  % key: sprintf('%s_%s', axKey, solType)
     
-    % Base colors for solution types
-    baseVolcano = [0, 0.769, 1];       % light blue
-    darkVolcano = [0.165, 0.29, 1];    % dark blue
-    baseVULCAN  = [1, 0.5, 0];         % orange
-    darkVULCAN  = [0.851, 0, 0];       % dark red
+    baseColors = lines(2);          % get a small lines colormap
+    volcanoColorStd = baseColors(1,:);  % first color for Volcano
+    vulcanColorStd  = baseColors(2,:);  % second color for VULCAN
     
-    for i = 1:nAx
-        t = 0;
-        if nAx > 1
-            % 0 -> light (small axial), 1 -> dark (large axial)
-            t = (i-1) / (nAx-1);
-        end
-        
-        % Volcano shades
-        volcanoColor = (1-t)*baseVolcano + t*darkVolcano;
-        vulcanColor  = (1-t)*baseVULCAN  + t*darkVULCAN;
-        
+    for i = 1:numel(axialKeysSorted)
         kVolcano = sprintf('%s_%s', axialKeysSorted{i}, 'Volcano');
         kVULCAN  = sprintf('%s_%s', axialKeysSorted{i}, 'VULCAN');
         
-        colorMap(kVolcano) = volcanoColor;
-        colorMap(kVULCAN)  = vulcanColor;
+        colorMap(kVolcano) = volcanoColorStd;
+        colorMap(kVULCAN)  = vulcanColorStd;
     end
     
     %----------------------------------------------------------
@@ -146,7 +139,11 @@ for g = 1:numel(dataTypes)
     allLineHandles = [];
     allAxialDisp   = {};
     
-    % Reset RD mapping for this overlay
+    % For legend sorting
+    allRDvals      = [];   % numeric R/D values
+    allSolTypes    = {};   % solver type strings
+    
+    % Reset RD mapping for this overlay (no-op now but kept for compatibility)
     getLineStyleForRD('RESET');
     
     for f = 1:numel(filesInGroup)
@@ -189,7 +186,7 @@ for g = 1:numel(dataTypes)
                 % Extract RD numeric string from legend, e.g., "0.52" from "R/D = 0.52"
                 rdVal = local_parseRDfromName(origName);
                 
-                % Get line style for this RD
+                % Get line style for this R/D
                 ls = getLineStyleForRD(rdVal);
                 
                 % Copy line to overlay axes
@@ -214,6 +211,15 @@ for g = 1:numel(dataTypes)
                 
                 set(newObj, 'DisplayName', legendText);
                 allLineHandles(end+1) = newObj; %#ok<AGROW>
+                
+                % Store numeric R/D and solver type for legend sorting
+                if strcmp(rdVal, 'UNKNOWN')
+                    rdNum = NaN;
+                else
+                    rdNum = str2double(rdVal);
+                end
+                allRDvals(end+1)   = rdNum;   %#ok<AGROW>
+                allSolTypes{end+1} = solType; %#ok<AGROW>
             end
         end
         
@@ -238,6 +244,9 @@ for g = 1:numel(dataTypes)
         case 'Rzz'
             dtPlot  = '\boldmath$\mathbf{R}_{zz}$ \textbf{(Pa)}';
             dtPlot2 = '\boldmath$\mathbf{R}_{zz}$';
+        otherwise
+            dtPlot  = dt;
+            dtPlot2 = dt;
     end
     
     % Axes labels and title
@@ -248,11 +257,32 @@ for g = 1:numel(dataTypes)
     xlim([0 20000])
     ylim([-1 1.5])
     
+    % Legend: sorted by solver type, then R/D ascending
     if ~isempty(allLineHandles)
-        lgd = legend(ax, allLineHandles, 'Interpreter', 'none');
-        % Put legend outside the plot on the right
+        names = get(allLineHandles, 'DisplayName');
+        if ischar(names)
+            names = {names};
+        end
+        
+        rdSort = allRDvals(:);
+        
+        % Handle NaNs: push them to the end within each solver type
+        nanMask = isnan(rdSort);
+        rdSortForSort = rdSort;
+        rdSortForSort(nanMask) = inf;
+        
+        % Encode solver type as categorical to fix Volcano/VULCAN grouping
+        solCats = categorical(allSolTypes(:), {'Volcano','VULCAN'}, 'Ordinal', true);
+        
+        % Sort by solver type, then by R/D ascending
+        [~, sortIdx] = sortrows([double(solCats), rdSortForSort]);
+        
+        handlesSorted = allLineHandles(sortIdx);
+        namesSorted   = names(sortIdx);
+        
+        lgd = legend(ax, handlesSorted, namesSorted, 'Interpreter', 'none');
         set(lgd, 'Location', 'southoutside');
-        set(lgd, 'NumColumns', 2); 
+        set(lgd, 'NumColumns', 2);
     end
     
     %-----------------------------
@@ -351,39 +381,44 @@ end
 
 %% ------------------------------------------------------------------------
 %% Local function: map RD values to line styles
-% Usage:
-%   local_getLineStyleForRD('RESET')  -> reset mapping
-%   ls = local_getLineStyleForRD(rdVal)
+% Fixed mapping:
+%   R/D = 0    -> '-'
+%   R/D = 0.17 -> '--'
+%   R/D = 0.52 -> ':'
+% All others (or UNKNOWN) -> '-.'
 function ls = local_getLineStyleForRD(rdVal)
-    persistent rdMap rdStyles nextIdx
-    
+
     if nargin > 0 && strcmpi(rdVal, 'RESET')
-        rdMap    = containers.Map('KeyType', 'char', 'ValueType', 'any');
-        rdStyles = {'-', '--', ':', '-.'};
-        nextIdx  = 1;
+        % Nothing to reset for a fixed mapping, but keep for interface compatibility
         ls = '';
         return;
     end
     
-    if isempty(rdMap)
-        rdMap    = containers.Map('KeyType', 'char', 'ValueType', 'any');
-        rdStyles = {'-', '--', ':', '-.'};
-        nextIdx  = 1;
+    % Normalize input text
+    if isempty(rdVal) || strcmpi(rdVal, 'UNKNOWN')
+        ls = '-.';
+        return;
     end
     
-    key = rdVal;
-    if isempty(key)
-        key = 'UNKNOWN';
+    % Try to interpret numeric value
+    rdNum = str2double(rdVal);
+    
+    if isnan(rdNum)
+        % Not numeric, default
+        ls = '-.';
+        return;
     end
     
-    if isKey(rdMap, key)
-        ls = rdMap(key);
+    % Use a small tolerance for comparisons
+    tol = 1e-3;
+    
+    if abs(rdNum - 0.0) < tol
+        ls = '-';       % solid
+    elseif abs(rdNum - 0.17) < tol
+        ls = '--';      % dashed
+    elseif abs(rdNum - 0.52) < tol
+        ls = ':';       % dotted
     else
-        ls = rdStyles{nextIdx};
-        rdMap(key) = ls;
-        nextIdx = nextIdx + 1;
-        if nextIdx > numel(rdStyles)
-            nextIdx = 1;  % wrap if more R/D values than styles
-        end
+        ls = '-.';      % default for any other R/D
     end
 end

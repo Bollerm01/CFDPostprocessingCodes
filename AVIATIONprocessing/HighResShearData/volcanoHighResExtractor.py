@@ -6,12 +6,12 @@ import os
 # ============================================================
 
 # --- Input volcano file ---
-# VOLCANO_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD00/RD00_004/latest.volcano"
+VOLCANO_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD00/RD00_004/latest.volcano"
 # VOLCANO_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD17/RD17_022/latest.volcano" # RD17 Path
-VOLCANO_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD52/RD52_057/latest.volcano" # RD52 Path
+# VOLCANO_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD52/RD52_057/latest.volcano" # RD52 Path
 
 # --- Output directory ---
-OUTPUT_DIR = r"/home/bollerma/LESdata/SSWT/fullCav/RDsteps/highResShearOutput/RD52"  # Change tailing folder
+OUTPUT_DIR = r"/home/bollerma/LESdata/SSWT/fullCav/RDsteps/highResShearOutput/RD00"  # Change tailing folder
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # --- Variables to load from the volcano file ---
@@ -19,7 +19,8 @@ POINT_ARRAYS = [
     "velocitymag",
     "velocitymagavg",
     "velocityx",
-    "velocityxavg",
+    "velocityxavg", 
+    "tke"
 ]
 
 # --- Line resolution ---

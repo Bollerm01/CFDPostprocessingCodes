@@ -6,7 +6,7 @@ import pandas as pd
 
 # ---------------- USER SETTINGS ----------------
 INPUT_ROOT = r"E:\Boller CFD\VULCAN Data\SSWT"
-CASE = "CAVmix_SSWT_r3_noinject"
+CASE = "CAVmix_SSWT_r0_noinject"
 INPUT_FILE = rf"{INPUT_ROOT}\{CASE}\iteration-009\Plot_files\vulcan_solution.plt"
 
 OUTPUT_ROOT = r"E:\Boller CFD\AVIATION CFD\Paper Results\finalData\VULCAN\CompleteData\HighResShearData"
@@ -50,13 +50,15 @@ US_Y_END   =  0.035  # example placeholders
 
 POINT_ARRAYS = [
     'U_velocity_m_s',
+    'Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup',
     'X',
     'Y',
     'Z',
     'zone2/U_velocity_m_s',
     'zone2/X',
     'zone2/Y',
-    'zone2/Z'
+    'zone2/Z',
+    'zone2/Turbulence_Kinetic_Energy_msup2_sup_ssup2_sup'
 ]
 
 LINE_RESOLUTION = 500
