@@ -90,9 +90,18 @@ origYLabelStr = origYLabelObj.String;
 %% CREATE OVERLAY FIGURE (UN-NORMALIZED)
 
 overlayFig = figure('Name', 'Overlay: velocityx (Two Files)', 'NumberTitle', 'off');
+% Widen the figure so large text and bottom legend don't get clipped
+set(overlayFig, 'Units','pixels', 'Position',[100 100 1200 650]);
+
 ax = axes('Parent', overlayFig);
 hold(ax, 'on');
 grid(ax, 'on');
+
+% --- Font size settings for overlay figure ---
+ax.FontSize    = 14;  % tick labels
+labelFontSize  = 18;  % axis labels
+titleFontSize  = 20;  % title
+legendFontSize = 14;  % legend
 
 allLineHandles = [];
 
@@ -232,9 +241,7 @@ end
 
 %% ------------------------------------------------------------------------
 %% REASSIGN COLORS BY ASCENDING R/D (GEOMETRY)
-% Ensure R/D values map to colors in ascending order (e.g., smallest R/D -> blue)
 
-% Unique geometries from lineInfo (force to cell array of char)
 geomKeysRaw  = {lineInfo.geomKey};
 geomKeysCell = cellfun(@char, geomKeysRaw, 'UniformOutput', false);
 geomKeysUnique = unique(geomKeysCell);
@@ -287,10 +294,6 @@ geomColors = newGeomColors;
 %% PRECOMPUTE LEGEND SORT ORDER:
 %  Volcano: left column, ascending R/D
 %  VULCAN : right column, ascending R/D
-% NOTE: With NumColumns=2, MATLAB fills legend entries COLUMN-WISE.
-%       So we pass [VolcanoSorted; VULCANSorted] so that:
-%         - Column 1 (left)  = all Volcano
-%         - Column 2 (right) = all VULCAN
 
 nLines = numel(lineInfo);
 rdValsLegend   = zeros(nLines,1);
@@ -301,38 +304,26 @@ for i = 1:nLines
     solNamesLegend{i} = lineInfo(i).sol;
 end
 
-% Indices for each solution type
 idxVolcano = find(strcmp(solNamesLegend, 'Volcano'));
 idxVULCAN  = find(strcmp(solNamesLegend, 'VULCAN'));
 
-% Sort Volcano by ascending R/D
 [~, sv] = sort(rdValsLegend(idxVolcano));
 idxVolcanoSorted = idxVolcano(sv);
 
-% Sort VULCAN by ascending R/D
 [~, sv2] = sort(rdValsLegend(idxVULCAN));
 idxVULCANSorted = idxVULCAN(sv2);
 
-% For column-wise filling with NumColumns=2:
-%  Column 1 gets the first ceil(N/2) entries
-%  Column 2 gets the remaining entries
-% So use Volcano first, then VULCAN
 sortIdxLegend = [idxVolcanoSorted; idxVULCANSorted];
 
 %% ------------------------------------------------------------------------
 %% LABELS AND TITLE FOR ORIGINAL (UN-NORMALIZED) OVERLAY
 
-xlabel(ax, origXLabelStr, 'Interpreter', origXLabelObj.Interpreter);
-ylabel(ax, origYLabelStr, 'Interpreter', origYLabelObj.Interpreter);
+xlabel(ax, origXLabelStr, 'Interpreter', origXLabelObj.Interpreter, 'FontSize', labelFontSize);
+ylabel(ax, origYLabelStr, 'Interpreter', origYLabelObj.Interpreter, 'FontSize', labelFontSize);
 
-% Override title to a LaTeX-style thickness label (core text only)
-plainCoreTitle = 'V_x/V_{x,\infty} Thickness';
-
-% Bold LaTeX title with proper math
 newTitleStrLatex = sprintf('\\bf{%s vs. %s - $V_x/V_{x,\\infty}$ Thickness}',...
     solType1, solType2);
-
-title(ax, newTitleStrLatex, 'Interpreter', 'latex');
+title(ax, newTitleStrLatex, 'Interpreter', 'latex', 'FontSize', titleFontSize);
 
 % Legend: handles sorted by ascending R/D, then solution type
 if ~isempty(allLineHandles)
@@ -340,7 +331,8 @@ if ~isempty(allLineHandles)
     lgd = legend(ax, sortedHandles);
     set(lgd, 'Interpreter', 'latex');
     set(lgd, 'Location', 'southoutside');
-    set(lgd, 'NumColumns', 2); 
+    set(lgd, 'NumColumns', 2);
+    set(lgd, 'FontSize', legendFontSize);
 end
 
 %% ------------------------------------------------------------------------
@@ -354,24 +346,15 @@ exportgraphics(overlayFig, [outBaseChar '.png']);
 exportgraphics(overlayFig, [outBaseChar '.pdf'], 'ContentType','vector');
 
 %% ------------------------------------------------------------------------
-%% BUILD NORMALIZED PLOTS
-% For each solution type, find the FIRST y-value of the R/D = 0.0 line
-% and use it as the baseline y0.
-%
-% Normalized value for any line of that solution:
-%   yNorm = y / y0
+%% BUILD NORMALIZED PLOTS (y / y0)
 
-% Identify unique solutions in lineInfo
 allSols = {lineInfo.sol};
 uniqueSols = unique(allSols);
 
-% Baseline map: solution -> baseline thickness at R/D = 0.0 (first y-value)
 baselineMap = containers.Map;
 
 for iSol = 1:numel(uniqueSols)
     sol = uniqueSols{iSol};
-    
-    % Find all lines for this solution
     idxSol = find(strcmp(allSols, sol));
     
     baselineFound = false;
@@ -392,13 +375,19 @@ for iSol = 1:numel(uniqueSols)
     end
 end
 
-%% ------------------------------------------------------------------------
-%% Create normalized figure (pure y/y0, original second figure behavior)
+%% Normalized figure
 
 normFig = figure('Name', 'Overlay: velocityx (Normalized to R/D = 0.0)', 'NumberTitle', 'off');
+set(normFig, 'Units','pixels', 'Position',[150 120 1200 650]);
+
 axN = axes('Parent', normFig);
 hold(axN, 'on');
 grid(axN, 'on');
+
+axN.FontSize    = 14;
+labelFontSizeN  = 18;
+titleFontSizeN  = 20;
+legendFontSizeN = 14;
 
 normLineHandles = [];
 
@@ -414,47 +403,40 @@ for k = 1:numel(lineInfo)
     if isKey(baselineMap, sol)
         y0 = baselineMap(sol);
         if y0 ~= 0
-            yNorm = yData./ y0;   % pure division by baseline
+            yNorm = yData./ y0;
         else
-            yNorm = yData;         % fallback if baseline is zero
+            yNorm = yData;
         end
     else
-        % No baseline for this solution; set NaN or just use original
         yNorm = nan(size(yData));
     end
     
-    % Plot normalized data with thicker lines
     hN = plot(axN, xData, yNorm,...
         'Color', clr,...
         'LineStyle', ls,...
         'Marker', mk,...
-        'LineWidth', 1.5);  % thicker lines for normalized plot
+        'LineWidth', 1.5);
     
     set(hN, 'DisplayName', lgText);
-    
     normLineHandles(end+1) = hN; %#ok<AGROW>
 end
 
-% Labels and title for normalized plot
-xlabel(axN, origXLabelStr, 'Interpreter', origXLabelObj.Interpreter);
-ylabel(axN, '$\delta_{SL} / \delta_{SL,R/D=0}$', 'Interpreter', 'latex');
+xlabel(axN, origXLabelStr, 'Interpreter', origXLabelObj.Interpreter, 'FontSize', labelFontSizeN);
+ylabel(axN, '$\delta_{SL} / \delta_{SL,R/D=0}$', 'Interpreter', 'latex', 'FontSize', labelFontSizeN);
 
-% Bold LaTeX title
 normTitleStrLatex = sprintf('\\bf{Normalized: %s vs. %s - $V_x/V_{x,\\infty}$ Thickness}',...
     solType1, solType2);
+title(axN, normTitleStrLatex, 'Interpreter', 'latex', 'FontSize', titleFontSizeN);
 
-title(axN, normTitleStrLatex, 'Interpreter', 'latex');
-
-% Legend: use the same sorted order as the original figure
 if ~isempty(normLineHandles)
     sortedHandlesN = normLineHandles(sortIdxLegend);
     lgdN = legend(axN, sortedHandlesN);
     set(lgdN, 'Interpreter', 'latex');
     set(lgdN, 'Location', 'southoutside');
-    set(lgdN, 'NumColumns', 2); 
+    set(lgdN, 'NumColumns', 2);
+    set(lgdN, 'FontSize', legendFontSizeN);
 end
 
-% Save normalized figure
 outBaseNorm = fullfile(outFolder, sprintf('%s_vs_%s_velocityx_overlay_normalized', solType1, solType2));
 outBaseNormChar = char(outBaseNorm);
 savefig(normFig, [outBaseNormChar '.fig']);
@@ -462,20 +444,12 @@ exportgraphics(normFig, [outBaseNormChar '.png']);
 exportgraphics(normFig, [outBaseNormChar '.pdf'], 'ContentType','vector');
 
 %% ------------------------------------------------------------------------
-%% Create third figure: normalized to MAX thickness at R/D = 0.0 per solution type
-% For each solution type, find the MAXIMUM y-value of the R/D = 0.0 line
-% and use it as the baseline yMax0.
-%
-% Normalized value for any line of that solution:
-%   yNormMax = y / yMax0
+%% Max-normalized (y / max(y0))
 
-% Map: solution -> max thickness at R/D = 0.0 (over entire curve)
 maxBaselineMap = containers.Map;
 
 for iSol = 1:numel(uniqueSols)
     sol = uniqueSols{iSol};
-
-    % indices for this solution
     idxSol = find(strcmp(allSols, sol));
 
     maxFound = false;
@@ -502,12 +476,17 @@ for iSol = 1:numel(uniqueSols)
     end
 end
 
-%% Third figure: normalized using maximum R/D = 0.0 thickness
-
 normMaxFig = figure('Name', 'Overlay: velocityx (Max R/D=0 Normalized)', 'NumberTitle', 'off');
+set(normMaxFig, 'Units','pixels', 'Position',[200 140 1200 650]);
+
 axNM = axes('Parent', normMaxFig);
 hold(axNM, 'on');
 grid(axNM, 'on');
+
+axNM.FontSize     = 14;
+labelFontSizeNM   = 18;
+titleFontSizeNM   = 20;
+legendFontSizeNM  = 14;
 
 normMaxLineHandles = [];
 
@@ -525,13 +504,12 @@ for k = 1:numel(lineInfo)
         if yMax0 ~= 0
             yNormMax = yData./ yMax0;
         else
-            yNormMax = yData;   % fallback if baseline is zero
+            yNormMax = yData;
         end
     else
         yNormMax = nan(size(yData));
     end
 
-    % Plot max-normalized data (thick lines)
     hNM = plot(axNM, xData, yNormMax,...
         'Color', clr,...
         'LineStyle', ls,...
@@ -539,29 +517,25 @@ for k = 1:numel(lineInfo)
         'LineWidth', 1.5);
 
     set(hNM, 'DisplayName', lgText);
-
     normMaxLineHandles(end+1) = hNM; %#ok<AGROW>
 end
 
-% Labels and title for max-normalized plot
-xlabel(axNM, origXLabelStr, 'Interpreter', origXLabelObj.Interpreter);
-ylabel(axNM, '$\delta_{SL} / \max(\delta_{SL,R/D=0})$', 'Interpreter', 'latex');
+xlabel(axNM, origXLabelStr, 'Interpreter', origXLabelObj.Interpreter, 'FontSize', labelFontSizeNM);
+ylabel(axNM, '$\delta_{SL} / \max(\delta_{SL,R/D=0})$', 'Interpreter', 'latex', 'FontSize', labelFontSizeNM);
 
 normMaxTitleStrLatex = sprintf('\\bf{Max-Normalized: %s vs. %s - $V_x/V_{x,\\infty}$ Thickness}',...
     solType1, solType2);
+title(axNM, normMaxTitleStrLatex, 'Interpreter', 'latex', 'FontSize', titleFontSizeNM);
 
-title(axNM, normMaxTitleStrLatex, 'Interpreter', 'latex');
-
-% Legend: same sorted order
 if ~isempty(normMaxLineHandles)
     sortedHandlesNM = normMaxLineHandles(sortIdxLegend);
     lgdNM = legend(axNM, sortedHandlesNM);
     set(lgdNM, 'Interpreter', 'latex');
     set(lgdNM, 'Location', 'southoutside');
     set(lgdNM, 'NumColumns', 2);
+    set(lgdNM, 'FontSize', legendFontSizeNM);
 end
 
-% Save max-normalized figure
 outBaseNormMax = fullfile(outFolder, sprintf('%s_vs_%s_velocityx_overlay_maxRD0_normalized', solType1, solType2));
 outBaseNormMaxChar = char(outBaseNormMax);
 savefig(normMaxFig, [outBaseNormMaxChar '.fig']);
@@ -577,7 +551,6 @@ disp('Overlay, normalized overlay, and max-R/D=0 normalized overlay of two veloc
 
 %% ========================================================================
 %% Local function: get solution type from base file name
-%  Assumes filename ends with something like "..._VULCAN" or "..._Volcano".
 function solType = local_getSolutionType_fromName(baseName)
     parts = strsplit(baseName, '_');
     if isempty(parts)
@@ -595,13 +568,11 @@ function solTypeOut = local_normalizeSolutionType(solTypeIn)
     elseif contains(s, 'volcano')
         solTypeOut = 'Volcano';
     else
-        solTypeOut = solTypeIn;  % leave as-is if unknown
+        solTypeOut = solTypeIn;
     end
 end
 
 %% Local function: extract geometry key (R/D) from legend string
-%  Returns a consistent text key for the same geometry across both figures.
-%  Always returns a char row vector for compatibility with cellstr/unique.
 function geomKey = local_extractGeometryKey(legendStr)
     geomKey = '';
     if isempty(legendStr)
@@ -609,23 +580,16 @@ function geomKey = local_extractGeometryKey(legendStr)
         return;
     end
     
-    % Work with char internally
     s = char(legendStr);
     idx = strfind(lower(s), 'r/d');
     if ~isempty(idx)
-        % Take from 'R/D' to end
         sub = s(idx(1):end);
         sub = strtrim(sub);
-        
-        % Trim at first comma/semicolon/pipe if present
-        tokens = regexp(sub, '^[^,;|]*', 'match', 'once');  % up to first , ; or |
+        tokens = regexp(sub, '^[^,;|]*', 'match', 'once');
         geomKey = strtrim(tokens);
-        geomKey = char(geomKey); % ensure char
+        geomKey = char(geomKey);
         return;
     end
-    
-    % If your geometry appears as something else (e.g., "RD00", "RD17"),
-    % add extra parsing logic here as needed.
     geomKey = char(strtrim(s));
 end
 
@@ -636,29 +600,21 @@ function isZero = local_isZeroRD(geomKey)
         return;
     end
     
-    % Simple checks that work with common formats:
-    % e.g., "R/D = 0.0", "R/D=0.0", "R/D = 0.00"
     s = lower(strtrim(geomKey));
     if contains(s, 'r/d')
-        % Try to pull off the numeric part:
-        % remove 'r/d', '=', and spaces
         sNum = regexprep(s, 'r/d', '', 'ignorecase');
         sNum = strrep(sNum, '=', '');
         sNum = strtrim(sNum);
-        
-        % Convert to number if possible
         val = str2double(sNum);
         if ~isnan(val) && abs(val) < 1e-6
             isZero = true;
         end
     elseif strcmpi(strtrim(geomKey), 'rd00')
-        % Example of alternate encoding
         isZero = true;
     end
 end
 
 %% Local function: extract numeric R/D value from geometry key
-%  Used for sorting and color assignment. Returns Inf if it cannot parse.
 function rdVal = local_getRDValue(geomKey)
     rdVal = inf;
     if isempty(geomKey)
@@ -668,7 +624,6 @@ function rdVal = local_getRDValue(geomKey)
     s = char(geomKey);
     sLower = lower(strtrim(s));
     
-    % Try formats like "R/D = 0.17", "R/D=0.0", etc.
     expr = 'r/d\s*=\s*([+-]?\d*\.?\d+([eE][+-]?\d+)?)';
     tokens = regexp(sLower, expr, 'tokens', 'once');
     if ~isempty(tokens)
@@ -679,16 +634,13 @@ function rdVal = local_getRDValue(geomKey)
         end
     end
     
-    % Try compact formats like "rd00", "rd17"
-    expr2 = 'rd\s*([0-9]+)'; % e.g., "rd00" -> 0, "rd17" -> 17
+    expr2 = 'rd\s*([0-9]+)';
     tokens2 = regexp(sLower, expr2, 'tokens', 'once');
     if ~isempty(tokens2)
         rdValTmp = str2double(tokens2{1});
         if ~isnan(rdValTmp)
-            rdVal = rdValTmp / 100;   % e.g., "rd17" -> 0.17 if that's your convention
+            rdVal = rdValTmp / 100;
             return;
         end
     end
-    
-    % If still not parsed, leave as Inf so it sorts last.
 end

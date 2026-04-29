@@ -68,16 +68,12 @@ function import_and_plot_condensed_xlsx(varargin)
     lineSheets = {'FL','CL','CTRL'};
 
     %% --- Quantities (data) ---
-    % Column names in the XLSX tables (do not change unless your data changes)
     quantitiesData = {...
         'pressureavg';...
         'velocitymagavg';...
         'velocityxavg' };
 
     %% --- Plotting descriptors (edit these for labels/titles/tags) ---
-    % col 1: y-axis label
-    % col 2: base title text
-    % col 3: file tag (for saving files)
     quantitiesPlot = {...
         '\textbf{Pressure (Pa)}',          '\textbf{Pressure vs Axial Location}',        'pressure';...
         '\textbf{$$|\bar{V}|$$ (m/s)}',    '\textbf{$$|\bar{V}|$$ vs Axial Location}',   'velocitymag';...
@@ -101,7 +97,6 @@ function import_and_plot_condensed_xlsx(varargin)
         end
 
         % For interpolation: store X and Q for each quantity & file
-        % (since we are de-duplicating y per quantity, X must also be stored per quantity)
         X_raw  = cell(numel(quantitiesData), nFiles);
         Q_raw  = cell(numel(quantitiesData), nFiles);
 
@@ -177,7 +172,6 @@ function import_and_plot_condensed_xlsx(varargin)
                 case 'FL'
                     sheetTitle = 'Floor Line';
             end
-        
 
             % Build title: optional prefix + base title + (sheet)
             baseTitle    = quantitiesPlot{q,2};
@@ -267,51 +261,75 @@ function save_overlay_x(xCommon, yData, legendText, saveFolder, yLabel, titleTex
     end
 
     % Define 20% and 25% below the minimum as fractions of the y-range
-    % This keeps the vertical size of the construction shape proportional to the plot range.
     y20 = yMin - 0.20 * yRange;
     y25 = yMin - 0.25 * yRange;
 
     % --- Plot data ---
     fig = figure('Visible','on');
-    hold on; grid on;
+    hold on; grid on; box on;
+    set(fig, 'Color','w');
 
-    % yData is a 1 x nFiles cell array
+    % Reasonable figure size (prevents crowding with outside legend)
+    set(fig, 'Units','pixels', 'Position',[100 100 900 700]);
+
+    % Axes and font sizes
+    ax = gca;
+    ax.FontSize      = 14;  % tick labels
+    labelFontSize    = 18;  % axis labels
+    titleFontSize    = 20;  % title
+    legendFontSize   = 14;  % legend
+
+    % IMPORTANT: turn off axis exponent so it doesn't overlap with title
+    % (especially for pressure)
+    if isprop(ax, 'YAxis')
+        ax.YAxis.Exponent = 0;
+    else
+        ax.YRuler.Exponent = 0;  % for older MATLAB versions
+    end
+
+    % Plot data curves
     for k = 1:numel(yData)
         plot(xCommon, yData{k}, 'LineWidth', 2);
     end
 
     % --- Draw construction lines (solid black) ---
-    % Horizontal line from x=2.04 to x=2.15 at y20
     plot([2.04 2.15], [y20 y20], 'k-', 'LineWidth', 1.5);
-
-    % Vertical line at x=2.15 from y20 to y25
     plot([2.15 2.15], [y20 y25], 'k-', 'LineWidth', 1.5);
-
-    % Horizontal line from x=2.15 to x=2.195 at y25
     plot([2.15 2.195], [y25 y25], 'k-', 'LineWidth', 1.5);
-
-    % Diagonal from (2.195, y25) to (2.24, y20)
     plot([2.195 2.24], [y25 y20], 'k-', 'LineWidth', 1.5);
-
-    % Horizontal line from x=2.24 to x=2.55 at y20
     plot([2.24 2.55], [y20 y20], 'k-', 'LineWidth', 1.5);
 
     % --- Labels, title, legend ---
-    xlabel(xLabel, 'Interpreter','none');
-    ylabel(yLabel, 'Interpreter','latex');
-    title(titleText, 'Interpreter','latex');
+    xlabel(xLabel,  'Interpreter','none',  'FontSize', labelFontSize);
+    ylabel(yLabel,  'Interpreter','latex', 'FontSize', labelFontSize);
 
-    legend(legendText, 'Interpreter','none', 'Location','best');
+    % Let MATLAB place the title; don't manually move it
+    title(titleText, 'Interpreter','latex', 'FontSize', titleFontSize);
 
-    % --- Save outputs ---
-    saveas(fig, fullfile(saveFolder, sprintf('%s.fig', tag)));  % FIG
+    % Centered legend at bottom, outside, with 3 columns
+    lgd = legend(legendText,...
+                 'Interpreter','none',...
+                 'Location','southoutside',...
+                 'Orientation','horizontal');
+    set(lgd, 'FontSize', legendFontSize,...
+             'NumColumns', 3);
 
-    exportgraphics(fig,...
-        fullfile(saveFolder, sprintf('%s.pdf', tag)),...
-        'ContentType','vector');                               % PDF
+    % Give MATLAB room to fit axes + legend nicely
+    set(ax, 'LooseInset', max(get(ax, 'TightInset'), 0.02));
 
-    print(fig, fullfile(saveFolder, sprintf('%s.jpg', tag)),...
-        '-djpeg','-r300');                                    % JPEG
+    % --- Save outputs (use exportgraphics for all, to avoid clipping) ---
+    figPathFIG = fullfile(saveFolder, sprintf('%s.fig', tag));
+    figPathPDF = fullfile(saveFolder, sprintf('%s.pdf', tag));
+    figPathJPG = fullfile(saveFolder, sprintf('%s.jpg', tag));
+
+    savefig(fig, figPathFIG);  % FIG
+
+    exportgraphics(fig, figPathPDF,...
+        'ContentType','vector');              % PDF (vector)
+
+    exportgraphics(fig, figPathJPG,...
+        'ContentType','image',...
+        'Resolution',300);                    % JPEG (raster, 300 dpi)
 
     close(fig);
 end

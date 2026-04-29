@@ -224,15 +224,14 @@ for iP = 1:numel(planeNames)
             % Build plain-text title (no plane)
             % Example: 'TKE vs y/D at x/L = 0.17'
             titleStr = sprintf('y/D vs %s at %s', qName, axialPlain);
-            title(titleStr, 'Interpreter','none', 'FontWeight','bold', ...
-                'FontSize',titleFontSize);
+            title(titleStr, 'Interpreter','none', 'FontWeight','bold');
 
             % Legend: plain text, no LaTeX, not bold
             if ~isempty(legendEntries)
                 lgd = legend(legendEntries,...
                              'Interpreter','none',...
                              'Location','best');
-                set(lgd, 'FontWeight','normal','FontSize',legendFontSize);
+                set(lgd, 'FontWeight','normal');
             end
 
             % Filename pattern: <Q>_<plane>_<axial>_RDsweep (plane only in filename)

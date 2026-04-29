@@ -274,6 +274,13 @@ for iFile = 1:numel(filenames)
             hold on;
             has_data = false;
 
+            % --- Font size settings ---
+            ax = gca;
+            ax.FontSize    = 12;  % tick labels
+            labelFontSize  = 16;  % axis labels
+            titleFontSize  = 18;  % title
+            legendFontSize = 12;  % legend
+
             for iThr = 1:size(THRESHOLDS,1)
                 upper = THRESHOLDS(iThr,1);
                 lower = THRESHOLDS(iThr,2);
@@ -308,9 +315,9 @@ for iFile = 1:numel(filenames)
                     locLabel = loc;
             end
 
-            % Axes labels (you can keep or adjust these)
-            xlabel('$x/L$', 'Interpreter', 'latex');
-            ylabel('Normalized Shear Layer Thickness', 'Interpreter', 'latex');
+            % Axes labels
+            xlabel('$x/L$', 'Interpreter', 'latex', 'FontSize', labelFontSize);
+            ylabel('Normalized Shear Layer Thickness', 'Interpreter', 'latex', 'FontSize', labelFontSize);
 
             % -------- TITLE (FIXED LATEX) --------
             % nice_name and locLabel contain $$...$$; strip and embed in $...$
@@ -321,10 +328,11 @@ for iFile = 1:numel(filenames)
             % Example: '$V_x/V_{x,\infty}$ Thickness, z/w = 0.50 (RD00)'
             title_str = sprintf('$%s$ Thickness, %s (%s)',...
                                 nice_core, loc_core, geometryType);
-            title(title_str, 'Interpreter', 'latex');
+            title(title_str, 'Interpreter', 'latex', 'FontSize', titleFontSize);
 
             grid on;
-            legend('Location', 'best');
+            lgd = legend('Location', 'best', 'Interpreter','latex');
+            set(lgd, 'FontSize', legendFontSize);
             hold off;
 
             plot_path_png = fullfile(plots_dir,...
@@ -363,6 +371,13 @@ for iFile = 1:numel(filenames)
         hfig = figure('Visible','off');
         hold on;
         has_data = false;
+
+        % --- Font size settings ---
+        ax = gca;
+        ax.FontSize    = 12;  % tick labels
+        labelFontSize  = 16;  % axis labels
+        titleFontSize  = 18;  % title
+        legendFontSize = 12;  % legend
 
         for iLoc = 1:numel(LOCATIONS)
             loc = LOCATIONS{iLoc};
@@ -427,8 +442,8 @@ for iFile = 1:numel(filenames)
                 geoLabel = geometryType;
         end
 
-        xlabel('$x/L$', 'Interpreter', 'latex');
-        ylabel('$$\delta_{SL}/D$$', 'Interpreter', 'latex');
+        xlabel('$x/L$', 'Interpreter', 'latex', 'FontSize', labelFontSize);
+        ylabel('$$\delta_{SL}/D$$', 'Interpreter', 'latex', 'FontSize', labelFontSize);
 
         % -------- TITLE (FIXED LATEX) --------
         % nice_name has $$...$$; strip and embed
@@ -436,10 +451,11 @@ for iFile = 1:numel(filenames)
 
         % Example: '$V_x/V_{x,\infty}$ Thickness, R/D = 0.17'
         title_str = sprintf('$%s$ Thickness, %s', nice_core, geoLabel);
-        title(title_str, 'Interpreter', 'latex');
+        title(title_str, 'Interpreter', 'latex', 'FontSize', titleFontSize);
 
         grid on;
-        legend('Location', 'best', 'Interpreter','latex');
+        lgd = legend('Location', 'best', 'Interpreter','latex');
+        set(lgd, 'FontSize', legendFontSize);
         hold off;
 
         plot_path_png = fullfile(plots_dir,...
@@ -519,6 +535,13 @@ for iNorm = 1:numel(avg_norm_cols)
             hold on;
             has_data = false;
 
+            % --- Font size settings ---
+            ax = gca;
+            ax.FontSize    = 12;  % tick labels
+            labelFontSize  = 16;  % axis labels
+            titleFontSize  = 18;  % title
+            legendFontSize = 12;  % legend
+
             for iFile = 1:numel(all_geometryType)
                 geometryType = all_geometryType{iFile};
                 if ~isfield(all_results, geometryType)
@@ -578,8 +601,8 @@ for iNorm = 1:numel(avg_norm_cols)
                 continue;
             end
 
-            xlabel('$x/L$', 'Interpreter', 'latex');
-            ylabel('$$\delta_{SL}/D$$', 'Interpreter', 'latex');
+            xlabel('$x/L$', 'Interpreter', 'latex', 'FontSize', labelFontSize);
+            ylabel('$$\delta_{SL}/D$$', 'Interpreter', 'latex', 'FontSize', labelFontSize);
 
             % -------- TITLE (FIXED LATEX) --------
             % nice_name & locLabelLatex: strip $$, embed core in $...$
@@ -588,10 +611,11 @@ for iNorm = 1:numel(avg_norm_cols)
 
             % Example: '$V_x/V_{x,\infty}$ Thickness, z/w = 0.50'
             title_str = sprintf('$%s$ Thickness, %s', nice_core, loc_core);
-            title(title_str, 'Interpreter', 'latex');
+            title(title_str, 'Interpreter', 'latex', 'FontSize', titleFontSize);
 
             grid on;
-            legend('Location', 'best', 'Interpreter','latex');
+            lgd = legend('Location', 'best', 'Interpreter','latex');
+            set(lgd, 'FontSize', legendFontSize);
             hold off;
 
             % Save cross-geometry plot

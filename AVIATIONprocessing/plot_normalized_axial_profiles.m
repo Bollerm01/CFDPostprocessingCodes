@@ -30,9 +30,9 @@ files = {'VULCANCondensedProbeData_RD00.xlsx',...
 
 % Volcano paths
 % path  = "E:\Boller CFD\AVIATION CFD\Paper Results\finalData\Volcano\CompleteData\High Res Shear Data\All RD\";
-% files = {'CondensedProbeData_RD00.xlsx',...
-%          'CondensedProbeData_RD17.xlsx',...
-%          'CondensedProbeData_RD52.xlsx'};
+% files = {'VolcanoCondensedProbeData_RD00.xlsx',...
+%          'VolcanoCondensedProbeData_RD17.xlsx',...
+%          'VolcanoCondensedProbeData_RD52.xlsx'};
 
 filePaths = fullfile(path, files);
 
@@ -74,10 +74,10 @@ subplotTitles = {...
     'x/L = 1.0'...
 }; % <-- EDIT titles to match your sheet meaning
 
-axisFontSize   = 11;
-labelFontSize  = 12;
-titleFontSize  = 14;
-legendFontSize = 12;
+axisFontSize   = 14;
+labelFontSize  = 18;
+titleFontSize  = 20;
+legendFontSize = 14;
 
 % Fixed axis limits
 xLim = [-0.2, 1.1];
@@ -259,7 +259,7 @@ if ~isempty(allLineHandles) && ~isempty(firstAx) && isvalid(firstAx)
 end
 
 %% ----------------- SHARED MAIN TITLE -----------------------
-sgtitle(tl, mainTitle, 'FontSize', 14, 'FontWeight', 'bold', 'Interpreter','latex');
+sgtitle(tl, mainTitle, 'FontSize', 20, 'FontWeight', 'bold', 'Interpreter','latex');
 
 %% ----------------- SAVE HIGH-RES FIGURE --------------------
 set(fig, 'PaperPositionMode', 'auto');  % Ensure proper sizing
