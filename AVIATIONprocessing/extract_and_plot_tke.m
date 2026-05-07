@@ -5,19 +5,19 @@
 % 2) For each Volcano workbook:
 %       - Use only sheets whose names end with '_MP'
 %       - Extract xL from sheet name using regex (e.g., '0p03' -> 0.03)
-%       - From each sheet, get a representative TKE at Y_norm ~ 0:
-%           * Prefer exact Y_norm = 0
-%           * Otherwise find the inflection (sign change) from negative to
-%             positive Y_norm and treat that as "zero"
-%           * Average TKE in ±5 rows around that index
+%       - From each sheet, get:
+%           * max TKE over all Y_norm
+%           * Y_norm location of that max TKE
 % 3) For each VULCAN workbook:
 %       - Treat all sheets as planes (no '_MP' filter)
-%       - Same averaging logic around Y_norm ~ 0
-% 4) Cross-plot TKE vs x/L:
+%       - Same max TKE and Y_norm logic
+% 4) Cross-plot:
+%       - Figure 1: max TKE vs x/L
+%       - Figure 2: Y_norm location of max TKE vs x/L
 %       - Volcano = blue lines
 %       - VULCAN  = red lines
 %       - Legend labels customized by workbook name
-% 5) Save figure as.fig, vector.pdf, and.png
+% 5) Save figures as .fig, vector .pdf, and .png
 % -------------------------------------------------------------------------
 
 clear; close all; clc;
@@ -53,21 +53,21 @@ for i = 1:2
     geomLabelsVulcan{i}  = mapLegendLabel(nameVul, 'VULCAN');
 end
 
-%% 2. Process Volcano files
-volcanoData = struct('xL',[],'TKE',[],'label','');
+%% 2. Process Volcano files (max TKE and Y location)
+volcanoData = struct('xL',[],'TKEmax',[],'Y_of_TKEmax',[],'label','');
 for i = 1:2
     fullFile = fullfile(volcanoPath, volcanoFiles{i});
-    volcanoData(i) = processVolcanoWorkbook(fullFile, geomLabelsVolcano{i});
+    volcanoData(i) = processVolcanoWorkbook_MaxTKE(fullFile, geomLabelsVolcano{i});
 end
 
-%% 3. Process VULCAN files
-vulcanData = struct('xL',[],'TKE',[],'label','');
+%% 3. Process VULCAN files (max TKE and Y location)
+vulcanData = struct('xL',[],'TKEmax',[],'Y_of_TKEmax',[],'label','');
 for i = 1:2
     fullFile = fullfile(vulcanPath, vulcanFiles{i});
-    vulcanData(i) = processVulcanWorkbook(fullFile, geomLabelsVulcan{i});
+    vulcanData(i) = processVulcanWorkbook_MaxTKE(fullFile, geomLabelsVulcan{i});
 end
 
-%% 4. Plotting
+%% 4. Plotting: Figure 1 - Max TKE vs x/L
 figure('Color','w'); hold on; grid on; box on;
 
 % Colors per solution type (requested: Volcano blue, VULCAN red)
@@ -80,7 +80,7 @@ lines   = {'-','--'};
 
 % Plot Volcano data (blue)
 for i = 1:2
-    plot(volcanoData(i).xL, volcanoData(i).TKE,...
+    plot(volcanoData(i).xL, volcanoData(i).TKEmax,...
         'Color', colVolcano,...
         'LineStyle', lines{i},...
         'Marker', markers{i},...
@@ -90,7 +90,7 @@ end
 
 % Plot VULCAN data (red)
 for i = 1:2
-    plot(vulcanData(i).xL, vulcanData(i).TKE,...
+    plot(vulcanData(i).xL, vulcanData(i).TKEmax,...
         'Color', colVulcan,...
         'LineStyle', lines{i},...
         'Marker', markers{i},...
@@ -100,27 +100,67 @@ end
 
 % Axis labels and title (bold)
 hX = xlabel('x/L','Interpreter','none', 'FontWeight','bold');
-hY = ylabel('TKE','Interpreter','none', 'FontWeight','bold');
-hT = title('VULCAN vs. Volcano: Shear Layer TKE vs x/L','Interpreter','none', 'FontWeight','bold');
+hY = ylabel('Max TKE','Interpreter','none', 'FontWeight','bold');
+hT = title('VULCAN vs. Volcano: Max Shear Layer TKE vs x/L','Interpreter','none', 'FontWeight','bold');
 set([hX hY hT],'FontWeight','bold');
+set(hT, 'Visible', 'off');   % hides the title
 
 legend('Location','best','Interpreter','none');
 
-%% 5. Save figure in multiple formats
-outNameBase = 'TKE_vs_xL_Volcano_VULCAN';
+% 5. Save Figure 1
+outNameBase1 = 'MaxTKE_vs_xL_Volcano_VULCAN';
 
-%.fig
-savefig([outNameBase '.fig']);
-
-% Vectorized PDF
+savefig([outNameBase1 '.fig']);
 set(gcf,'Renderer','Painters');
-print(gcf, outNameBase, '-dpdf','-r300');
+% print(gcf, outNameBase1, '-dpdf','-r300');
+exportgraphics(gcf, [outNameBase1 '.pdf'], 'ContentType','vector');
+print(gcf, outNameBase1, '-dpng','-r300');
 
-%.png
-print(gcf, outNameBase, '-dpng','-r300');
+fprintf('Figure 1 saved as:\n  %s.fig\n  %s.pdf\n  %s.png\n',...
+    outNameBase1, outNameBase1, outNameBase1);
 
-fprintf('Figure saved as:\n  %s.fig\n  %s.pdf\n  %s.png\n',...
-    outNameBase, outNameBase, outNameBase);
+%% 6. Plotting: Figure 2 - Y location of max TKE vs x/L
+figure('Color','w'); hold on; grid on; box on;
+
+% Volcano (blue)
+for i = 1:2
+    plot(volcanoData(i).xL, volcanoData(i).Y_of_TKEmax,...
+        'Color', colVolcano,...
+        'LineStyle', lines{i},...
+        'Marker', markers{i},...
+        'LineWidth', 1.5,...
+        'DisplayName', [volcanoData(i).label ' - y/D location']);
+end
+
+% VULCAN (red)
+for i = 1:2
+    plot(vulcanData(i).xL, vulcanData(i).Y_of_TKEmax,...
+        'Color', colVulcan,...
+        'LineStyle', lines{i},...
+        'Marker', markers{i},...
+        'LineWidth', 1.5,...
+        'DisplayName', [vulcanData(i).label ' - y/D location']);
+end
+
+hX2 = xlabel('x/L','Interpreter','none', 'FontWeight','bold');
+hY2 = ylabel('y/D of max TKE ','Interpreter','none', 'FontWeight','bold');
+hT2 = title('VULCAN vs. Volcano: y/D location of Max TKE vs x/L','Interpreter','none', 'FontWeight','bold');
+set([hX2 hY2 hT2],'FontWeight','bold');
+set(hT2, 'Visible', 'off');   % hides the title
+
+legend('Location','best','Interpreter','none');
+
+% Save Figure 2
+outNameBase2 = 'Yloc_of_MaxTKE_vs_xL_Volcano_VULCAN';
+
+savefig([outNameBase2 '.fig']);
+set(gcf,'Renderer','Painters');
+% print(gcf, outNameBase2, '-dpdf','-r300');
+exportgraphics(gcf, [outNameBase2 '.pdf'], 'ContentType','vector')
+print(gcf, outNameBase2, '-dpng','-r300');
+
+fprintf('Figure 2 saved as:\n  %s.fig\n  %s.pdf\n  %s.png\n',...
+    outNameBase2, outNameBase2, outNameBase2);
 
 %% ------------------------------------------------------------------------
 %% Local helper functions
@@ -153,13 +193,15 @@ function label = mapLegendLabel(baseName, solverType)
     end
 end
 
-function out = processVolcanoWorkbook(filename, labelStr)
+function out = processVolcanoWorkbook_MaxTKE(filename, labelStr)
     % Process a Volcano workbook:
     %   - only sheets whose names end with '_MP'
     %   - extract xL from sheet name
-    %   - average TKE in ±5 rows around Y_norm ~ 0
+    %   - for each sheet, find:
+    %       * max TKE over all Y_norm
+    %       * Y_norm location of that max
 
-    fprintf('\nProcessing Volcano workbook: %s\n', filename);
+    fprintf('\nProcessing Volcano workbook (max TKE): %s\n', filename);
     [~, base, ~] = fileparts(filename);
     
     [status,sheets] = xlsfinfo(filename);
@@ -167,8 +209,9 @@ function out = processVolcanoWorkbook(filename, labelStr)
         error('Could not read Excel file: %s', filename);
     end
     
-    xL_list  = [];
-    TKE_list = [];
+    xL_list        = [];
+    TKEmax_list    = [];
+    Y_of_TKEmax    = [];
     
     for iSheet = 1:numel(sheets)
         sheetName = sheets{iSheet};
@@ -190,7 +233,7 @@ function out = processVolcanoWorkbook(filename, labelStr)
         T = readtable(filename, 'Sheet', sheetName);
         
         % Identify columns
-        yCol  = find(strcmpi(T.Properties.VariableNames,'Y_norm'), 1);
+        yCol   = find(strcmpi(T.Properties.VariableNames,'Y_norm'), 1);
         tkeCol = find(strcmpi(T.Properties.VariableNames,'tke'), 1);
         if isempty(tkeCol)
             tkeCol = find(strcmpi(T.Properties.VariableNames,'TKE'), 1);
@@ -202,38 +245,51 @@ function out = processVolcanoWorkbook(filename, labelStr)
             continue;
         end
         
-        y  = T{:, yCol};
+        y       = T{:, yCol};
         tkeData = T{:, tkeCol};
         
-        [tkeAvg, success] = averageAroundYzero(y, tkeData, 5);
-        if ~success
-            fprintf('Warning: Could not determine Y_norm ~ 0 in sheet "%s" of %s. Skipping.\n',...
+        if isempty(y) || isempty(tkeData)
+            fprintf('Warning: Empty data in sheet "%s" of %s. Skipping.\n', sheetName, base);
+            continue;
+        end
+        
+        % Find max TKE and its Y_norm location
+        [tkeMaxVal, idxMax] = max(tkeData, [], 'omitnan');
+        if isempty(idxMax) || isnan(tkeMaxVal)
+            fprintf('Warning: Could not find max TKE in sheet "%s" of %s. Skipping.\n',...
                 sheetName, base);
             continue;
         end
         
-        xL_list(end+1,1)  = xLval;    %#ok<AGROW>
-        TKE_list(end+1,1) = tkeAvg;   %#ok<AGROW>
+        yAtMax = y(idxMax);
+        
+        xL_list(end+1,1)     = xLval;     %#ok<AGROW>
+        TKEmax_list(end+1,1) = tkeMaxVal; %#ok<AGROW>
+        Y_of_TKEmax(end+1,1) = yAtMax;    %#ok<AGROW>
     end
     
     % Sort by xL
     [xL_sorted, idx] = sort(xL_list);
-    TKE_sorted = TKE_list(idx);
+    TKEmax_sorted    = TKEmax_list(idx);
+    Y_sorted         = Y_of_TKEmax(idx);
     
-    out.xL    = xL_sorted;
-    out.TKE   = TKE_sorted;
-    out.label = labelStr;
+    out.xL          = xL_sorted;
+    out.TKEmax      = TKEmax_sorted;
+    out.Y_of_TKEmax = Y_sorted;
+    out.label       = labelStr;
     
     fprintf('  Extracted %d planes from %s\n', numel(xL_sorted), base);
 end
 
-function out = processVulcanWorkbook(filename, labelStr)
+function out = processVulcanWorkbook_MaxTKE(filename, labelStr)
     % Process a VULCAN workbook:
     %   - all sheets treated as planes
     %   - extract xL from sheet name
-    %   - average TKE in ±5 rows around Y_norm ~ 0
+    %   - for each sheet, find:
+    %       * max TKE over all Y_norm
+    %       * Y_norm location of that max
 
-    fprintf('\nProcessing VULCAN workbook: %s\n', filename);
+    fprintf('\nProcessing VULCAN workbook (max TKE): %s\n', filename);
     [~, base, ~] = fileparts(filename);
     
     [status,sheets] = xlsfinfo(filename);
@@ -241,8 +297,9 @@ function out = processVulcanWorkbook(filename, labelStr)
         error('Could not read Excel file: %s', filename);
     end
     
-    xL_list  = [];
-    TKE_list = [];
+    xL_list        = [];
+    TKEmax_list    = [];
+    Y_of_TKEmax    = [];
     
     for iSheet = 1:numel(sheets)
         sheetName = sheets{iSheet};
@@ -257,7 +314,7 @@ function out = processVulcanWorkbook(filename, labelStr)
         
         T = readtable(filename, 'Sheet', sheetName);
         
-        yCol  = find(strcmpi(T.Properties.VariableNames,'Y_norm'), 1);
+        yCol   = find(strcmpi(T.Properties.VariableNames,'Y_norm'), 1);
         tkeCol = find(strcmpi(T.Properties.VariableNames,'tke'), 1);
         if isempty(tkeCol)
             tkeCol = find(strcmpi(T.Properties.VariableNames,'TKE'), 1);
@@ -269,27 +326,37 @@ function out = processVulcanWorkbook(filename, labelStr)
             continue;
         end
         
-        y = T{:, yCol};
+        y       = T{:, yCol};
         tkeData = T{:, tkeCol};
         
-        [tkeAvg, success] = averageAroundYzero(y, tkeData, 5);
-        if ~success
-            fprintf('Warning: Could not determine Y_norm ~ 0 in sheet "%s" of %s. Skipping.\n',...
+        if isempty(y) || isempty(tkeData)
+            fprintf('Warning: Empty data in sheet "%s" of %s. Skipping.\n', sheetName, base);
+            continue;
+        end
+        
+        [tkeMaxVal, idxMax] = max(tkeData, [], 'omitnan');
+        if isempty(idxMax) || isnan(tkeMaxVal)
+            fprintf('Warning: Could not find max TKE in sheet "%s" of %s. Skipping.\n',...
                 sheetName, base);
             continue;
         end
         
-        xL_list(end+1,1)  = xLval;    %#ok<AGROW>
-        TKE_list(end+1,1) = tkeAvg;   %#ok<AGROW>
+        yAtMax = y(idxMax);
+        
+        xL_list(end+1,1)     = xLval;     %#ok<AGROW>
+        TKEmax_list(end+1,1) = tkeMaxVal; %#ok<AGROW>
+        Y_of_TKEmax(end+1,1) = yAtMax;    %#ok<AGROW>
     end
     
     % Sort by xL
     [xL_sorted, idx] = sort(xL_list);
-    TKE_sorted = TKE_list(idx);
+    TKEmax_sorted    = TKEmax_list(idx);
+    Y_sorted         = Y_of_TKEmax(idx);
     
-    out.xL    = xL_sorted;
-    out.TKE   = TKE_sorted;
-    out.label = labelStr;
+    out.xL          = xL_sorted;
+    out.TKEmax      = TKEmax_sorted;
+    out.Y_of_TKEmax = Y_sorted;
+    out.label       = labelStr;
     
     fprintf('  Extracted %d planes from %s\n', numel(xL_sorted), base);
 end
@@ -315,60 +382,4 @@ function xL = parse_xL_from_name(sheetName)
     if isnan(xL)
         xL = NaN;
     end
-end
-
-function [tkeAvg, success] = averageAroundYzero(y, tkeData, nRows)
-    % Robust averaging of TKE around Y_norm ≈ 0
-    %
-    % Strategy:
-    %   1) If any y == 0, use the first such index as idxZero.
-    %   2) Otherwise, look for a sign change from negative to positive:
-    %        - Find indices i where y(i) < 0 and y(i+1) > 0.
-    %        - Use i+1 (first positive after negative) as idxZero.
-    %   3) If neither is found, fall back to the point closest to zero.
-    %   4) Average TKE over [idxZero-nRows : idxZero+nRows] intersected
-    %      with [1 : length(y)].
-
-    success = false;
-    tkeAvg  = NaN;
-    
-    if isempty(y) || isempty(tkeData) || numel(y) ~= numel(tkeData)
-        return;
-    end
-    
-    % 1) Exact zero if available
-    idxZero = find(y == 0, 1, 'first');
-    
-    % 2) If no exact zero, look for sign change from negative to positive
-    if isempty(idxZero)
-        yNeg = y(1:end-1) < 0;
-        yPos = y(2:end)   > 0;
-        signChangeIdx = find(yNeg & yPos, 1, 'first');  % y(i)<0 & y(i+1)>0
-        
-        if ~isempty(signChangeIdx)
-            idxZero = signChangeIdx + 1;  % first positive index after negative
-        end
-    end
-    
-    % 3) If still nothing, fall back to nearest-to-zero
-    if isempty(idxZero)
-        [~, idxZero] = min(abs(y));
-    end
-    
-    if isempty(idxZero) || isnan(idxZero)
-        return;
-    end
-    
-    n = numel(y);
-    idxStart = max(1, idxZero - nRows);
-    idxEnd   = min(n, idxZero + nRows);
-    
-    if idxEnd < idxStart
-        idxStart = idxZero;
-        idxEnd   = idxZero;
-    end
-    
-    tkeWindow = tkeData(idxStart:idxEnd);
-    tkeAvg    = mean(tkeWindow, 'omitnan');
-    success   = true;
 end

@@ -323,7 +323,7 @@ ylabel(ax, origYLabelStr, 'Interpreter', origYLabelObj.Interpreter, 'FontSize', 
 
 newTitleStrLatex = sprintf('\\bf{%s vs. %s - $V_x/V_{x,\\infty}$ Thickness}',...
     solType1, solType2);
-title(ax, newTitleStrLatex, 'Interpreter', 'latex', 'FontSize', titleFontSize);
+% title(ax, newTitleStrLatex, 'Interpreter', 'latex', 'FontSize', titleFontSize);
 
 % Legend: handles sorted by ascending R/D, then solution type
 if ~isempty(allLineHandles)
@@ -426,7 +426,7 @@ ylabel(axN, '$\delta_{SL} / \delta_{SL,R/D=0}$', 'Interpreter', 'latex', 'FontSi
 
 normTitleStrLatex = sprintf('\\bf{Normalized: %s vs. %s - $V_x/V_{x,\\infty}$ Thickness}',...
     solType1, solType2);
-title(axN, normTitleStrLatex, 'Interpreter', 'latex', 'FontSize', titleFontSizeN);
+% title(axN, normTitleStrLatex, 'Interpreter', 'latex', 'FontSize', titleFontSizeN);
 
 if ~isempty(normLineHandles)
     sortedHandlesN = normLineHandles(sortIdxLegend);
@@ -525,7 +525,7 @@ ylabel(axNM, '$\delta_{SL} / \max(\delta_{SL,R/D=0})$', 'Interpreter', 'latex', 
 
 normMaxTitleStrLatex = sprintf('\\bf{Max-Normalized: %s vs. %s - $V_x/V_{x,\\infty}$ Thickness}',...
     solType1, solType2);
-title(axNM, normMaxTitleStrLatex, 'Interpreter', 'latex', 'FontSize', titleFontSizeNM);
+% title(axNM, normMaxTitleStrLatex, 'Interpreter', 'latex', 'FontSize', titleFontSizeNM);
 
 if ~isempty(normMaxLineHandles)
     sortedHandlesNM = normMaxLineHandles(sortIdxLegend);

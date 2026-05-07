@@ -23,7 +23,7 @@ clear; clc;
 % -------------------------------------------------------------------------
 [filenames, pathname] = uigetfile({...
     '*.xlsx;*.xls', 'Excel Files (*.xlsx, *.xls)'},...
-    'Select 3 Volca probe Excel files (one per geometry)',...
+    'Select 3 Volcano probe Excel files (one per geometry)',...
     'MultiSelect', 'on');
 
 if isequal(filenames,0) || isequal(pathname,0)
@@ -224,8 +224,8 @@ for iP = 1:numel(planeNames)
             % Build plain-text title (no plane)
             % Example: 'TKE vs y/D at x/L = 0.17'
             titleStr = sprintf('y/D vs %s at %s', qName, axialPlain);
-            title(titleStr, 'Interpreter','none', 'FontWeight','bold', ...
-                'FontSize',titleFontSize);
+            % title(titleStr, 'Interpreter','none', 'FontWeight','bold', ...
+                % 'FontSize',titleFontSize);
 
             % Legend: plain text, no LaTeX, not bold
             if ~isempty(legendEntries)

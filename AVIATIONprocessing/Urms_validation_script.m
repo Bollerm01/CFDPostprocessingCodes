@@ -108,7 +108,7 @@ if ~isempty(allLineHandles)
 end
 
 % Add shared main title
-sgtitle(mainTitle, 'FontSize', 14, 'FontWeight', 'bold');
+% sgtitle(mainTitle, 'FontSize', 14, 'FontWeight', 'bold');
 
 % === SAVE HIGH-RES JPG ===
 set(fig, 'PaperPositionMode', 'auto');  % Ensure proper sizing

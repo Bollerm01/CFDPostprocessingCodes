@@ -26,7 +26,7 @@ PROBE_LINES = {
 }
 
 # --- Line resolution ---
-LINE_RESOLUTION = 500
+LINE_RESOLUTION = 1000
 
 # Zones to include (volume mesh solution only)
 ACTIVE_ZONES = ["zone2"]

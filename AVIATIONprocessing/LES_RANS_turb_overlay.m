@@ -253,9 +253,9 @@ for g = 1:numel(dataTypes)
     xlabel(ax, dtPlot, 'Interpreter', 'latex');          % X axis: data type
     ylabel(ax, 'y/D', 'Interpreter', 'none', 'FontWeight','bold');     % Y axis
     titleStr = sprintf('Volcano vs. VULCAN: %s at %s', dtPlot2, axialStr);
-    title(ax, ['\textbf{' titleStr '}'], 'Interpreter', 'latex');
+    % title(ax, ['\textbf{' titleStr '}'], 'Interpreter', 'latex');
     xlim([0 20000])
-    ylim([-1 1.5])
+    ylim([-1 1.1])
     
     % Legend: sorted by solver type, then R/D ascending
     if ~isempty(allLineHandles)

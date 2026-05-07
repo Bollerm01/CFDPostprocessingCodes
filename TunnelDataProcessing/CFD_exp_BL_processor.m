@@ -6,10 +6,10 @@
 % - Also read & overlay additional VULCAN dataset (all in meters, D = 0.018369 m).
 % - Find and mark M/M_max = 0.95 intersections with red stars, print Y/D.
 
-%% --- Select Excel files (3 files) ---
+%% --- Select Excel files (1 to 3 files) ---
 [excelNames, excelPath] = uigetfile(...
     {'*.xlsx;*.xls;*.xlsm', 'Excel Files (*.xlsx, *.xls, *.xlsm)'},...
-    'Select 3 Excel files',...
+    'Select up to 3 Excel files',...
     'MultiSelect', 'on');
 
 if isequal(excelNames, 0)
@@ -20,8 +20,9 @@ if ischar(excelNames)
     excelNames = {excelNames};
 end
 
-if numel(excelNames) ~= 3
-    error('You must select exactly 3 Excel files. You selected %d.', numel(excelNames));
+nExcel = numel(excelNames);
+if nExcel < 1 || nExcel > 3
+    error('You must select between 1 and 3 Excel files. You selected %d.', nExcel);
 end
 
 excelFiles = fullfile(excelPath, excelNames);
@@ -82,9 +83,9 @@ if isnan(D_m_zone2) || D_m_zone2 <= 0
 end
 
 %% Storage for processed datasets
-excelY        = cell(1, numel(excelFiles));   % Y/D (Excel)
-excelMach     = cell(1, numel(excelFiles));   % Mach (Excel)
-excelMach_nd  = cell(1, numel(excelFiles));   % M/M_max (Excel)
+excelY        = cell(1, nExcel);   % Y/D (Excel)
+excelMach     = cell(1, nExcel);   % Mach (Excel)
+excelMach_nd  = cell(1, nExcel);   % M/M_max (Excel)
 
 csvY          = [];   % Y/D (original CSV)
 csvMach       = [];   % Mach (original CSV)
@@ -95,7 +96,7 @@ zone2Mach     = [];   % Mach (zone2 dataset)
 zone2Mach_nd  = [];   % M/M_max (zone2 dataset)
 
 %% ---- Process the Excel files ----
-for k = 1:numel(excelFiles)
+for k = 1:nExcel
     T = readtable(excelFiles{k});
 
     % Extract columns (assumed names)
@@ -127,12 +128,12 @@ for k = 1:numel(excelFiles)
     nPts = numel(M_BL_avg);
     nTail = min(5, nPts);
     M_max_BL = mean(M_BL_avg(end-nTail+1:end));   % average of last up-to-5 points
-    M_nd_avg = M_BL_avg./ M_max_BL;
+    M_nd_avg = M_BL_avg ./ M_max_BL;
 
     % Non-dimensionalize Y by D (cm)
-    Y_over_D = yUnique./ D_cm_excel_csv;
+    Y_over_D = yUnique ./ D_cm_excel_csv;
 
-    % Store
+    % Store full data (Excel will be plotted with all points)
     excelY{k}       = Y_over_D;
     excelMach{k}    = M_BL_avg;
     excelMach_nd{k} = M_nd_avg;
@@ -195,10 +196,10 @@ Mcsv_interp = interp1(Y_cm, Mcsv, Y_cm_interp, 'pchip');
 nPts_csv = numel(Mcsv_interp);
 nTail_csv = min(5, nPts_csv);
 M_max_csv = mean(Mcsv_interp(end-nTail_csv+1:end));  % average of last up-to-5 points
-Mcsv_nd_interp = Mcsv_interp./ M_max_csv;
+Mcsv_nd_interp = Mcsv_interp ./ M_max_csv;
 
 % Non-dimensionalize Y by D (cm)
-Y_over_D_csv = Y_cm_interp./ D_cm_excel_csv;
+Y_over_D_csv = Y_cm_interp ./ D_cm_excel_csv;
 
 % Store for later saving/plotting
 csvY       = Y_over_D_csv;   % Y/D
@@ -236,10 +237,10 @@ Mach_zone2 = Mach_zone2(sortIdx);
 nPts_z = numel(Mach_zone2);
 nTail_z = min(5, nPts_z);
 M_max_zone2 = mean(Mach_zone2(end-nTail_z+1:end));  % average of last up-to-5 points
-Mach_zone2_nd = Mach_zone2./ M_max_zone2;
+Mach_zone2_nd = Mach_zone2 ./ M_max_zone2;
 
 % Non-dimensionalize Y by D (m)
-Y_over_D_zone2 = Y_zone2_m./ D_m_zone2;
+Y_over_D_zone2 = Y_zone2_m ./ D_m_zone2;
 
 % Store for later saving/plotting
 zone2Y       = Y_over_D_zone2;
@@ -247,7 +248,7 @@ zone2Mach    = Mach_zone2;
 zone2Mach_nd = Mach_zone2_nd;
 
 %% ---- Save processed data to a single Excel file (multiple sheets) ----
-for k = 1:numel(excelFiles)
+for k = 1:nExcel
     TblOut = table(excelY{k}, excelMach{k}, excelMach_nd{k},...
         'VariableNames', {'Y_over_D', 'Mach', 'Mach_nd'});
     sheetName = sprintf('Excel_%d', k);
@@ -263,8 +264,8 @@ TblZone2 = table(zone2Y, zone2Mach, zone2Mach_nd,...
 writetable(TblZone2, outputExcel, 'Sheet', 'zone2', 'WriteMode', 'overwrite');
 
 %% ---- Build legend labels from Excel filenames ----
-excelLegendLabels = cell(1, numel(excelNames));
-for k = 1:numel(excelNames)
+excelLegendLabels = cell(1, nExcel);
+for k = 1:nExcel
     [~, fname, ~] = fileparts(excelNames{k});
     parts = strsplit(fname, '_');
     excelLegendLabels{k} = parts{end};   % last token after "_"
@@ -272,18 +273,22 @@ end
 
 % Legend labels for CSV and zone2 datasets
 csvLegendLabel   = 'Volcano';     % original CSV
-zone2LegendLabel = 'VULCAN';       % new dataset
+zone2LegendLabel = 'VULCAN';      % new dataset
+experimentalLabel = 'Experimental'; % Run1 data
 
 %% ---- Plot 1: Dimensional Mach vs Y/D ----
 fig_dim = figure;
 hold on; grid on; box on;
 
 % Number of distinct datasets:
-%   - excelFiles (3)
+%   - excelFiles (1–3)
 %   - csv (1)
 %   - zone2 (1)
-nSeries = numel(excelFiles) + 2;
+nSeries = nExcel + 2;
 colors  = lines(nSeries);
+
+idxCSV   = nExcel + 1;
+idxZone2 = nExcel + 2;
 
 % VULCAN dataset (dimensional Mach) as a continuous line
 plot(zone2Mach, zone2Y, '-',...
@@ -291,26 +296,24 @@ plot(zone2Mach, zone2Y, '-',...
     'LineWidth', 2,...
     'DisplayName', zone2LegendLabel);
 
-% Excel datasets (dimensional Mach)
-for k = 1:numel(excelFiles)
+% Excel datasets (dimensional Mach) with ALL points
+for k = 1:nExcel
     plot(excelMach{k}, excelY{k}, '-o',...
         'Color', colors(k,:),...
         'MarkerSize', 4,...
-        'DisplayName', excelLegendLabels{k});
+        'DisplayName', experimentalLabel);
 end
 
-idxCSV   = numel(excelFiles) + 1;
-idxZone2 = numel(excelFiles) + 2;
-
-% CSV dataset (dimensional Mach) as a continuous line
-plot(csvMach, csvY, '-sq',...
+% CSV dataset (dimensional Mach), plotting every other point
+idxSubCSV = 1:2:numel(csvY);  % every other point for CSV
+plot(csvMach(idxSubCSV), csvY(idxSubCSV), '-sq',...
     'Color', colors(idxCSV,:),...
     'MarkerSize', 5,...
     'DisplayName', csvLegendLabel);
 
 xlabel('M','FontWeight','bold');
 ylabel('y/D', 'FontWeight','bold');
-title('Experimental vs. CFD Incident Boundary Layers','Interpreter','none', 'FontWeight','bold');
+% Title hidden (removed)
 legend('Location', 'best');
 set(gca, 'YDir', 'normal');
 
@@ -330,35 +333,39 @@ plot(zone2Mach_nd, zone2Y, '-',...
     'LineWidth', 2,...
     'DisplayName', zone2LegendLabel);
 
-% Excel datasets (non-dimensional Mach)
-for k = 1:numel(excelFiles)
+% Experimental Excel datasets (non-dimensional Mach) with ALL points
+for k = 1:nExcel
     plot(excelMach_nd{k}, excelY{k}, '-o',...
         'Color', colors(k,:),...
-        'MarkerSize', 4,...
-        'DisplayName', excelLegendLabels{k});
+        'MarkerSize', 5,...
+        'DisplayName', experimentalLabel);
 end
 
-% CSV dataset (non-dimensional Mach) as a continuous line
-plot(csvMach_nd, csvY, '-sq',...
+% CSV Volcano dataset (non-dimensional Mach), plotting every other point
+idxSubCSV = 1:2:numel(csvY);  % every other point for CSV
+plot(csvMach_nd(idxSubCSV), csvY(idxSubCSV), '-',...
     'Color', colors(idxCSV,:),...
-    'MarkerSize', 5,...
+    'LineWidth', 3,...
     'DisplayName', csvLegendLabel);
 
-% --- NEW: Vertical line at M/M_max = 0.95 ---
+% --- Vertical line at M/M_max = 0.95 ---
 M_target = 0.95;
-xline(M_target, 'r--', 'LineWidth', 1.5, 'HandleVisibility', 'off', 'DisplayName','$$95%% M/M_{max}$$', 'Interpreter','latex');
+xline(M_target, 'r--', 'LineWidth', 1.5, ...
+    'HandleVisibility', 'off', ...
+    'DisplayName','$$95\% M/M_{max}$$', ...
+    'Interpreter','latex');
 
 xlabel('$$\mathbf{M/M_{max}}$$','Interpreter','latex');
 ylabel('y/D', 'FontWeight','bold');
-title('Experimental vs. CFD Incident Boundary Layers','Interpreter','none', 'FontWeight','bold');
+% Title hidden (removed)
 legend('Location', 'best');
 set(gca, 'YDir', 'normal');
 
-% --- NEW: Compute and mark intersections with M/M_max = 0.95 ---
+% --- Compute and mark intersections with M/M_max = 0.95 ---
 fprintf('\n=== Y/D at M/M_max = %.2f ===\n', M_target);
 
 % Excel datasets
-for k = 1:numel(excelFiles)
+for k = 1:nExcel
     yInt = find_MoverMmax_intersections(excelMach_nd{k}, excelY{k}, M_target);
     if ~isempty(yInt)
         % red stars at intersections
@@ -395,6 +402,7 @@ end
 % Save non-dimensional Mach figure as vectorized PDF
 exportgraphics(fig_nd, pdfFile_nd, 'ContentType', 'vector');
 saveas(fig_nd, figFile_nd);
+
 %% ---- Summary messages ----
 disp(['Processed data saved to: ' char(outputExcel)]);
 disp(['Dimensional Mach PDF saved as: ' char(pdfFile_dim)]);

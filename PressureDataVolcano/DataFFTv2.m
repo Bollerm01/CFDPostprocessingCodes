@@ -2,17 +2,17 @@
 % Experimental aeroacoustic data
 % Columns: time | probe0000 ... probe0024
 
-clear; clc; %close all;
+clear; clc; close all;
 
 %% ---------------- USER SETTINGS ----------------
 nmics        = 25;                 % Total number of probes
-df_desired   = 25;                 % Hz per FFT bin
-plot_probes  = [1 10];      % <<< PROBES TO OVERLAY <<<
+df_desired   =100;                 % Hz per FFT bin
+plot_probes  = [3 14 24];      % <<< PROBES TO OVERLAY <<<
 
 %% ---------------- LOAD DATA ----------------
-[file, path] = uigetfile('*.dat', 'Select pressure data file');
-% file = 'rampLine.pressure.dat';
-% path = 'E:\Boller CFD\AVIATION CFD\PressureProbeData\';
+% [file, path] = uigetfile('*.dat', 'Select pressure data file');
+ file = 'rampLine.pressure.dat';
+ path = 'E:\Boller CFD\AVIATION CFD\PressureProbeData\';
 if isequal(file,0)
     error('No file selected.');
 end
@@ -66,15 +66,15 @@ for k = 1:nmics
         x = pt(pt_start:pt_finish, k);
 
         X = fft(x .* nwin);
-
+        % fft_temp(n)=X;
         % Raw amplitude spectrum
         Xf(:,n) = 2 * abs(X) / Nfft;
 
     end
 
     Xfsave(:,k) = mean(Xf, 2);
-    NB(:,k)     = 20 * log10(Xfsave(:,k) / 20e-6);
-
+    % NB(:,k)     = 20 * log10(Xfsave(:,k) / 20e-6);
+    NB(:,k)=Xfsave(:,k);
 end
 
 %% ---------------- PLOT SELECTED PROBES ----------------

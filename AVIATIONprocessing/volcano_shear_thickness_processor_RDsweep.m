@@ -328,7 +328,7 @@ for iFile = 1:numel(filenames)
             % Example: '$V_x/V_{x,\infty}$ Thickness, z/w = 0.50 (RD00)'
             title_str = sprintf('$%s$ Thickness, %s (%s)',...
                                 nice_core, loc_core, geometryType);
-            title(title_str, 'Interpreter', 'latex', 'FontSize', titleFontSize);
+            % title(title_str, 'Interpreter', 'latex', 'FontSize', titleFontSize);
 
             grid on;
             lgd = legend('Location', 'best', 'Interpreter','latex');
@@ -451,7 +451,7 @@ for iFile = 1:numel(filenames)
 
         % Example: '$V_x/V_{x,\infty}$ Thickness, R/D = 0.17'
         title_str = sprintf('$%s$ Thickness, %s', nice_core, geoLabel);
-        title(title_str, 'Interpreter', 'latex', 'FontSize', titleFontSize);
+        % title(title_str, 'Interpreter', 'latex', 'FontSize', titleFontSize);
 
         grid on;
         lgd = legend('Location', 'best', 'Interpreter','latex');
@@ -611,7 +611,7 @@ for iNorm = 1:numel(avg_norm_cols)
 
             % Example: '$V_x/V_{x,\infty}$ Thickness, z/w = 0.50'
             title_str = sprintf('$%s$ Thickness, %s', nice_core, loc_core);
-            title(title_str, 'Interpreter', 'latex', 'FontSize', titleFontSize);
+            % title(title_str, 'Interpreter', 'latex', 'FontSize', titleFontSize);
 
             grid on;
             lgd = legend('Location', 'best', 'Interpreter','latex');

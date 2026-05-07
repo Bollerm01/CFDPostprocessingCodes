@@ -304,7 +304,8 @@ function save_overlay_x(xCommon, yData, legendText, saveFolder, yLabel, titleTex
     ylabel(yLabel,  'Interpreter','latex', 'FontSize', labelFontSize);
 
     % Let MATLAB place the title; don't manually move it
-    title(titleText, 'Interpreter','latex', 'FontSize', titleFontSize);
+    % title(titleText, 'Interpreter','latex', 'FontSize', titleFontSize);
+    % set(titleText, 'Visible', 'off');   % hides the title
 
     % Centered legend at bottom, outside, with 3 columns
     lgd = legend(legendText,...
