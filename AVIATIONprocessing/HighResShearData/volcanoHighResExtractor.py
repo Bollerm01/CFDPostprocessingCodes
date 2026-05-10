@@ -5,13 +5,18 @@ import os
 # ====================== USER SETTINGS =======================
 # ============================================================
 
-# --- Input volcano file ---
+# Slice Inputs
+VOLCANO_FILE = "/home/bollerma/LESdata/SSWT/sliceCav/RD00s/SSWTM2Test2s_000/latest.volcano" # RD00 Slice
+# VOLCANO_FILE = "/home/bollerma/LESdata/SSWT/sliceCav/RD52s/SSWTM2TestRD52s_000/latest.volcano" # RD52 Slice
+
+# Full Inputs
 # VOLCANO_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD00/RD00_004/latest.volcano"
 # VOLCANO_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD17/RD17_022/latest.volcano" # RD17 Path
-VOLCANO_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD52/RD52_057/latest.volcano" # RD52 Path
+# VOLCANO_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD52/RD52_057/latest.volcano" # RD52 Path
 
 # --- Output directory ---
-OUTPUT_DIR = r"/home/bollerma/LESdata/SSWT/fullCav/RDsteps/highResShearOutput/RD52"  # Change tailing folder
+# OUTPUT_DIR = r"/home/bollerma/LESdata/SSWT/fullCav/RDsteps/highResShearOutput/RD52"  # Change tailing folder
+OUTPUT_DIR = r"/home/bollerma/LESdata/SSWT/sliceCav/highResShearOutput/RD00"  # Change tailing folder
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # --- Variables to load from the volcano file ---
@@ -37,10 +42,13 @@ X_OVER_L_END   = 1.0
 # z = -0.0381  -> "_z75"
 # z =  0.0     -> "_MP"
 # z = +0.0381  -> "_z25"
+# PLANES = [
+#     ("_z75", -0.0381),
+#     ("_MP",   0.0),
+#     ("_z25",  0.0381),
+# ]
 PLANES = [
-    ("_z75", -0.0381),
-    ("_MP",   0.0),
-    ("_z25",  0.0381),
+    ("_MP",   0.0)
 ]
 
 # ============================================================
