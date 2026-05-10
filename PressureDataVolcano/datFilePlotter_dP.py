@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 # ===================== USER SETTINGS ========================
 # ============================================================
 
-INPUT_DAT_FILE = r"E:\Boller CFD\AVIATION CFD\PressureProbeData\rampLine.pressure.dat"
-OUTPUT_FOLDER  = r"E:\Boller CFD\AVIATION CFD\PressureProbeData\PressureOutput_RampDP"
+INPUT_DAT_FILE = r"E:\Boller CFD\AVIATION CFD\PressureProbeData\floorLine.pressure.dat"
+OUTPUT_FOLDER  = r"E:\Boller CFD\AVIATION CFD\PressureProbeData\PressureOutput_FloorDP"
 
 REFERENCE_PRESSURE_PA = 19777.0   # Zero-point pressure (Pa)
 

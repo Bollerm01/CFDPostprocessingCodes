@@ -5,17 +5,22 @@ import os
 # ======================= USER INPUT =========================
 # ============================================================
 
-INPUT_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD00/RD00_004/latest.volcano"
+# Slice Inputs
+INPUT_FILE = "/home/bollerma/LESdata/SSWT/sliceCav/RD00s/SSWTM2Test2s_000/latest.volcano" # RD00 Slice
+# INPUT_FILE = "/home/bollerma/LESdata/SSWT/sliceCav/RD52s/SSWTM2TestRD52s_000/latest.volcano" # RD52 Slice
+
+# Full Inputs
+# INPUT_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD00/RD00_004/latest.volcano"
 # INPUT_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD17/RD17_022/latest.volcano" # RD17 Path
 # INPUT_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD52/RD52_057/latest.volcano" # RD52 Path
 
-OUTPUT_DIR = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/contourOutput/AVIATIONmanuscript/RD00/mesh" # CHANGE PER RUN
+OUTPUT_DIR = "/home/bollerma/LESdata/SSWT/sliceCav/contourOutput/RD00" # CHANGE PER RUN
 
 folder_path = os.path.dirname(INPUT_FILE) # /home/user/project
 file_name = os.path.basename(folder_path) # project
 
 # Debugging scalars
-SCALARS = ["pressure"]
+SCALARS = ["pressure", "pressureAvg", "velocityx", "velocityxavg"]
 # SCALARS = [
 #     "reynoldsstressxx", "reynoldsstressyy", "reynoldsstresszz",
 #     "reynoldsstressxy", "reynoldsstressxz", "reynoldsstressyz",
@@ -97,7 +102,7 @@ SCALAR_COLORMAPS = {
 
 # Debugging loop
 YZ_SLICE_X = [2.15057954, 2.16015806, 2.1793151, 2.20736648, 2.216945]
-XY_SLICE_Z = [0.00, 0.0381]
+XY_SLICE_Z = [0.00]
 XZ_SLICE_Y = [0.0093, 0.001]
 
 # full loop
@@ -106,9 +111,9 @@ XZ_SLICE_Y = [0.0093, 0.001]
 # XZ_SLICE_Y = [0.0182, 0.0093, 0.003, 0.001]
 
 # 3D slices group
-YZ_SLICE_X_3D = [2.15057954, 2.1793151, 2.216945] #x/L = 0.03, 0.45, 1
-XY_SLICE_Z_3D = [0.0381]
-XZ_SLICE_Y_3D = [0.0093,0.001]
+# YZ_SLICE_X_3D = [2.15057954, 2.1793151, 2.216945] #x/L = 0.03, 0.45, 1
+# XY_SLICE_Z_3D = [0.0381]
+# XZ_SLICE_Y_3D = [0.0093,0.001]
 
 IMG_RES = [1920, 1080]
 
@@ -471,9 +476,9 @@ for s in SCALARS:
         # create_slice([0,0,z], [0,0,1], "XY_FAR",  f"XY_far_z{z:+0.5f}",  s)
 
     # 3D figs - Near 3D (for this scalar s)
-    sliceGroup = make_slice_group(XY_SLICE_Z_3D, XZ_SLICE_Y_3D, YZ_SLICE_X_3D, s)
-    outputFileName = "3D_Near_Group"
-    make_3D_slice_view(sliceGroup, "3D_Near", outputFileName, s)
+    # sliceGroup = make_slice_group(XY_SLICE_Z_3D, XZ_SLICE_Y_3D, YZ_SLICE_X_3D, s)
+    # outputFileName = "3D_Near_Group"
+    # make_3D_slice_view(sliceGroup, "3D_Near", outputFileName, s)
     
 
 if ENABLE_SCHLIEREN:
