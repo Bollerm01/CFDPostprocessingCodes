@@ -20,7 +20,7 @@ folder_path = os.path.dirname(INPUT_FILE) # /home/user/project
 file_name = os.path.basename(folder_path) # project
 
 # Debugging scalars
-SCALARS = ["pressure", "pressureAvg", "velocityx", "velocityxavg"]
+SCALARS = ["pressure", "pressureavg", "velocityx", "velocityxavg"]
 # SCALARS = [
 #     "reynoldsstressxx", "reynoldsstressyy", "reynoldsstresszz",
 #     "reynoldsstressxy", "reynoldsstressxz", "reynoldsstressyz",
