@@ -6,8 +6,8 @@ import os
 # ============================================================
 
 # Slice Inputs
-VOLCANO_FILE = "/home/bollerma/LESdata/SSWT/sliceCav/RD00s/SSWTM2Test2s_000/latest.volcano" # RD00 Slice
-# VOLCANO_FILE = "/home/bollerma/LESdata/SSWT/sliceCav/RD52s/SSWTM2TestRD52s_000/latest.volcano" # RD52 Slice
+# VOLCANO_FILE = "/home/bollerma/LESdata/SSWT/sliceCav/RD00s/SSWTM2Test2s_000/latest.volcano" # RD00 Slice
+VOLCANO_FILE = "/home/bollerma/LESdata/SSWT/sliceCav/RD52s/SSWTM2TestRD52s_000/latest.volcano" # RD52 Slice
 
 # Full Inputs
 # VOLCANO_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD00/RD00_004/latest.volcano"
@@ -16,7 +16,7 @@ VOLCANO_FILE = "/home/bollerma/LESdata/SSWT/sliceCav/RD00s/SSWTM2Test2s_000/late
 
 # --- Output directory ---
 # OUTPUT_DIR = r"/home/bollerma/LESdata/SSWT/fullCav/RDsteps/highResShearOutput/RD52"  # Change tailing folder
-OUTPUT_DIR = r"/home/bollerma/LESdata/SSWT/sliceCav/highResShearOutput/RD00"  # Change tailing folder
+OUTPUT_DIR = r"/home/bollerma/LESdata/SSWT/sliceCav/highResShearOutput/RD52"  # Change tailing folder
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # --- Variables to load from the volcano file ---
