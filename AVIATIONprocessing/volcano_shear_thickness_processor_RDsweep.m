@@ -37,7 +37,7 @@ VELMAGAVG_COL = 'velocitymagavg';
 VELOCITY_COLS = {VELX_COL, VELXAVG_COL, VELMAG_COL, VELMAGAVG_COL};
 
 % THRESHOLDS = [0.95 0.05; 0.9 0.1];  % rows = [upper lower]
-THRESHOLDS = [0.95 0.05];
+THRESHOLDS = [0.80 0.20];
 % Locations for freestream sheets and per-location results
 % LOCATIONS = {'MP', 'z25', 'z75'};  % corresponding to sheets US_MP, US_z25, US_z75
 LOCATIONS = {'MP'}; 

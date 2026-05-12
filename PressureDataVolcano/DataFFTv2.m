@@ -6,7 +6,7 @@ clear; clc; close all;
 
 %% ---------------- USER SETTINGS ----------------
 nmics        = 25;                 % Total number of probes
-df_desired   =100;                 % Hz per FFT bin
+df_desired   = 100;                 % Hz per FFT bin
 plot_probes  = [3 14 24];      % <<< PROBES TO OVERLAY <<<
 
 %% ---------------- LOAD DATA ----------------
@@ -89,6 +89,7 @@ end
 
 xlabel('Frequency [Hz]');
 ylabel('SPL [dB re 20 \muPa]');
+ylim([0 500]);
 title('Raw Narrowband SPL – Selected Probes');
 legend('show');
 set(gca,'XScale','log');

@@ -1,0 +1,161 @@
+%% Combine 3 .fig files and merge legends into one (2 columns below figure)
+% Clear workspace and close any open figures
+clear; close all; clc;
+
+% -------------------------------------------------------------------------
+% USER SETTINGS
+% -------------------------------------------------------------------------
+% List your .fig files here (in the order you want them combined)
+% Open GUI dialog to select multiple .fig files
+[files, path] = uigetfile({'*.fig','Figure Files (*.fig)'}, ...
+                          'Select FIG files to combine', ...
+                          'MultiSelect', 'on');
+
+% Handle case where user cancels
+if isequal(files,0)
+    disp('No files selected. Exiting.');
+    return;
+end
+
+% Normalize output from uigetfile to a cell array of full paths
+if ischar(files)
+    % Single file selected
+    figFiles = { fullfile(path, files) };
+else
+    % Multiple files selected
+    figFiles = cellfun(@(f) fullfile(path, f), files, 'UniformOutput', false);
+end
+
+% Optional: colors/line styles can be customized if desired
+% You can leave this empty to keep original properties.
+useCustomStyles = true;
+lineStyles = {'-','--',':','-.'};  % example styles
+lineColors = lines(10);            % colormap for up to 10 lines
+
+% -------------------------------------------------------------------------
+% Create a new figure and axes to hold the combined plot
+% -------------------------------------------------------------------------
+combinedFig = figure('Name', 'Combined Figure', 'Color', 'w');
+combinedAx  = axes('Parent', combinedFig);
+hold(combinedAx, 'on'); grid(combinedAx, 'on');
+
+% Containers for legend handles and labels
+allHandles = [];
+allLabels  = {};
+
+% -------------------------------------------------------------------------
+% Loop through each .fig file, open it, copy its plotted objects
+% -------------------------------------------------------------------------
+for f = 1:numel(figFiles)
+    % Open the .fig invisibly
+    tempFig = openfig(figFiles{f}, 'invisible');
+
+    % Get the main axes from this figure
+    tempAxes = findobj(tempFig, 'Type', 'axes');
+    % If there are multiple axes, you may want to pick one explicitly
+    % e.g., tempAxes = tempAxes(1);
+
+    for a = 1:numel(tempAxes)
+        ax = tempAxes(a);
+
+        % Get existing legend (if any) to extract labels
+        tempLegend = findobj(tempFig, 'Type', 'Legend');
+        legendStrings = {};
+        if ~isempty(tempLegend)
+            legendStrings = tempLegend.String;
+        end
+
+        % Find plot-like objects (lines, scatter, etc.) in this axes
+        % You can adjust the 'Type' or 'ObjectType' if you use different plot objects
+        plotObjs = findobj(ax, '-property', 'XData');  % catches lines, scatter, etc.
+
+        % We want to preserve order: from bottom to top
+        plotObjs = flipud(plotObjs); % 'findobj' returns in reverse order
+
+        % Copy each object to the new combined axes
+        for k = 1:numel(plotObjs)
+            hOld = plotObjs(k);
+            hNew = copyobj(hOld, combinedAx);
+
+            % Optionally override style/color
+            if useCustomStyles
+                % Example: cycle through styles and colors
+                styleIdx = mod(numel(allHandles), numel(lineStyles)) + 1;
+                colorIdx = mod(numel(allHandles), size(lineColors,1)) + 1;
+
+                if isprop(hNew, 'LineStyle')
+                    set(hNew, 'LineStyle', lineStyles{styleIdx});
+                end
+                if isprop(hNew, 'Color')
+                    set(hNew, 'Color', lineColors(colorIdx,:));
+                end
+            end
+
+            % Collect handle for legend
+            allHandles(end+1) = hNew; %#ok<AGROW>
+
+            % Determine label for this object:
+            % 1. Prefer the original legend string (if available)
+            % 2. Otherwise, use DisplayName if set
+            % 3. Otherwise, generate a generic label
+            thisLabel = '';
+
+            % Try to use legend strings from source figure if present
+            if ~isempty(legendStrings)
+                % If the number of legend strings matches the number of plotted
+                % objects, this is easy; otherwise we approximate by index.
+                idx = min(k, numel(legendStrings));
+                thisLabel = legendStrings{idx};
+            end
+
+            % If legendStrings was empty or mismatched, use DisplayName
+            if isempty(thisLabel) && isprop(hOld, 'DisplayName') && ~isempty(get(hOld,'DisplayName'))
+                thisLabel = get(hOld, 'DisplayName');
+            end
+
+            % If still empty, make a generic one
+            if isempty(thisLabel)
+                fileName = files{k};
+                thisLabel = input(sprintf("Enter the legend for file %s: ", fileName),"s");
+            end
+
+            allLabels{end+1} = thisLabel; %#ok<AGROW>
+        end
+    end
+
+    % Close the temporary figure
+    close(tempFig);
+end
+
+% -------------------------------------------------------------------------
+% Adjust axes labels, title, etc. (you can adapt these)
+% -------------------------------------------------------------------------
+xlabel(combinedAx, '$x/L$','Interpreter','latex');
+ylabel(combinedAx, '$\delta_{SL}/D$','Interpreter','latex');
+% title(combinedAx, 'Combined Plot from 3 FIG Files');
+
+% -------------------------------------------------------------------------
+% Create a single merged legend with 2 columns below the axes
+% -------------------------------------------------------------------------
+% 'Orientation','horizontal' and 'Location','southoutside' put it below.
+mergedLegend = legend(combinedAx, allHandles, allLabels, ...
+    'Location', 'southoutside', ...
+    'Orientation', 'horizontal', ...
+    'Interpreter', 'latex');
+% mergedLegend.Box = 'on';
+
+% Use NumColumns to make it 2 columns (requires reasonably recent MATLAB)
+mergedLegend.NumColumns = 2;
+
+% Optional: adjust font, box, etc.
+set(mergedLegend, 'Box', 'on');
+
+% Make sure layout is nice
+set(combinedAx, 'Box', 'on');
+hold(combinedAx, 'off');
+
+% -------------------------------------------------------------------------
+% Save combined figure if desired
+% -------------------------------------------------------------------------
+% savefig(combinedFig, 'combined_figure.fig');
+% exportgraphics(combinedFig, 'combined_figure.png', 'Resolution', 300);

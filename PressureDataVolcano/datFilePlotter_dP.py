@@ -7,8 +7,8 @@ import csv
 # ===================== USER SETTINGS ========================
 # ============================================================
 
-INPUT_DAT_FILE = r"E:\Boller CFD\AVIATION CFD\PressureProbeData\rampLine.pressure.dat"
-OUTPUT_FOLDER  = r"E:\Boller CFD\AVIATION CFD\PressureProbeData\PressureOutput_RampDP_11May26"
+INPUT_DAT_FILE = r"E:\Boller CFD\AVIATION CFD\PressureProbeData\floorLine.pressure.dat"
+OUTPUT_FOLDER  = r"E:\Boller CFD\AVIATION CFD\PressureProbeData\PressureOutput_FloorDP_11May26"
 
 REFERENCE_PRESSURE_PA = 19777.0   # Mean / zero-reference pressure
 
@@ -74,7 +74,7 @@ def plot_and_save(time, probe_name, pressure_pa, out_dir):
     """
 
     # Pressure fluctuation relative to reference pressure
-    delta_p_pa = pressure_pa - REFERENCE_PRESSURE_PA
+    delta_p_pa = pressure_pa - np.mean(pressure_pa)
 
     # Convert to PSI
     delta_p_psi = delta_p_pa * PA_TO_PSI
