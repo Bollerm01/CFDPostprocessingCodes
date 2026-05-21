@@ -54,7 +54,7 @@ SCALAR_RANGES = {
 
     # Turbulence / pressure
     "tke":         (0.0, 20000.0),
-    "pressureavg": (13000.0, 32000.0),
+    "pressure": (13000.0, 32000.0),
     "pressureavg": (13000.0, 32000.0),
 
     # Vorticity
