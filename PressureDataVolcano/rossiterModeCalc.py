@@ -5,7 +5,7 @@ import numpy as np
 # ==========================================================
 
 # Freestream Mach number (INPUT)
-Mach = 3.65
+Mach = 2.02
 
 
 # Number of Rossiter modes to calculate

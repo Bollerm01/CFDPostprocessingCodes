@@ -6,21 +6,25 @@ import os
 # ============================================================
 
 # Slice Inputs
-INPUT_FILE = "/home/bollerma/LESdata/SSWT/sliceCav/RD00s/SSWTM2Test2s_000/latest.volcano" # RD00 Slice
+# INPUT_FILE = "/home/bollerma/LESdata/SSWT/sliceCav/RD00s/SSWTM2Test2s_000/latest.volcano" # RD00 Slice
 # INPUT_FILE = "/home/bollerma/LESdata/SSWT/sliceCav/RD52s/SSWTM2TestRD52s_000/latest.volcano" # RD52 Slice
+
 
 # Full Inputs
 # INPUT_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD00/RD00_004/latest.volcano"
 # INPUT_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD17/RD17_022/latest.volcano" # RD17 Path
 # INPUT_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD52/RD52_057/latest.volcano" # RD52 Path
 
+INPUT_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD00/RD00_reprobing_002/latest.volcano" # RD00 Slice from Kulite probing
+
 OUTPUT_DIR = "/home/bollerma/LESdata/SSWT/sliceCav/contourOutput/RD00" # CHANGE PER RUN
+OUTPUT_DIR = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD00/RD00_reprobing_002/contourOutput"
 
 folder_path = os.path.dirname(INPUT_FILE) # /home/user/project
 file_name = os.path.basename(folder_path) # project
 
 # Debugging scalars
-SCALARS = ["pressure", "pressureavg", "velocityx", "velocityxavg"]
+SCALARS = ["pressure", "pressureavg", "velocityx", "velocityxavg", "tke"]
 # SCALARS = [
 #     "reynoldsstressxx", "reynoldsstressyy", "reynoldsstresszz",
 #     "reynoldsstressxy", "reynoldsstressxz", "reynoldsstressyz",
