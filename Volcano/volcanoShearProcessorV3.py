@@ -32,7 +32,7 @@ SCALARS = ["pressure", "pressureavg", "velocityx", "velocityxavg", "tke"]
 #     "vorticitymag", "vorticitymagavg"
 # ]
 
-ENABLE_SCHLIEREN = False # Change to true if desired
+ENABLE_SCHLIEREN = True # Change to true if desired
 DENSITY_NAME = "density"
 
 # <<< NEW: Optional, user-defined scalar ranges (min, max) per array name >>>
@@ -268,7 +268,6 @@ def apply_camera_and_colorbar(lut, preset, array_name):
 
     # ---- Scalar bar ----
     bar = GetScalarBar(lut, view)
-    # bar.Visibility = 1
     bar.Visibility = 1 # 0 hides bar
 
     # --- Reset cached geometry ----
