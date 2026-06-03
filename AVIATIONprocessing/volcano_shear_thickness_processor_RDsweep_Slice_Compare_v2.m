@@ -408,8 +408,9 @@ end
 
 colorMap = containers.Map();
 
-colorMap('RD00') = [0.00 0.45 0.74];
-colorMap('RD52') = [1.00, 0.80, 0.20];
+colorMap('Volcano')       = [0.00 0.45 0.74];   % blue
+colorMap('Volcano_Slice') = [0.85 0.33 0.10];   % orange
+colorMap('VULCAN')        = [0.47 0.67 0.19];   % green
 
 hfig = figure;
 
@@ -425,36 +426,45 @@ for iKey = 1:numel(all_geometryKeys)
         continue;
     end
 
-    sourceType = sourceOfKey(k);
-
     baseGeom = geometryBaseOfKey(k);
-
-    color = colorMap(baseGeom);
-
-    %% --------------------------------------------------------
-    % STYLE
-    %% --------------------------------------------------------
-
-    if contains(k,'Slice')
-
-        ls = ':';
-        mk = '^';
-
+    
+    geomType = getGeometryType(k);
+    
+    color = colorMap(geomType);
+    
+    % --------------------------------------------------------
+    % RD determines line style
+    % --------------------------------------------------------
+    
+    if strcmpi(baseGeom,'RD00')
+    
+        ls = '-';
+        mk = 'sq';
+    
     else
-
-        if strcmpi(sourceType,'Volcano')
-
-            ls = '--';
-            mk = 'o';
-
-        else
-
-            ls = '-';
-            mk = 's';
-
-        end
-
+    
+        ls = '--';
+        mk = 'o';
+    
     end
+    
+    % optional markers by geometry type
+    % mk = 'none';
+    % switch geomType
+    % 
+    %     case 'Volcano'
+    %         mk = 'o';
+    % 
+    %     case 'Volcano_Slice'
+    %         mk = '^';
+    % 
+    %     case 'VULCAN'
+    %         mk = 's';
+    % 
+    %     otherwise
+    %         mk = 'none';
+    % 
+    % end
 
     %% --------------------------------------------------------
     % LABELS
@@ -608,28 +618,38 @@ for iKey = 1:numel(all_geometryKeys)
     % STYLE
     %% --------------------------------------------------------
 
-    color = colorMap(baseGeom);
+    geomType = getGeometryType(k);
 
-    if contains(k,'Slice')
-
-        ls = ':';
-        mk = '^';
-
+    color = colorMap(geomType);
+    
+    if strcmpi(baseGeom,'RD00')
+    
+        ls = '-';
+        mk = 'sq';
+    
     else
-
-        if strcmpi(sourceType,'Volcano')
-
-            ls = '--';
-            mk = 'o';
-
-        else
-
-            ls = '-';
-            mk = 's';
-
-        end
-
+    
+        ls = '--';
+        mk = 'o';
+    
     end
+    
+    % mk = 'none';
+    % switch geomType
+    % 
+    %     case 'Volcano'
+    %         mk = 'o';
+    % 
+    %     case 'Volcano_Slice'
+    %         mk = '^';
+    % 
+    %     case 'VULCAN'
+    %         mk = 's';
+    % 
+    %     otherwise
+    %         mk = 'none';
+    % 
+    % end
 
     %% --------------------------------------------------------
     % LABELS
@@ -698,6 +718,19 @@ fprintf('========================================\n');
 %% ============================================================
 % HELPER FUNCTIONS
 % ============================================================
+
+function geomType = getGeometryType(geometryKey)
+
+    parts = split(geometryKey,'_');
+
+    if numel(parts) < 2
+        geomType = geometryKey;
+        return;
+    end
+
+    geomType = strjoin(parts(2:end),'_');
+
+end
 
 function xL = parse_xL_MATLAB(sheet_name)
 

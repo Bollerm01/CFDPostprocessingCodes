@@ -7,13 +7,13 @@ if rootFolder == 0
 end
 
 % CTU duration (in CTUs) that you want to keep at the end of the record
-CTU_duration = 50;   % <-- change as needed
+CTU_duration = 100;   % <-- change as needed
 
 % Conversion from CTUs to seconds (seconds per CTU)
 CTU_to_sec = 0.00367;    % <-- change as needed
 
 % Name of output subfolder (created inside rootFolder)
-outputSubFolder = '50_CTU_Data';
+outputSubFolder = '100_CTU_Data';
 
 
 %% Create output directory
