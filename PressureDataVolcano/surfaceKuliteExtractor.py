@@ -31,7 +31,7 @@ for k in range(1, 7):
         [
             os.path.join(plane_folder, f)
             for f in os.listdir(plane_folder)
-            if f.endswith(".volcsurf")
+            if re.match(r'.*\d+\.volcsurf$', f)
         ]
     )
 
