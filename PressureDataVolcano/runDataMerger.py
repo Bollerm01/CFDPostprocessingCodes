@@ -7,7 +7,7 @@ import shutil
 
 root1 = Path("/home/bollerma/LESdata/SSWT/sliceCav/RD52s/surfaceData")
 root2 = Path("/home/bollerma/LESdata/SSWT/sliceCav/RD52s/surfaceData2")
-root3 = Path("/home/bollerma/LESdata/SSWT/sliceCav/RD52s/surfaceData3")
+# root3 = Path("/home/bollerma/LESdata/SSWT/sliceCav/RD52s/surfaceData3")
 dest_root = Path("/home/bollerma/LESdata/SSWT/sliceCav/RD52s/surfaceDataCombined")
 
 # ==========================
