@@ -37,67 +37,81 @@ for k in range(1, 7):
 
     results = []
 
-    # for file_path in files:
-    file_path = "/home/bollerma/LESdata/SSWT/sliceCav/RD00s/surfaceDataCombined/K1_Plane/K1_Plane.0715039.volcsurf"
-    print(f"Processing {os.path.basename(file_path)}")
+    for file_path in files:
 
-    src = OpenDataFile(file_path)
+        print(f"Processing {os.path.basename(file_path)}")
 
-    try:
-        src.PointArrayStatus = ['pressure']
-    except:
-        pass
+        src = OpenDataFile(file_path)
 
-    UpdatePipeline()
+        try:
+            src.PointArrayStatus = ['pressure']
+        except:
+            pass
 
-    stats = DescriptiveStatistics(Input=src)
-    stats.VariablesofInterest = ['pressure']
+        UpdatePipeline()
 
-    UpdatePipeline()
+        stats = DescriptiveStatistics(Input=src)
+        stats.VariablesofInterest = ['pressure']
 
-    mb = Fetch(stats, 1)
-    for b in range(mb.GetNumberOfBlocks()):
+        UpdatePipeline()
+        mb = Fetch(stats, 1)
 
-        table = mb.GetBlock(b)
+        stats_table = mb.GetBlock(0)
 
-        print(f"\nBLOCK {b}")
+        mean_col = None
 
-        for c in range(table.GetNumberOfColumns()):
-            print(c, table.GetColumnName(c))
+        for c in range(stats_table.GetNumberOfColumns()):
+            if stats_table.GetColumnName(c) == "Mean":
+                mean_col = c
+                break
 
-        print("Rows:", table.GetNumberOfRows())
+        mean_pressure = float(
+            stats_table.GetValue(0, mean_col).ToString()
+        )
 
-    mean_pressure = None
+        # mb = Fetch(stats, 1)
+        # for b in range(mb.GetNumberOfBlocks()):
 
-    for row in range(table.GetNumberOfRows()):
+        #     table = mb.GetBlock(b)
 
-        variable = table.GetValue(row, 0).ToString()
+        #     print(f"\nBLOCK {b}")
 
-        if variable == "pressure":
+        #     for c in range(table.GetNumberOfColumns()):
+        #         print(c, table.GetColumnName(c))
 
-            # Verify column index once for your ParaView version
-            mean_pressure = float(
-                table.GetValue(row, 4).ToString()
-            )
-            break
+        #     print("Rows:", table.GetNumberOfRows())
 
-    filename = os.path.basename(file_path)
+        # mean_pressure = None
 
-    match = re.search(r'(\d+)\.volcsurf$', filename)
+        # for row in range(table.GetNumberOfRows()):
 
-    iteration = (
-        int(match.group(1))
-        if match else None
-    )
+        #     variable = table.GetValue(row, 0).ToString()
 
-    results.append([
-        filename,
-        iteration,
-        mean_pressure
-    ])
+        #     if variable == "pressure":
 
-    Delete(stats)
-    Delete(src)
+        #         # Verify column index once for your ParaView version
+        #         mean_pressure = float(
+        #             table.GetValue(row, 4).ToString()
+        #         )
+        #         break
+
+        filename = os.path.basename(file_path)
+
+        match = re.search(r'(\d+)\.volcsurf$', filename)
+
+        iteration = (
+            int(match.group(1))
+            if match else None
+        )
+
+        results.append([
+            filename,
+            iteration,
+            mean_pressure
+        ])
+
+        Delete(stats)
+        Delete(src)
 
     with open(output_csv, "w", newline="") as f:
 
