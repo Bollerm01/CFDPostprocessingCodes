@@ -55,13 +55,17 @@ for k in range(1, 7):
 
         UpdatePipeline()
 
-        table = Fetch(stats, 1)
-        print(type(table))
-        print("Number of blocks:", table.GetNumberOfBlocks())
+        mb = Fetch(stats, 1)
+        for b in range(mb.GetNumberOfBlocks()):
 
-        for i in range(table.GetNumberOfBlocks()):
-            block = table.GetBlock(i)
-            print(i, type(block))
+            table = mb.GetBlock(b)
+
+            print(f"\nBLOCK {b}")
+
+            for c in range(table.GetNumberOfColumns()):
+                print(c, table.GetColumnName(c))
+
+            print("Rows:", table.GetNumberOfRows())
 
         mean_pressure = None
 
