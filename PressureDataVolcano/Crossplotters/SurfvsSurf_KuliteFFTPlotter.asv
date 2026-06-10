@@ -1,0 +1,324 @@
+%% ============================================================
+% CFD Slice Surface Dataset (A) vs CFD Full Surface Dataset (B)
+%
+% Features:
+%   - Multi-file CFD Surface Slice Domain Set (A)
+%   - Multi-file CFD Surface Full Domain Set (B) 
+%   - Time filtering
+%   - Narrowband FFT comparison
+%   - PSD comparison
+%
+%% ============================================================
+
+clear; clc; close all;
+
+%% ============================================================
+% CONSTANTS
+%% ============================================================
+
+PREF = 20e-6;
+
+%% ============================================================
+% COLOR SYSTEM
+%% ============================================================
+
+nColors = 10;
+baseRGB = lines(nColors);
+baseLAB = rgb2lab(baseRGB);
+
+% Brightness shifts
+Lshift = [-15 +15];   % A = darker, B = brighter
+
+%% ============================================================
+% USER INPUT: CFD SURFACE DATASET A
+%% ============================================================
+
+[aFiles, aPath] = uigetfile( ...
+    {'*.csv','CFD Surface A Files'}, ...
+    'Select CFD SURFACE DATASET A', ...
+    'MultiSelect','on');
+
+if isequal(aFiles,0), return; end
+if ischar(aFiles), aFiles = {aFiles}; end
+
+aNames = cellfun(@(x) strtok(x,'_'), aFiles, 'UniformOutput', false);
+
+%% ============================================================
+% USER INPUT: CFD SURFACE DATASET B
+%% ============================================================
+
+[bFiles, bPath] = uigetfile( ...
+    {'*.csv','CFD Surface B Files'}, ...
+    'Select CFD SURFACE DATASET B', ...
+    'MultiSelect','on');
+
+if isequal(bFiles,0), return; end
+if ischar(bFiles), bFiles = {bFiles}; end
+
+bNames = cellfun(@(x) strtok(x,'_'), bFiles, 'UniformOutput', false);
+
+%% ============================================================
+% USER SETTINGS
+%% ============================================================
+
+answer = inputdlg( ...
+    { ...
+    'Plot Title', ...
+    'Start Time [s]', ...
+    'End Time [s]', ...
+    'FFT df [Hz]', ...
+    'Min Frequency [Hz]', ...
+    'Max Frequency [Hz]'}, ...
+    'Settings', ...
+    [1 50], ...
+    { ...
+    'CFD Surface A vs B', ...
+    '0', ...
+    '10', ...
+    '75', ...
+    '100', ...
+    '20000'});
+
+if isempty(answer), return; end
+
+plotTitle = answer{1};
+tStart = str2double(answer{2});
+tEnd   = str2double(answer{3});
+
+df_desired = str2double(answer{4});
+fmin = str2double(answer{5});
+fmax = str2double(answer{6});
+
+%% ============================================================
+% STORAGE
+%% ============================================================
+
+A_sig = cell(length(aFiles),1);
+A_time = cell(length(aFiles),1);
+
+B_sig = cell(length(bFiles),1);
+B_time = cell(length(bFiles),1);
+
+%% ============================================================
+% TIME HISTORY PLOT
+%% ============================================================
+
+figure(1); hold on; grid on;
+title([plotTitle ' - Time History']);
+xlabel('Time [s]');
+ylabel('Pressure Mean [Pa]');
+
+%% ============================================================
+% PROCESS DATASET A
+%% ============================================================
+
+for i = 1:length(aFiles)
+
+    T = readtable(fullfile(aPath,aFiles{i}), ...
+        'VariableNamingRule','preserve');
+
+    t = T.time;
+    p = T.pressure_mean;
+
+    mask = t >= tStart & t <= tEnd;
+
+    t = t(mask);
+    p = p(mask) - mean(p(mask));
+
+    A_time{i} = t;
+    A_sig{i} = p;
+
+    k = mod(i-1,nColors)+1;
+    lab = baseLAB(k,:);
+    lab(1) = lab(1) + Lshift(1);
+
+    c = max(min(lab2rgb(lab),1),0);
+
+    plot(t,p,'-','LineWidth',1.2, ...
+        'Color',c, ...
+        'DisplayName',['CFD A ' erase(aFiles{i},'.csv')]);
+end
+
+%% ============================================================
+% PROCESS DATASET B
+%% ============================================================
+
+for i = 1:length(bFiles)
+
+    T = readtable(fullfile(bPath,bFiles{i}), ...
+        'VariableNamingRule','preserve');
+
+    t = T.time;
+    p = T.pressure_mean;
+
+    mask = t >= tStart & t <= tEnd;
+
+    t = t(mask);
+    p = p(mask) - mean(p(mask));
+
+    B_time{i} = t;
+    B_sig{i} = p;
+
+    k = mod(i-1,nColors)+1;
+    lab = baseLAB(k,:);
+    lab(1) = lab(1) + Lshift(2);
+
+    c = max(min(lab2rgb(lab),1),0);
+
+    plot(t,p,'-','LineWidth',1.4, ...
+        'Color',c, ...
+        'DisplayName',['CFD B ' erase(bFiles{i},'.csv')]);
+end
+
+legend('show');
+
+%% ============================================================
+% FFT FUNCTION
+%% ============================================================
+
+computeNBFFT = @(sig,fs) localFFT(sig,fs,df_desired,PREF);
+
+%% ============================================================
+% NARROWBAND FFT
+%% ============================================================
+
+figure(2); hold on; grid on;
+title([plotTitle ' - Narrowband SPL']);
+xlabel('Frequency [Hz]');
+ylabel('SPL [dB re 20 \muPa]');
+set(gca,'XScale','log');
+
+%% DATASET A FFT
+for i = 1:length(A_sig)
+
+    fs = 1/mean(diff(A_time{i}));
+
+    [f,NB] = computeNBFFT(A_sig{i},fs);
+
+    k = mod(i-1,nColors)+1;
+    lab = baseLAB(k,:);
+    lab(1) = lab(1) + Lshift(1);
+
+    c = max(min(lab2rgb(lab),1),0);
+
+    semilogx(f,NB,'LineWidth',2, ...
+        'Color',c, ...
+        'DisplayName',['CFD A ' erase(aFiles{i},'.csv')]);
+end
+
+%% DATASET B FFT
+for i = 1:length(B_sig)
+
+    fs = 1/mean(diff(B_time{i}));
+
+    [f,NB] = computeNBFFT(B_sig{i},fs);
+
+    k = mod(i-1,nColors)+1;
+    lab = baseLAB(k,:);
+    lab(1) = lab(1) + Lshift(2);
+
+    c = max(min(lab2rgb(lab),1),0);
+
+    semilogx(f,NB,'--','LineWidth',2, ...
+        'Color',c, ...
+        'DisplayName',['CFD B ' erase(bFiles{i},'.csv')]);
+end
+
+xlim([fmin fmax]);
+legend('show','Location','southoutside','NumColumns',2);
+
+%% ============================================================
+% PSD
+%% ============================================================
+
+figure(3); hold on; grid on;
+title([plotTitle ' - PSD']);
+xlabel('Frequency [Hz]');
+ylabel('PSD [dB/Hz]');
+set(gca,'XScale','log');
+
+%% DATASET A PSD
+for i = 1:length(A_sig)
+
+    seg = floor(length(A_sig{i})/8);
+    w = hann(seg);
+
+    fs = 1/mean(diff(A_time{i}));
+
+    [P,f] = pwelch(A_sig{i}, w, round(seg/2), [], fs);
+
+    k = mod(i-1,nColors)+1;
+    lab = baseLAB(k,:);
+    lab(1) = lab(1) + Lshift(1);
+
+    c = max(min(lab2rgb(lab),1),0);
+
+    semilogx(f,10*log10(P),'LineWidth',2, ...
+        'Color',c, ...
+        'DisplayName',['CFD A ' erase(aFiles{i},'.csv')]);
+end
+
+%% DATASET B PSD
+for i = 1:length(B_sig)
+
+    seg = floor(length(B_sig{i})/8);
+    w = hann(seg);
+
+    fs = 1/mean(diff(B_time{i}));
+
+    [P,f] = pwelch(B_sig{i}, w, round(seg/2), [], fs);
+
+    k = mod(i-1,nColors)+1;
+    lab = baseLAB(k,:);
+    lab(1) = lab(1) + Lshift(2);
+
+    c = max(min(lab2rgb(lab),1),0);
+
+    semilogx(f,10*log10(P),'--','LineWidth',2, ...
+        'Color',c, ...
+        'DisplayName',['CFD B ' erase(bFiles{i},'.csv')]);
+end
+
+xlim([fmin fmax]);
+legend('show','Location','southoutside','NumColumns',2);
+
+%% ============================================================
+% LOCAL FFT FUNCTION
+%% ============================================================
+
+function [f,NB] = localFFT(signal,fs,df_desired,PREF)
+
+signal = signal(:);
+
+Nfft = round(fs/df_desired);
+
+if mod(Nfft,2) ~= 0
+    Nfft = Nfft + 1;
+end
+
+window = hann(Nfft);
+nBlocks = floor(length(signal)/Nfft);
+
+if nBlocks < 2
+    error('Signal too short for FFT resolution.');
+end
+
+spec = zeros(Nfft,nBlocks);
+
+for k = 1:nBlocks
+    idx1 = (k-1)*Nfft + 1;
+    idx2 = k*Nfft;
+
+    x = signal(idx1:idx2);
+    X = fft(x .* window);
+
+    spec(:,k) = 2*abs(X)/Nfft;
+end
+
+Xavg = mean(spec,2);
+
+f = (0:Nfft/2)' * (fs/Nfft);
+
+NB = 20*log10(Xavg(1:Nfft/2+1)/PREF);
+
+end

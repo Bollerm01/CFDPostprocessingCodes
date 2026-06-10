@@ -52,7 +52,7 @@ for csv_file in csv_files:
         )
 
     # Insert between columns B and C
-    df.insert(2, "time2", time_values)
+    df.insert(2, "time", time_values)
 
     # Overwrite original file
     df.to_csv(csv_file, index=True)
