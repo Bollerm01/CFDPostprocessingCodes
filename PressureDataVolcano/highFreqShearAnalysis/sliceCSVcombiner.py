@@ -3,18 +3,30 @@
 Process DAT files and combine variables per location into CSVs.
 
 Naming convention: [Line Location]_[Plane].[Variable].dat
-- Only processes planes: _MP
+- Only processes planes: _mid, _zWp25, _zWp75
 - Ignores variable: coords
-- Only extracts the probe numbers specified via --probes
+- Extracts probe numbers defined per-location in a JSON config file
 - Combines all variables for a given location+plane into one CSV
 - Renames selected probe columns to: [3-digit probe number]_[variable]
 - Saves CSVs to a 'csv_output' subfolder within the DAT folder
 
 Usage:
-    python process_dat_files.py /path/to/dat/folder --probes 0 5 23 67 99
+    python process_dat_files.py /path/to/dat/folder --config probes.json
+
+Config file format (probes.json):
+    {
+        "LineA":  [0, 5, 23, 67, 99],
+        "LineB":  [1, 12, 34, 56, 78],
+        "default": [0, 1, 2, 3, 4]
+    }
+
+    Keys are location names as they appear in the DAT filenames.
+    The optional "default" key is used for any location not explicitly listed.
+    If a location has no entry and no default, it is skipped with a warning.
 """
 
 import argparse
+import json
 import re
 import sys
 from collections import defaultdict
@@ -26,9 +38,9 @@ import pandas as pd
 
 # --- Configuration -----------------------------------------------------------
 
-ALLOWED_PLANES = {"_MP"}
+ALLOWED_PLANES   = {"_mid", "_zWp25", "_zWp75"}
 IGNORED_VARIABLES = {"coords"}
-PROBE_PATTERN = re.compile(r"^probe(\d+)$")
+PROBE_PATTERN    = re.compile(r"^probe(\d+)$")
 OUTPUT_SUBFOLDER = "csv_output"
 
 
@@ -60,7 +72,7 @@ def parse_filename(filename: str):
         return None
 
     location = location_plane[:underscore_idx]
-    plane = location_plane[underscore_idx:]  # includes leading '_'
+    plane    = location_plane[underscore_idx:]  # includes leading '_'
 
     if plane not in ALLOWED_PLANES:
         return None
@@ -69,6 +81,52 @@ def parse_filename(filename: str):
         return None
 
     return location, plane, variable
+
+
+def load_probe_config(config_path: Path) -> dict[str, set[int]]:
+    """
+    Load and validate a JSON probe config file.
+
+    Returns a dict mapping location name (or "default") -> set of probe ints.
+    """
+    try:
+        raw = json.loads(config_path.read_text())
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"Invalid JSON in config file: {exc}") from exc
+
+    if not isinstance(raw, dict):
+        raise ValueError("Config file must be a JSON object mapping location names to probe lists.")
+
+    result: dict[str, set[int]] = {}
+    for location, probes in raw.items():
+        if not isinstance(probes, list) or not all(isinstance(p, int) for p in probes):
+            raise ValueError(f"Probe list for '{location}' must be a JSON array of integers.")
+        if len(probes) != 5:
+            raise ValueError(
+                f"Exactly 5 probe numbers required for '{location}'; got {len(probes)}."
+            )
+        if len(set(probes)) != len(probes):
+            raise ValueError(f"Duplicate probe numbers found for '{location}'.")
+        for p in probes:
+            if not (0 <= p <= 99):
+                raise ValueError(
+                    f"Probe number {p} for '{location}' is out of range (0–99)."
+                )
+        result[location] = set(probes)
+
+    return result
+
+
+def get_probes_for_location(location: str, probe_config: dict[str, set[int]]) -> set[int] | None:
+    """
+    Return the probe set for a location, falling back to 'default' if present.
+    Returns None if neither the location nor 'default' is configured.
+    """
+    if location in probe_config:
+        return probe_config[location]
+    if "default" in probe_config:
+        return probe_config["default"]
+    return None
 
 
 def read_dat_file(filepath: Path) -> pd.DataFrame:
@@ -126,24 +184,9 @@ def select_and_rename_probes(df: pd.DataFrame, variable: str, probe_numbers: set
     return df[["time"] + selected_probe_cols]
 
 
-def validate_probes(probe_numbers: list[int]) -> set[int]:
-    """Validate that probe numbers are in range 0–99 and there are exactly 5."""
-    if len(probe_numbers) != 5:
-        raise ValueError(f"Exactly 5 probe numbers required; got {len(probe_numbers)}.")
-    for p in probe_numbers:
-        if not (0 <= p <= 99):
-            raise ValueError(f"Probe number {p} is out of range (0–99).")
-    if len(set(probe_numbers)) != len(probe_numbers):
-        raise ValueError("Duplicate probe numbers are not allowed.")
-    return set(probe_numbers)
-
-
 # --- Core processing ---------------------------------------------------------
 
-def process_folder(dat_folder: Path, probe_numbers: set[int]) -> None:
-    probe_display = ", ".join(f"{p:03d}" for p in sorted(probe_numbers))
-    print(f"Selected probes: {probe_display}\n")
-
+def process_folder(dat_folder: Path, probe_config: dict[str, set[int]]) -> None:
     # Collect DAT files grouped by (location, plane)
     groups: dict[tuple[str, str], list[tuple[str, Path]]] = defaultdict(list)
 
@@ -172,7 +215,18 @@ def process_folder(dat_folder: Path, probe_numbers: set[int]) -> None:
     # Process each (location, plane) group
     for (location, plane), var_files in sorted(groups.items()):
         group_key = f"{location}{plane}"
-        print(f"Processing group: {group_key}")
+
+        probe_numbers = get_probes_for_location(location, probe_config)
+        if probe_numbers is None:
+            print(
+                f"  WARNING: No probe config for location '{location}' and no 'default' set; "
+                f"skipping group {group_key}.\n",
+                file=sys.stderr,
+            )
+            continue
+
+        probe_display = ", ".join(f"{p:03d}" for p in sorted(probe_numbers))
+        print(f"Processing group: {group_key}  (probes: {probe_display})")
 
         merged_df: pd.DataFrame | None = None
 
@@ -194,7 +248,7 @@ def process_folder(dat_folder: Path, probe_numbers: set[int]) -> None:
                 )
                 continue
 
-            # Check that the requested probes actually exist in this file
+            # Warn about any requested probes missing from this file
             available = {int(m.group(1)) for c in df.columns if (m := PROBE_PATTERN.match(c))}
             missing = probe_numbers - available
             if missing:
@@ -236,12 +290,19 @@ def process_folder(dat_folder: Path, probe_numbers: set[int]) -> None:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Combine DAT probe files into per-location CSVs, extracting specified probes.",
+        description="Combine DAT probe files into per-location CSVs with per-location probe selection.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
+            "Config file format (probes.json):\n"
+            "  {\n"
+            '      "LineA":   [0, 5, 23, 67, 99],\n'
+            '      "LineB":   [1, 12, 34, 56, 78],\n'
+            '      "default": [0, 1, 2, 3, 4]\n'
+            "  }\n\n"
+            "  Keys are location names as they appear in the DAT filenames.\n"
+            '  The optional "default" key applies to any unlisted location.\n\n'
             "Examples:\n"
-            "  python process_dat_files.py /data/runs --probes 0 5 23 67 99\n"
-            "  python process_dat_files.py /data/runs --probes 1 2 3 4 5\n"
+            "  python process_dat_files.py /data/runs --config probes.json\n"
         ),
     )
     parser.add_argument(
@@ -250,12 +311,11 @@ def main():
         help="Path to the folder containing the DAT files.",
     )
     parser.add_argument(
-        "--probes",
-        type=int,
-        nargs=5,
+        "--config",
+        type=Path,
         required=True,
-        metavar=("P1", "P2", "P3", "P4", "P5"),
-        help="Exactly 5 probe numbers to extract (0–99), e.g. --probes 0 5 23 67 99",
+        metavar="FILE",
+        help="JSON config file mapping location names to lists of 5 probe numbers (0–99).",
     )
     args = parser.parse_args()
 
@@ -264,14 +324,26 @@ def main():
         print(f"ERROR: '{dat_folder}' is not a directory.", file=sys.stderr)
         sys.exit(1)
 
+    if not args.config.is_file():
+        print(f"ERROR: Config file '{args.config}' not found.", file=sys.stderr)
+        sys.exit(1)
+
     try:
-        probe_numbers = validate_probes(args.probes)
+        probe_config = load_probe_config(args.config)
     except ValueError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         sys.exit(1)
 
+    # Print the loaded config so the user can verify it
+    print("Probe config loaded:")
+    for loc, probes in sorted(probe_config.items()):
+        probe_display = ", ".join(f"{p:03d}" for p in sorted(probes))
+        label = f"{loc}" if loc != "default" else "default (fallback)"
+        print(f"  {label}: [{probe_display}]")
+    print()
+
     print(f"Scanning folder: {dat_folder}\n")
-    process_folder(dat_folder, probe_numbers)
+    process_folder(dat_folder, probe_config)
 
 
 if __name__ == "__main__":
