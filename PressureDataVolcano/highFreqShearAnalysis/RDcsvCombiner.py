@@ -4,6 +4,7 @@ import re
 from pathlib import Path
 import pandas as pd
 
+
 # ---------------------------------------------------------------------
 # USER INPUT
 # ---------------------------------------------------------------------
@@ -12,6 +13,8 @@ dat_folder = Path(input("Enter DAT folder path: ").strip()).resolve()
 if not dat_folder.is_dir():
     raise RuntimeError(f"Folder does not exist: {dat_folder}")
 
+# Output structure:
+# combined_csvs/<plane>/<location>.csv
 output_root = dat_folder / "combined_csvs"
 output_root.mkdir(exist_ok=True)
 
@@ -26,13 +29,15 @@ pattern = re.compile(
     re.IGNORECASE,
 )
 
-# Key = (location, plane)
-combined_data = {}
+# Store lists of DataFrames (FAST APPROACH)
+data_store = {}  # key = (location, plane)
 
 # ---------------------------------------------------------------------
 # READ FILES
 # ---------------------------------------------------------------------
-for file in sorted(dat_folder.glob("*.dat")):
+files = sorted(dat_folder.glob("*.dat"))
+
+for file in files:
 
     match = pattern.match(file.name)
     if not match:
@@ -54,79 +59,69 @@ for file in sorted(dat_folder.glob("*.dat")):
             engine="python"
         )
 
-        # Remove leading '#' from first column header
-        df.columns = [c.lstrip('#').strip() for c in df.columns]
+        # Fix header like "# time"
+        df.columns = [c.lstrip("#").strip() for c in df.columns]
 
     except Exception as e:
         print(f"Skipping {file.name}: {e}")
         continue
 
-    time_col = next(
-        (c for c in df.columns if c.lower() == "time"),
-        None
-    )
+    # Identify time column
+    time_col = next((c for c in df.columns if c.lower() == "time"), None)
 
     if time_col is None:
-        print(f"No time column found in {file.name}")
+        print(f"No time column in {file.name}, skipping.")
         continue
 
+    # Rename probe columns
     rename_map = {}
 
     for col in df.columns:
-
-        probe_match = re.match(
-            r"probe(\d+)",
-            col,
-            re.IGNORECASE
-        )
-
-        if probe_match:
-            probe_num = int(probe_match.group(1))
-
-            rename_map[col] = (
-                f"{probe_num:03d}_{variable}"
-            )
+        m = re.match(r"probe(\d+)", col, re.IGNORECASE)
+        if m:
+            probe_num = int(m.group(1))
+            rename_map[col] = f"{probe_num:03d}_{variable}"
 
     df = df.rename(columns=rename_map)
 
+    # Keep only time + probes
     keep_cols = [time_col] + list(rename_map.values())
     df = df[keep_cols]
 
+    # IMPORTANT: set index for fast alignment
+    df = df.set_index(time_col)
+
     key = (location, plane)
 
-    if key not in combined_data:
-        combined_data[key] = df
-    else:
-        combined_data[key] = pd.merge(
-            combined_data[key],
-            df,
-            on=time_col,
-            how="outer"
-        )
+    data_store.setdefault(key, []).append(df)
 
 # ---------------------------------------------------------------------
-# WRITE OUTPUTS
+# COMBINE + WRITE OUTPUT
 # ---------------------------------------------------------------------
-for (location, plane), df in combined_data.items():
+for (location, plane), df_list in data_store.items():
 
+    print(f"Combining {location} | {plane}")
+
+    # FAST CONCAT (no repeated merges)
+    combined = pd.concat(df_list, axis=1, join="outer")
+
+    # Restore time column
+    combined = combined.reset_index()
+
+    # Clean column ordering (time first)
+    time_col = combined.columns[0]
+    other_cols = sorted([c for c in combined.columns if c != time_col])
+
+    combined = combined[[time_col] + other_cols]
+
+    # Output folder per plane
     plane_folder = output_root / plane
     plane_folder.mkdir(exist_ok=True)
 
-    time_col = next(
-        (c for c in df.columns if c.lower() == "time"),
-        df.columns[0]
-    )
-
-    probe_cols = sorted(
-        [c for c in df.columns if c != time_col]
-    )
-
-    df = df[[time_col] + probe_cols]
-
     output_file = plane_folder / f"{location}.csv"
 
-    df.to_csv(output_file, index=False)
+    combined.to_csv(output_file, index=False)
 
     print(f"Saved {output_file}")
 
-print("\nFinished.")
+print("\nDone.")
