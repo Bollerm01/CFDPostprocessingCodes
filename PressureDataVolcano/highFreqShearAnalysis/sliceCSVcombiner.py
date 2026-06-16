@@ -38,7 +38,7 @@ import pandas as pd
 
 # --- Configuration -----------------------------------------------------------
 
-ALLOWED_PLANES   = {"_MP"}
+ALLOWED_PLANES   = {"_mid", "_zWp25", "_zWp75"}
 IGNORED_VARIABLES = {"coords"}
 PROBE_PATTERN    = re.compile(r"^probe(\d+)$")
 OUTPUT_SUBFOLDER = "csv_output"
@@ -83,7 +83,7 @@ def parse_filename(filename: str):
     return location, plane, variable
 
 
-def load_probe_config(config_path: Path) -> dict[str, set[int]]:
+def load_probe_config(config_path: Path) -> dict[str, list[int]]:
     """
     Load and validate a JSON probe config file.
 
@@ -112,12 +112,12 @@ def load_probe_config(config_path: Path) -> dict[str, set[int]]:
                 raise ValueError(
                     f"Probe number {p} for '{location}' is out of range (0–99)."
                 )
-        result[location] = set(probes)
+        result[location] = probes  # list — order is preserved for CSV column ordering
 
     return result
 
 
-def get_probes_for_location(location: str, probe_config: dict[str, set[int]]) -> set[int] | None:
+def get_probes_for_location(location: str, probe_config: dict[str, list[int]]) -> list[int] | None:
     """
     Return the probe set for a location, falling back to 'default' if present.
     Returns None if neither the location nor 'default' is configured.
@@ -163,22 +163,24 @@ def read_dat_file(filepath: Path) -> pd.DataFrame:
     return df
 
 
-def select_and_rename_probes(df: pd.DataFrame, variable: str, probe_numbers: set[int]) -> pd.DataFrame:
+def select_and_rename_probes(df: pd.DataFrame, variable: str, probe_numbers: list[int]) -> pd.DataFrame:
     """
     Keep only the time column and the specified probe columns, renaming
     each selected probe from 'probeNNNNN' to 'NNN_variable'.
+    Columns are returned in the order probe_numbers was specified.
     """
-    rename_map = {}
-    selected_probe_cols = []
+    # Build a lookup of probe number -> current column name
+    available = {int(m.group(1)): col for col in df.columns if (m := PROBE_PATTERN.match(col))}
 
-    for col in df.columns:
-        m = PROBE_PATTERN.match(col)
-        if m:
-            num = int(m.group(1))
-            if num in probe_numbers:
-                new_name = f"{num:03d}_{variable}"
-                rename_map[col] = new_name
-                selected_probe_cols.append(new_name)
+    rename_map = {}
+    selected_probe_cols = []  # built in probe_numbers order
+
+    for num in probe_numbers:
+        if num in available:
+            original = available[num]
+            new_name = f"{num:03d}_{variable}"
+            rename_map[original] = new_name
+            selected_probe_cols.append(new_name)
 
     df = df.rename(columns=rename_map)
     return df[["time"] + selected_probe_cols]
@@ -225,7 +227,7 @@ def process_folder(dat_folder: Path, probe_config: dict[str, set[int]]) -> None:
             )
             continue
 
-        probe_display = ", ".join(f"{p:03d}" for p in sorted(probe_numbers))
+        probe_display = ", ".join(f"{p:03d}" for p in probe_numbers)
         print(f"Processing group: {group_key}  (probes: {probe_display})")
 
         merged_df: pd.DataFrame | None = None
@@ -249,8 +251,8 @@ def process_folder(dat_folder: Path, probe_config: dict[str, set[int]]) -> None:
                 continue
 
             # Warn about any requested probes missing from this file
-            available = {int(m.group(1)) for c in df.columns if (m := PROBE_PATTERN.match(c))}
-            missing = probe_numbers - available
+            available_nums = {int(m.group(1)) for c in df.columns if (m := PROBE_PATTERN.match(c))}
+            missing = [p for p in probe_numbers if p not in available_nums]
             if missing:
                 missing_fmt = ", ".join(f"{p:03d}" for p in sorted(missing))
                 print(
@@ -273,9 +275,11 @@ def process_folder(dat_folder: Path, probe_config: dict[str, set[int]]) -> None:
         # Sort by time for a clean output
         merged_df = merged_df.sort_values("time").reset_index(drop=True)
 
-        # Sort data columns by probe number then variable name
+        # Order data columns: group by variable (alphabetical), within each variable
+        # follow the probe order specified in the config.
         data_cols = [c for c in merged_df.columns if c != "time"]
-        data_cols.sort(key=lambda c: (int(c.split("_")[0]), c.split("_", 1)[1]))
+        probe_order = {p: i for i, p in enumerate(probe_numbers)}
+        data_cols.sort(key=lambda c: (c.split("_", 1)[1], probe_order.get(int(c.split("_")[0]), 999)))
         merged_df = merged_df[["time"] + data_cols]
 
         csv_name = f"{group_key}.csv"
@@ -337,7 +341,7 @@ def main():
     # Print the loaded config so the user can verify it
     print("Probe config loaded:")
     for loc, probes in sorted(probe_config.items()):
-        probe_display = ", ".join(f"{p:03d}" for p in sorted(probes))
+        probe_display = ", ".join(f"{p:03d}" for p in probes)
         label = f"{loc}" if loc != "default" else "default (fallback)"
         print(f"  {label}: [{probe_display}]")
     print()
