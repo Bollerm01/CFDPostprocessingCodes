@@ -14,6 +14,7 @@ import argparse
 import re
 import sys
 from collections import defaultdict
+from io import StringIO
 from pathlib import Path
 
 import pandas as pd
@@ -70,17 +71,36 @@ def parse_filename(filename: str):
 
 def read_dat_file(filepath: Path) -> pd.DataFrame:
     """
-    Read a whitespace-delimited DAT file.
+    Read a whitespace-delimited DAT file where the header line is prefixed
+    with '#'.
 
-    The file is assumed to have a header row followed by data rows.
-    Lines starting with '#' are treated as comments and skipped.
+    Format example:
+        #    time    probe00000    probe00001    ...
+           6.119e-02   6.064e+02   5.410e+02   ...
+
+    The '#' is stripped from the header and used as column names; all
+    subsequent non-comment lines are data rows.
     """
-    return pd.read_csv(
-        filepath,
-        sep=r"\s+",
-        comment="#",
-        engine="python",
-    )
+    header = None
+    data_lines = []
+
+    with filepath.open() as fh:
+        for line in fh:
+            stripped = line.strip()
+            if not stripped:
+                continue
+            if stripped.startswith("#"):
+                # Use the LAST comment line before data as the header
+                header = stripped.lstrip("#").split()
+            else:
+                data_lines.append(stripped)
+
+    if header is None:
+        raise ValueError(f"No header line (starting with '#') found in {filepath}")
+
+    data_text = "\n".join(data_lines)
+    df = pd.read_csv(StringIO(data_text), sep=r"\s+", header=None, names=header, engine="python")
+    return df
 
 
 def rename_probe_columns(df: pd.DataFrame, variable: str) -> pd.DataFrame:
