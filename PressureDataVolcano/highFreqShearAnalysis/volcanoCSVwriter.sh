@@ -1,6 +1,6 @@
 #!/bin/bash
 
-module purge 
+module purge
 module load volcano/2025.10
 
 TARGET_DIR="$1"
@@ -30,14 +30,78 @@ for file in "$TARGET_DIR"/*.volcano; do
 
     echo "Processing $file..."
 
+    ###########################################################
+    # Select probe numbers based on filename
+    ###########################################################
+
+    case "$base" in
+
+        # xL0p03 through xL0p59
+        *xL0p03*|*xL0p16*|*xL0p30*|*xL0p43*|*xL0p59*)
+            probes=(333 291 250 208 166)
+            ;;
+
+        # xL0p73
+        *xL0p73*)
+            probes=(311 269 227 186 144)
+            ;;
+
+        # xL0p86
+        *xL0p86*)
+            probes=(261 220 178 136 95)
+            ;;
+
+        # xL1p2 must come before xL1
+        *xL1p2*)
+            probes=(132 99 66 33 0)
+            ;;
+
+        # xL1
+        *xL1*)
+            probes=(208 166 125 83 42)
+            ;;
+
+        *)
+            echo "WARNING: No probe mapping defined for $base" | tee -a "$ERROR_LOG"
+            continue
+            ;;
+    esac
+
+    ###########################################################
+    # Build monitor variable list
+    ###########################################################
+
+    vars=()
+
+    for p in "${probes[@]}"; do
+
+        # Ensure 3-digit formatting (000, 033, 099, etc.)
+        p=$(printf "%03d" "$p")
+
+        vars+=(
+            "${p}_density"
+            "${p}_machnumber"
+            "${p}_machnumberavg"
+            "${p}_pressure"
+            "${p}_pressureavg"
+            "${p}_temperature"
+            "${p}_velocitymag"
+            "${p}_velocitymagavg"
+            "${p}_velocityx"
+            "${p}_velocityy"
+            "${p}_velocityz"
+        )
+
+    done
+
+    ###########################################################
+    # Run monitor
+    ###########################################################
+
     if monitor \
         -F "$file" \
         -X time \
-        -Y 000_density 000_machnumber 000_machnumberavg 000_pressure 000_pressureavg 000_temperature 000_velocitymag 000_velocitymagavg  000_velocityx  000_velocityy  000_velocityz \
-        125_density 125_machnumber 125_machnumberavg 125_pressure 125_pressureavg 125_temperature 125_velocitymag 125_velocitymagavg  125_velocityx  125_velocityy  125_velocityz \
-        250_density 250_machnumber 250_machnumberavg 250_pressure 250_pressureavg 250_temperature 250_velocitymag 250_velocitymagavg  250_velocityx  250_velocityy  250_velocityz \
-        374_density 374_machnumber 374_machnumberavg 374_pressure 374_pressureavg 374_temperature 374_velocitymag 374_velocitymagavg  374_velocityx  374_velocityy  374_velocityz \
-        499_density 499_machnumber 499_machnumberavg 499_pressure 499_pressureavg 499_temperature 499_velocitymag 499_velocitymagavg  499_velocityx  499_velocityy  499_velocityz \
+        -Y "${vars[@]}" \
         -C ; then
 
         echo "SUCCESS: $file"
@@ -49,6 +113,7 @@ for file in "$TARGET_DIR"/*.volcano; do
         continue
 
     fi
+
 done
 
 mv "$TARGET_DIR"/*.csv "$OUTPUT_DIR"/
