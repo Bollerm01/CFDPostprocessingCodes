@@ -97,49 +97,66 @@ for location, items in files_by_location.items():
     # -------------------------------------------------------------
     for plane, dfs in plane_store.items():
 
-        print(f"  Combining plane: {plane}")
+    print(f"  Combining plane: {plane}")
 
-        # master time from first dataset
-        master_time = np.sort(dfs[0].iloc[:, 0].values)
+    # -------------------------------------------------------------
+    # 1. BUILD GLOBAL TIME BASE (CRITICAL FIX)
+    # -------------------------------------------------------------
+    all_times = np.concatenate([df.iloc[:, 0].values for df in dfs])
+    master_time = np.unique(np.sort(all_times))
 
-        aligned = []
+    aligned = []
 
-        for df in dfs:
+    # -------------------------------------------------------------
+    # 2. INTERPOLATE EACH DATASET ONTO GLOBAL TIME
+    # -------------------------------------------------------------
+    for df in dfs:
 
-            time_col = df.columns[0]
+        time_col = df.columns[0]
 
-            df = df.sort_values(time_col)
+        df = df.sort_values(time_col)
 
-            t = df[time_col].values
+        t = df[time_col].values
 
-            df_interp = pd.DataFrame()
-            df_interp["time"] = master_time
+        df_interp = pd.DataFrame()
+        df_interp["time"] = master_time
 
-            for col in df.columns[1:]:
-                df_interp[col] = np.interp(master_time, t, df[col].values)
+        for col in df.columns[1:]:
 
-            aligned.append(df_interp.set_index("time"))
+            y = df[col].values
 
-        combined = pd.concat(aligned, axis=1).reset_index()
+            # SAFE interpolation with endpoint preservation
+            interp = np.interp(master_time, t, y)
 
-        # reorder columns
-        cols = combined.columns.tolist()
-        combined = combined[[cols[0]] + sorted(cols[1:])]
+            # FIX: preserve true end behavior (no flattening)
+            interp[master_time < t[0]] = y[0]
+            interp[master_time > t[-1]] = y[-1]
 
-        # ---------------------------------------------------------
-        # WRITE OUTPUT
-        # ---------------------------------------------------------
-        out_dir = output_root / plane
-        out_dir.mkdir(exist_ok=True)
+            df_interp[col] = interp
 
-        out_file = out_dir / f"{location}.csv"
-        combined.to_csv(out_file, index=False)
+        aligned.append(df_interp.set_index("time"))
 
-        print(f"  Saved: {out_file}")
+    # -------------------------------------------------------------
+    # 3. COMBINE WITHOUT LOSING COLUMNS
+    # -------------------------------------------------------------
+    combined = pd.concat(aligned, axis=1)
 
-        # free memory explicitly
-        del aligned
-        del combined
+    combined = combined.reset_index()
+
+    # reorder
+    cols = combined.columns.tolist()
+    combined = combined[[cols[0]] + sorted(cols[1:])]
+
+    # -------------------------------------------------------------
+    # 4. WRITE OUTPUT
+    # -------------------------------------------------------------
+    out_dir = output_root / plane
+    out_dir.mkdir(exist_ok=True)
+
+    out_file = out_dir / f"{location}.csv"
+    combined.to_csv(out_file, index=False)
+
+    print(f"  Saved: {out_file}")
 
     # clear per-location memory
     del plane_store
