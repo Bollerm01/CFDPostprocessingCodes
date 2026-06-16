@@ -37,7 +37,7 @@ for file in "$TARGET_DIR"/*.volcano; do
     case "$base" in
 
         # xL0p03 through xL0p59
-        *xL0p03*|*xL0p16*|*xL0p30*|*xL0p43*|*xL0p59*)
+        *xL0p03*|*xL0p1*|*xL0p3*|*xL0p4*|*xL0p5*)
             probes=(333 291 250 208 166)
             ;;
 
