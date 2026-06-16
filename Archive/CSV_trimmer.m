@@ -1,4 +1,6 @@
 %% ============================================================
+% ARCHIVED DUE TO NO LONGER USING EVEN SPLIT ACROSS CAVITY (Split is across shear layer w specified probe #s)
+% 
 % Trim Probe CSVs to Selected Probe Numbers
 %
 % Keeps:
