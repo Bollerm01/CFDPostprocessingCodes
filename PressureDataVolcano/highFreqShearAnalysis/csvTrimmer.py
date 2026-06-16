@@ -208,15 +208,27 @@ def process_folder(csv_folder: Path, probe_config: dict[str, list[int]]) -> None
             print(f"  ERROR reading {filepath.name}: {exc}", file=sys.stderr)
             continue
 
-        # Normalise column names to lowercase
-        df.columns = [c.lower() for c in df.columns]
+        # Normalize column names
+        df.columns = [c.strip().lower() for c in df.columns]
 
-        if "time" not in df.columns:
+        # --- robust time handling ---
+        time_aliases = ["time", "time(s)", "t", "iteration", "iter", "iterations"]
+
+        found_time = None
+        for c in df.columns:
+            if c in time_aliases:
+                found_time = c
+                break
+
+        if found_time is None:
             print(
-                f"  WARNING: 'time' column not found in {filepath.name}; skipping.",
+                f"  WARNING: no time-like column found in {filepath.name}; skipping.",
                 file=sys.stderr,
             )
             continue
+
+        # rename whatever was found → "time"
+        df = df.rename(columns={found_time: "time"})
 
         df = filter_and_reorder(df, probe_numbers)
 
