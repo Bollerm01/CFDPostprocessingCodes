@@ -5,6 +5,7 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 
+
 # ---------------------------------------------------------------------
 # INPUT
 # ---------------------------------------------------------------------
@@ -13,13 +14,14 @@ dat_folder = Path(input("Enter DAT folder path: ").strip()).resolve()
 if not dat_folder.is_dir():
     raise RuntimeError(f"Folder does not exist: {dat_folder}")
 
+
 output_root = dat_folder / "combined_csvs"
 output_root.mkdir(exist_ok=True)
 
 # ---------------------------------------------------------------------
 # SETTINGS
 # ---------------------------------------------------------------------
-VALID_PLANES = {"mid", "zWp25", "zWp75"}
+VALID_PLANES = ["mid", "zWp25", "zWp75"]
 IGNORE_VARIABLES = {"coords"}
 
 pattern = re.compile(
@@ -27,12 +29,11 @@ pattern = re.compile(
     re.IGNORECASE,
 )
 
-# key = (location, plane)
-data_store = {}
+# ---------------------------------------------------------------------
+# INDEX FILES BY LOCATION
+# ---------------------------------------------------------------------
+files_by_location = {}
 
-# ---------------------------------------------------------------------
-# READ FILES
-# ---------------------------------------------------------------------
 for file in sorted(dat_folder.glob("*.dat")):
 
     m = pattern.match(file.name)
@@ -46,98 +47,101 @@ for file in sorted(dat_folder.glob("*.dat")):
     if variable.lower() in IGNORE_VARIABLES:
         continue
 
-    print(f"Reading {file.name}")
+    files_by_location.setdefault(location, []).append((file, plane, variable))
 
-    df = pd.read_csv(file, sep=r"\s+", engine="python")
-    df.columns = [c.lstrip("#").strip() for c in df.columns]
-
-    time_col = next((c for c in df.columns if c.lower() == "time"), None)
-    if time_col is None:
-        continue
-
-    # clean time
-    df[time_col] = pd.to_numeric(df[time_col], errors="coerce")
-    df = df.dropna(subset=[time_col])
-
-    # remove duplicate time rows (critical)
-    df = df.groupby(time_col, as_index=False).mean()
-
-    rename_map = {}
-    for col in df.columns:
-        m2 = re.match(r"probe(\d+)", col, re.IGNORECASE)
-        if m2:
-            rename_map[col] = f"{int(m2.group(1)):03d}_{variable}"
-
-    df = df.rename(columns=rename_map)
-
-    keep_cols = [time_col] + list(rename_map.values())
-    df = df[keep_cols]
-
-    key = (location, plane)
-
-    data_store.setdefault(key, []).append(df)
 
 # ---------------------------------------------------------------------
-# ALIGN + WRITE
+# PROCESS ONE LOCATION AT A TIME (STREAMING)
 # ---------------------------------------------------------------------
-for (location, plane), dfs in data_store.items():
+for location, items in files_by_location.items():
 
-    print(f"Processing {location} | {plane}")
+    print(f"\nProcessing LOCATION: {location}")
 
-    # -------------------------------------------------------------
-    # 1. Choose master time vector (first file)
-    # -------------------------------------------------------------
-    master_time = dfs[0].iloc[:, 0].values
-
-    master_time = np.sort(master_time)
-
-    aligned = []
+    plane_store = {}
 
     # -------------------------------------------------------------
-    # 2. Interpolate every dataset onto master time
+    # Load all planes for this location only
     # -------------------------------------------------------------
-    for df in dfs:
+    for file, plane, variable in items:
 
-        time_col = df.columns[0]
+        print(f"  Reading {file.name}")
 
-        df = df.sort_values(time_col)
+        df = pd.read_csv(file, sep=r"\s+", engine="python")
+        df.columns = [c.lstrip("#").strip() for c in df.columns]
 
-        t = df[time_col].values
+        time_col = next((c for c in df.columns if c.lower() == "time"), None)
+        if time_col is None:
+            continue
 
-        df_interp = pd.DataFrame()
-        df_interp["time"] = master_time
+        df[time_col] = pd.to_numeric(df[time_col], errors="coerce")
+        df = df.dropna(subset=[time_col])
 
-        for col in df.columns[1:]:
+        # enforce unique time 
+        df = df.groupby(time_col, as_index=False).mean()
 
-            df_interp[col] = np.interp(
-                master_time,
-                t,
-                df[col].values
-            )
+        rename_map = {}
+        for col in df.columns:
+            m2 = re.match(r"probe(\d+)", col, re.IGNORECASE)
+            if m2:
+                rename_map[col] = f"{int(m2.group(1)):03d}_{variable}"
 
-        aligned.append(df_interp.set_index("time"))
+        df = df.rename(columns=rename_map)
 
-    # -------------------------------------------------------------
-    # 3. Combine cleanly 
-    # -------------------------------------------------------------
-    combined = pd.concat(aligned, axis=1)
+        keep_cols = [time_col] + list(rename_map.values())
+        df = df[keep_cols]
 
-    combined = combined.reset_index()
-
-    # reorder
-    cols = combined.columns.tolist()
-    cols = [cols[0]] + sorted(cols[1:])
-    combined = combined[cols]
+        plane_store.setdefault(plane, []).append(df)
 
     # -------------------------------------------------------------
-    # 4. Write output
+    # Process each plane independently
     # -------------------------------------------------------------
-    plane_folder = output_root / plane
-    plane_folder.mkdir(exist_ok=True)
+    for plane, dfs in plane_store.items():
 
-    out_file = plane_folder / f"{location}.csv"
-    combined.to_csv(out_file, index=False)
+        print(f"  Combining plane: {plane}")
 
-    print(f"Saved {out_file}")
+        # master time from first dataset
+        master_time = np.sort(dfs[0].iloc[:, 0].values)
+
+        aligned = []
+
+        for df in dfs:
+
+            time_col = df.columns[0]
+
+            df = df.sort_values(time_col)
+
+            t = df[time_col].values
+
+            df_interp = pd.DataFrame()
+            df_interp["time"] = master_time
+
+            for col in df.columns[1:]:
+                df_interp[col] = np.interp(master_time, t, df[col].values)
+
+            aligned.append(df_interp.set_index("time"))
+
+        combined = pd.concat(aligned, axis=1).reset_index()
+
+        # reorder columns
+        cols = combined.columns.tolist()
+        combined = combined[[cols[0]] + sorted(cols[1:])]
+
+        # ---------------------------------------------------------
+        # WRITE OUTPUT
+        # ---------------------------------------------------------
+        out_dir = output_root / plane
+        out_dir.mkdir(exist_ok=True)
+
+        out_file = out_dir / f"{location}.csv"
+        combined.to_csv(out_file, index=False)
+
+        print(f"  Saved: {out_file}")
+
+        # free memory explicitly
+        del aligned
+        del combined
+
+    # clear per-location memory
+    del plane_store
 
 print("\nDone.")
