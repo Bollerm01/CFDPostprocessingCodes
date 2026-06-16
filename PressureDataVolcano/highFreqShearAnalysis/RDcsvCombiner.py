@@ -89,6 +89,9 @@ for file in files:
     df = df[keep_cols]
 
     # IMPORTANT: set index for fast alignment
+    df[time_col] = pd.to_numeric(df[time_col], errors="coerce")
+    df = df.dropna(subset=[time_col])
+    df = df.groupby(time_col, as_index=False).mean()
     df = df.set_index(time_col)
 
     key = (location, plane)
