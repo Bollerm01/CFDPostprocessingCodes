@@ -1,177 +1,211 @@
 #!/usr/bin/env python3
+"""
+Process DAT files and combine variables per location into CSVs.
 
+Naming convention: [Line Location]_[Plane].[Variable].dat
+- Only processes planes: _mid, _zWp25, _zWp75
+- Ignores variable: coords
+- Combines all variables for a given location+plane into one CSV
+- Renames probe columns to: [3-digit probe number]_[variable]
+- Saves CSVs to a 'csv_output' subfolder within the DAT folder
+"""
+
+import argparse
 import re
+import sys
+from collections import defaultdict
 from pathlib import Path
+
 import pandas as pd
-import numpy as np
 
 
-# ---------------------------------------------------------------------
-# INPUT
-# ---------------------------------------------------------------------
-dat_folder = Path(input("Enter DAT folder path: ").strip()).resolve()
+# --- Configuration -----------------------------------------------------------
 
-if not dat_folder.is_dir():
-    raise RuntimeError(f"Folder does not exist: {dat_folder}")
-
-
-# ---------------------------------------------------------------------
-# OUTPUT
-# ---------------------------------------------------------------------
-output_root = dat_folder / "combined_csvs"
-output_root.mkdir(exist_ok=True)
+ALLOWED_PLANES = {"_mid", "_zWp25", "_zWp75"}
+IGNORED_VARIABLES = {"coords"}
+PROBE_PATTERN = re.compile(r"^probe(\d+)$")
+OUTPUT_SUBFOLDER = "csv_output"
 
 
-# ---------------------------------------------------------------------
-# SETTINGS
-# ---------------------------------------------------------------------
-VALID_PLANES = {"mid", "zWp25", "zWp75"}
-IGNORE_VARIABLES = {"coords"}
+# --- Helpers -----------------------------------------------------------------
 
-pattern = re.compile(
-    r"^(?P<location>.+?)_(?P<plane>mid|zWp25|zWp75)\.(?P<variable>[^.]+)\.dat$",
-    re.IGNORECASE,
-)
+def parse_filename(filename: str):
+    """
+    Parse a DAT filename into (location, plane, variable).
+
+    Expected format: [Location]_[Plane].[Variable].dat
+    E.g. "LineA_mid.pressure.dat" -> ("LineA", "_mid", "pressure")
+
+    Returns None if the filename doesn't match or should be skipped.
+    """
+    stem = filename[:-4] if filename.lower().endswith(".dat") else None
+    if stem is None:
+        return None
+
+    # Split on the first '.' to separate location+plane from variable
+    if "." not in stem:
+        return None
+
+    dot_idx = stem.index(".")
+    location_plane = stem[:dot_idx]
+    variable = stem[dot_idx + 1:]
+
+    # Split location_plane into location and plane.
+    # The plane is everything from the LAST underscore onward.
+    underscore_idx = location_plane.rfind("_")
+    if underscore_idx == -1:
+        return None
+
+    location = location_plane[:underscore_idx]
+    plane = location_plane[underscore_idx:]   # includes leading '_'
+
+    if plane not in ALLOWED_PLANES:
+        return None
+
+    if variable in IGNORED_VARIABLES:
+        return None
+
+    return location, plane, variable
 
 
-# ---------------------------------------------------------------------
-# GROUP FILES BY LOCATION (lightweight indexing)
-# ---------------------------------------------------------------------
-files_by_location = {}
+def read_dat_file(filepath: Path) -> pd.DataFrame:
+    """
+    Read a whitespace-delimited DAT file.
 
-for file in sorted(dat_folder.glob("*.dat")):
-
-    m = pattern.match(file.name)
-    if not m:
-        continue
-
-    location = m.group("location")
-    plane = m.group("plane")
-    variable = m.group("variable")
-
-    if variable.lower() in IGNORE_VARIABLES:
-        continue
-
-    files_by_location.setdefault(location, []).append((file, plane, variable))
+    The file is assumed to have a header row followed by data rows.
+    Lines starting with '#' are treated as comments and skipped.
+    """
+    return pd.read_csv(
+        filepath,
+        sep=r"\s+",
+        comment="#",
+        engine="python",
+    )
 
 
-# ---------------------------------------------------------------------
-# PROCESS EACH LOCATION (STREAMING)
-# ---------------------------------------------------------------------
-for location, items in files_by_location.items():
+def rename_probe_columns(df: pd.DataFrame, variable: str) -> pd.DataFrame:
+    """
+    Rename probe columns from 'probeNNNNN' to 'NNN_variable'.
 
-    print(f"Processing LOCATION: {location}")
+    Only renames columns that match the probe pattern; 'time' is left as-is.
+    """
+    rename_map = {}
+    for col in df.columns:
+        m = PROBE_PATTERN.match(col)
+        if m:
+            probe_num = int(m.group(1))
+            rename_map[col] = f"{probe_num:03d}_{variable}"
+    return df.rename(columns=rename_map)
 
-    plane_store = {}
 
-    # -----------------------------------------------------------------
-    # READ FILES FOR THIS LOCATION ONLY
-    # -----------------------------------------------------------------
-    for file, plane, variable in items:
+# --- Core processing ---------------------------------------------------------
 
-        print(f"Reading {file.name}")
+def process_folder(dat_folder: Path) -> None:
+    # Collect DAT files grouped by (location, plane)
+    groups: dict[tuple[str, str], list[tuple[str, Path]]] = defaultdict(list)
 
-        df = pd.read_csv(file, sep=r"\s+", engine="python")
+    dat_files = list(dat_folder.glob("*.dat"))
+    if not dat_files:
+        print(f"No .dat files found in {dat_folder}", file=sys.stderr)
+        return
 
-        # Fix header (# time ...)
-        df.columns = [c.lstrip("#").strip() for c in df.columns]
+    for filepath in sorted(dat_files):
+        parsed = parse_filename(filepath.name)
+        if parsed is None:
+            print(f"  Skipping: {filepath.name}")
+            continue
+        location, plane, variable = parsed
+        groups[(location, plane)].append((variable, filepath))
 
-        time_col = next((c for c in df.columns if c.lower() == "time"), None)
-        if time_col is None:
-            print(f"  Skipping (no time column): {file.name}")
+    if not groups:
+        print("No matching DAT files to process (check plane/variable filters).")
+        return
+
+    # Create output directory
+    output_dir = dat_folder / OUTPUT_SUBFOLDER
+    output_dir.mkdir(exist_ok=True)
+    print(f"Output directory: {output_dir}\n")
+
+    # Process each (location, plane) group
+    for (location, plane), var_files in sorted(groups.items()):
+        group_key = f"{location}{plane}"
+        print(f"Processing group: {group_key}")
+
+        merged_df: pd.DataFrame | None = None
+
+        for variable, filepath in sorted(var_files, key=lambda x: x[0]):
+            print(f"  Reading variable '{variable}' from {filepath.name}")
+            try:
+                df = read_dat_file(filepath)
+            except Exception as exc:
+                print(f"    ERROR reading {filepath.name}: {exc}", file=sys.stderr)
+                continue
+
+            # Normalise column names to lowercase for consistent matching
+            df.columns = [c.lower() for c in df.columns]
+
+            if "time" not in df.columns:
+                print(
+                    f"    WARNING: 'time' column not found in {filepath.name}; skipping.",
+                    file=sys.stderr,
+                )
+                continue
+
+            # Rename probe columns to NNN_variable format
+            df = rename_probe_columns(df, variable)
+
+            # Drop any non-probe, non-time columns that may exist
+            keep_cols = ["time"] + [c for c in df.columns if PROBE_PATTERN.match(c) is False and c != "time"]
+            # Actually keep time + all already-renamed probe cols
+            probe_renamed = [c for c in df.columns if re.match(r"^\d{3}_", c)]
+            df = df[["time"] + probe_renamed]
+
+            if merged_df is None:
+                merged_df = df
+            else:
+                merged_df = pd.merge(merged_df, df, on="time", how="outer")
+
+        if merged_df is None:
+            print(f"  No data merged for group {group_key}; skipping.\n")
             continue
 
-        # Clean time
-        df[time_col] = pd.to_numeric(df[time_col], errors="coerce")
-        df = df.dropna(subset=[time_col])
+        # Sort by time for a clean output
+        merged_df = merged_df.sort_values("time").reset_index(drop=True)
 
-        # Remove duplicate time entries 
-        df = df.groupby(time_col, as_index=False).mean()
+        # Sort data columns (everything except 'time') by probe number then variable
+        data_cols = [c for c in merged_df.columns if c != "time"]
+        data_cols.sort(key=lambda c: (int(c.split("_")[0]), c.split("_", 1)[1]))
+        merged_df = merged_df[["time"] + data_cols]
 
-        # Rename probes → 000_variable format
-        rename_map = {}
-        for col in df.columns:
-            m2 = re.match(r"probe(\d+)", col, re.IGNORECASE)
-            if m2:
-                rename_map[col] = f"{int(m2.group(1)):03d}_{variable}"
+        csv_name = f"{group_key}.csv"
+        csv_path = output_dir / csv_name
+        merged_df.to_csv(csv_path, index=False)
+        print(f"  Saved: {csv_path}  ({len(merged_df)} rows, {len(merged_df.columns)} columns)\n")
 
-        df = df.rename(columns=rename_map)
-
-        keep_cols = [time_col] + list(rename_map.values())
-        df = df[keep_cols]
-
-        plane_store.setdefault(plane, []).append(df)
-
-    # -----------------------------------------------------------------
-    # PROCESS EACH PLANE FOR THIS LOCATION
-    # -----------------------------------------------------------------
-    for plane, dfs in plane_store.items():
-
-        print(f"\n  Processing plane: {plane}")
-
-        # -------------------------------------------------------------
-        # BUILD GLOBAL TIME BASE (FIXES TIME MISMATCH)
-        # -------------------------------------------------------------
-        all_times = np.concatenate([df.iloc[:, 0].values for df in dfs])
-        master_time = np.unique(np.sort(all_times))
-
-        aligned = []
-
-        # -------------------------------------------------------------
-        # INTERPOLATE EACH VARIABLE SET ONTO GLOBAL TIME GRID
-        # -------------------------------------------------------------
-        for df in dfs:
-
-            time_col = df.columns[0]
-
-            df = df.sort_values(time_col)
-
-            t = df[time_col].values
-
-            df_interp = pd.DataFrame()
-            df_interp["time"] = master_time
-
-            for col in df.columns[1:]:
-
-                y = df[col].values
-
-                # Linear interpolation onto master grid
-                interp = np.interp(master_time, t, y)
-
-                # preserve endpoints
-                interp[master_time < t[0]] = y[0]
-                interp[master_time > t[-1]] = y[-1]
-
-                df_interp[col] = interp
-
-            aligned.append(df_interp.set_index("time"))
-
-        # -------------------------------------------------------------
-        # COMBINE ALL VARIABLES CLEANLY
-        # -------------------------------------------------------------
-        combined = pd.concat(aligned, axis=1).reset_index()
-
-        # reorder columns
-        cols = combined.columns.tolist()
-        combined = combined[[cols[0]] + sorted(cols[1:])]
-
-        # -------------------------------------------------------------
-        # WRITE OUTPUT
-        # -------------------------------------------------------------
-        out_dir = output_root / plane
-        out_dir.mkdir(exist_ok=True)
-
-        out_file = out_dir / f"{location}.csv"
-        combined.to_csv(out_file, index=False)
-
-        print(f"  Saved: {out_file}")
-
-        # free memory explicitly
-        del aligned
-        del combined
-
-    # clear location memory before next one
-    del plane_store
+    print("Done.")
 
 
-print("\nDone")
+# --- Entry point -------------------------------------------------------------
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Combine DAT probe files into per-location CSVs."
+    )
+    parser.add_argument(
+        "folder",
+        type=Path,
+        help="Path to the folder containing the DAT files.",
+    )
+    args = parser.parse_args()
+
+    dat_folder = args.folder.resolve()
+    if not dat_folder.is_dir():
+        print(f"ERROR: '{dat_folder}' is not a directory.", file=sys.stderr)
+        sys.exit(1)
+
+    print(f"Scanning folder: {dat_folder}\n")
+    process_folder(dat_folder)
+
+
+if __name__ == "__main__":
+    main()
