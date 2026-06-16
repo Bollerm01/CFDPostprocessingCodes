@@ -115,17 +115,22 @@ def get_probes_for_location(location: str, probe_config: dict[str, list[int]]) -
 
 def filter_and_reorder(df: pd.DataFrame, probe_numbers: list[int]) -> pd.DataFrame:
     """
-    Keep only the time column and columns belonging to the specified probes.
+    Keep the time column, any non-probe passthrough columns (e.g. nondimtime),
+    and columns belonging to the specified probes.
 
-    Columns are reordered so that all variables for probe_numbers[0] come
-    first (sorted alphabetically by variable name), then all for
-    probe_numbers[1], and so on — preserving the probe order from the config.
+    Columns are reordered as:
+        time | <passthrough cols in original order> | <probe cols>
+
+    Probe cols are grouped by probe (in config-specified order), with variables
+    sorted alphabetically within each probe group.
 
     Probe columns are expected to follow the pattern: NNN_variable
     where NNN is a zero-padded (or unpadded) integer.
     """
-    # Parse every non-time column into (probe_number_int, variable, original_col_name)
+    # Separate columns into: time, passthrough (non-probe non-time), and probe cols
+    passthrough_cols: list[str] = []
     probe_cols: dict[int, list[tuple[str, str]]] = {}   # probe_int -> [(variable, col_name)]
+
     for col in df.columns:
         if col == "time":
             continue
@@ -134,9 +139,14 @@ def filter_and_reorder(df: pd.DataFrame, probe_numbers: list[int]) -> pd.DataFra
             probe_int = int(m.group(1))
             variable  = m.group(2)
             probe_cols.setdefault(probe_int, []).append((variable, col))
+        else:
+            passthrough_cols.append(col)
+
+    if passthrough_cols:
+        print(f"    Passthrough columns (preserved as-is): {', '.join(passthrough_cols)}")
 
     # Build ordered list of columns to keep
-    ordered_cols = ["time"]
+    ordered_cols = ["time"] + passthrough_cols
     missing_probes = []
 
     for num in probe_numbers:
