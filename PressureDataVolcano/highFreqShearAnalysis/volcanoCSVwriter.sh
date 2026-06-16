@@ -20,7 +20,7 @@ OUTPUT_DIR="${TARGET_DIR}/csv_output"
 mkdir -p "$OUTPUT_DIR"
 
 # Error log
-ERROR_LOG="${OUTPUT_DIR}/monitor_errors.log"
+ERROR_LOG="${OUTPUT_DIR}/csv_errors.log"
 > "$ERROR_LOG"
 
 for file in "$TARGET_DIR"/*.volcano; do
@@ -38,18 +38,20 @@ for file in "$TARGET_DIR"/*.volcano; do
         250_density 250_machnumber 250_machnumberavg 250_pressure 250_pressureavg 250_temperature 250_velocitymag 250_velocitymagavg  250_velocityx  250_velocityy  250_velocityz \
         374_density 374_machnumber 374_machnumberavg 374_pressure 374_pressureavg 374_temperature 374_velocitymag 374_velocitymagavg  374_velocityx  374_velocityy  374_velocityz \
         499_density 499_machnumber 499_machnumberavg 499_pressure 499_pressureavg 499_temperature 499_velocitymag 499_velocitymagavg  499_velocityx  499_velocityy  499_velocityz \
-        -C > "${OUTPUT_DIR}/${base}.csv"; then
+        -C ; then
 
         echo "SUCCESS: $file"
 
     else
 
         echo "ERROR: $file" | tee -a "$ERROR_LOG"
-        rm -f "${OUTPUT_DIR}/${base}.csv"
+        # rm -f "${OUTPUT_DIR}/${base}.csv"
         continue
 
     fi
 done
+
+mv "$TARGET_DIR"/*.csv "$OUTPUT_DIR"/
 
 echo "Finished processing all files."
 echo "Results: $OUTPUT_DIR"
