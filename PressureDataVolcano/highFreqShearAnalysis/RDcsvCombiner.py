@@ -51,9 +51,12 @@ for file in sorted(dat_folder.glob("*.dat")):
         df = pd.read_csv(
             file,
             sep=r"\s+",
-            comment="#",
             engine="python"
         )
+
+        # Remove leading '#' from first column header
+        df.columns = [c.lstrip('#').strip() for c in df.columns]
+
     except Exception as e:
         print(f"Skipping {file.name}: {e}")
         continue
