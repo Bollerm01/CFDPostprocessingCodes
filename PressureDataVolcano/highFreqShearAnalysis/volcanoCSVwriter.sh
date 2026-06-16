@@ -1,7 +1,7 @@
 #!/bin/bash
 
 module purge 
-module load volcano/2026.03.1
+module load volcano/2025.10
 
 TARGET_DIR="$1"
 
