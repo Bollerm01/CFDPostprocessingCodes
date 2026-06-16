@@ -1,4 +1,6 @@
 #!/bin/bash
+module purge 
+module load volcano/2026.03.1
 
 for file in *.volcano; do
     # Skip if no files match
