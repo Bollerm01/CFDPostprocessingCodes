@@ -47,7 +47,7 @@ for file in "$TARGET_DIR"/k*.volcano; do
     fi
 done
 
-mv *.csv "$OUTPUT_DIR"
+mv "$TARGET_DIR"/*.csv "$OUTPUT_DIR"/
 
 echo "Finished processing all files."
 echo "Results: $OUTPUT_DIR"
