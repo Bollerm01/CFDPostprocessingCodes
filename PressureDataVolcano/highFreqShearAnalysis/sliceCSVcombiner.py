@@ -38,7 +38,7 @@ import pandas as pd
 
 # --- Configuration -----------------------------------------------------------
 
-ALLOWED_PLANES   = {"_mid", "_zWp25", "_zWp75"}
+ALLOWED_PLANES   = {"_MP"}
 IGNORED_VARIABLES = {"coords"}
 PROBE_PATTERN    = re.compile(r"^probe(\d+)$")
 OUTPUT_SUBFOLDER = "csv_output"
