@@ -16,7 +16,7 @@ if [ ! -d "$TARGET_DIR" ]; then
 fi
 
 # Create output folder
-OUTPUT_DIR="${TARGET_DIR}/monitor_output"
+OUTPUT_DIR="${TARGET_DIR}/csv_output"
 mkdir -p "$OUTPUT_DIR"
 
 # Error log
