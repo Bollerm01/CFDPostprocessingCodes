@@ -1,5 +1,8 @@
 #!/bin/bash
 
+module purge 
+module load volcano/2026.03.1
+
 TARGET_DIR="$1"
 
 if [ -z "$TARGET_DIR" ]; then
