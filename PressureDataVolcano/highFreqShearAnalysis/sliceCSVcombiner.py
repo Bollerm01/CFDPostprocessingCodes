@@ -279,7 +279,7 @@ def process_folder(dat_folder: Path, probe_config: dict[str, set[int]]) -> None:
         # follow the probe order specified in the config.
         data_cols = [c for c in merged_df.columns if c != "time"]
         probe_order = {p: i for i, p in enumerate(probe_numbers)}
-        data_cols.sort(key=lambda c: (c.split("_", 1)[1], probe_order.get(int(c.split("_")[0]), 999)))
+        data_cols.sort(key=lambda c: (probe_order.get(int(c.split("_")[0]), 999), c.split("_", 1)[1]))
         merged_df = merged_df[["time"] + data_cols]
 
         csv_name = f"{group_key}.csv"
