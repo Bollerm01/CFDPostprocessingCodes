@@ -10,4 +10,5 @@ Description of Pressure Data Processing Codes:
 - KuliteCalibratorCode.m : Used to take in raw voltage signal and adjust gain for calibrating Kulite sensors to known dP from tone generator
 - KuliteCalibratorCode_tunnelData.m : Takes tunnel Kulite data, sets the voltage offset, and plots the data as overlaid FFTs 
 - read_and_plot_csv.m : Takes in CSVs of CFD probe data and plots specific indices for large data sets (500 probe lines)
-- rossiterModeCalc.py : Calculates dominant Rossiter frequency modes (May need adjusting to Heller modified formula
+- rossiterModeCalc.py : Calculates dominant Rossiter frequency modes (May need adjusting to Heller modified formula)
+
