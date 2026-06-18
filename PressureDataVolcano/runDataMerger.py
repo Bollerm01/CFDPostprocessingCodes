@@ -40,7 +40,7 @@ copy_tree(root1, dest_root)
 print("Copying second dataset (overwriting duplicates)...")
 copy_tree(root2, dest_root)
 
-print("Copying second dataset (overwriting duplicates)...")
-copy_tree(root3, dest_root)
+# print("Copying second dataset (overwriting duplicates)...")
+# copy_tree(root3, dest_root)
 
 print("Done.")
