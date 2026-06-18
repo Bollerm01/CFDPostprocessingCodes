@@ -5,10 +5,10 @@ import shutil
 # USER INPUTS
 # ==========================
 
-root1 = Path("/home/bollerma/LESdata/SSWT/sliceCav/J35/RD00si/surfaceData")
-root2 = Path("/home/bollerma/LESdata/SSWT/sliceCav/J35/RD00si/surfaceData2")
+root1 = Path("/home/bollerma/LESdata/SSWT/sliceCav/J140/RD00si/surfaceData")
+root2 = Path("/home/bollerma/LESdata/SSWT/sliceCav/J140/RD00si/surfaceData2")
 # root3 = Path("/home/bollerma/LESdata/SSWT/sliceCav/RD52s/surfaceData3")
-dest_root = Path("/home/bollerma/LESdata/SSWT/sliceCav/J35/RD00si/surfaceDataCombined")
+dest_root = Path("/home/bollerma/LESdata/SSWT/sliceCav/J140/RD00si/surfaceDataCombined")
 
 # ==========================
 # COPY FUNCTION

@@ -11,8 +11,8 @@ from paraview.servermanager import Fetch
 # ==========================================================
 # USER INPUTS
 # ==========================================================
-root_dir = "/home/bollerma/LESdata/SSWT/fullCav/revisedMeshStudy/test2m/surfaceData/surfKulites"
-
+# root_dir = "/home/bollerma/LESdata/SSWT/fullCav/revisedMeshStudy/test2m/surfaceData/surfKulites"
+root_dir = "E:\Boller CFD\CFD Kulite Data\Slice Domains\J35\RD00si\kuliteSurfData"
 
 for k in range(1, 7):
 
