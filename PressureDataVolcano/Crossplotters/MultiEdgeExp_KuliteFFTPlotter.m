@@ -32,7 +32,7 @@ baseRGB = lines(nChannels);          % base channel colors
 baseLAB = rgb2lab(baseRGB);          % convert to LAB space
 
 % Dataset brightness shifts (Exp 1 = dark, Exp 2 = medium, Exp 3 = bright)
-Lshift = [-18 0 +18];
+Lshift = [-36 -18 0 +18 +36];
 
 
 %% ============================================================
@@ -49,11 +49,11 @@ if ischar(expFiles)
     expFiles = {expFiles};
 end
 
-expFiles = expFiles(1:min(3,length(expFiles)));
+expFiles = expFiles(1:min(5,length(expFiles)));
 nExp = length(expFiles);
 
 expNames = cellfun(@(x) split(x,{'_','.'}), expFiles, 'UniformOutput', false);
-expNames = cellfun(@(x) x{2}, expNames, 'UniformOutput', false);
+expNames = cellfun(@(x) x{1}, expNames, 'UniformOutput', false);
 
 Texp = cell(nExp,1);
 timeExpFull = cell(nExp,1);
