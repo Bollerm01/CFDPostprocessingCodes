@@ -6,10 +6,11 @@ from paraview.simple import *
 # ============================================================
 # USER INPUTS
 # ============================================================
+rootDir = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD00/RD00_004"
 
-input_file = "/home/bollerma/LESdata/SSWT/fullCav/revisedMeshStudy/test3m/test3mSSWTM2_002/latest.volcano"
+input_file = f"{rootDir}/latest.volcano"
 
-output_csv = "/home/bollerma/LESdata/SSWT/fullCav/revisedMeshStudy/test3m/test3mSSWTM2_002/cavFloorSurfacePressureData.csv"
+output_csv = f"{rootDir}/cavFloorSurfacePressureData.csv"
 
 # ============================================================
 # READ VOLCANO FILE
