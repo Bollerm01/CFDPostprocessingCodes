@@ -7,6 +7,7 @@
 %   - Time window filtering
 %   - Narrowband SPL (FFT averaged)
 %   - PSD (Welch)
+%   - OASPL (Overall Sound Pressure Level)
 %
 %% ============================================================
 
@@ -105,7 +106,7 @@ ylabel('Pressure [Pa]');
 %% ============================================================
 
 cfdPointSignals = cell(length(cfdFiles),1);
-cfdPointTime = cell(length(cfdFiles),1);
+cfdPointTime    = cell(length(cfdFiles),1);
 
 for i = 1:length(cfdFiles)
 
@@ -130,7 +131,7 @@ for i = 1:length(cfdFiles)
     p = p(mask) - mean(p(mask));
 
     cfdPointSignals{i} = p;
-    cfdPointTime{i} = t;
+    cfdPointTime{i}    = t;
 
     k = mod(i-1,nColors)+1;
 
@@ -145,11 +146,11 @@ for i = 1:length(cfdFiles)
 end
 
 %% ============================================================
-% PROCESS CFD SURFACE DATA (NEW)
+% PROCESS CFD SURFACE DATA
 %% ============================================================
 
 surfSignals = cell(length(surfFiles),1);
-surfTime = cell(length(surfFiles),1);
+surfTime    = cell(length(surfFiles),1);
 
 for i = 1:length(surfFiles)
 
@@ -166,7 +167,7 @@ for i = 1:length(surfFiles)
     p = p(mask) - mean(p(mask));
 
     surfSignals{i} = p;
-    surfTime{i} = t;
+    surfTime{i}    = t;
 
     k = mod(i-1,nColors)+1;
 
@@ -183,7 +184,7 @@ end
 legend('show');
 
 %% ============================================================
-% FFT FUNCTION
+% FFT FUNCTION (returns linear amplitudes + dB NB)
 %% ============================================================
 
 computeNBFFT = @(sig,fs) localFFT(sig,fs,df_desired,PREF);
@@ -253,7 +254,7 @@ set(gca,'XScale','log');
 for i = 1:length(cfdPointSignals)
 
     seg = floor(length(cfdPointSignals{i})/8);
-    w = hann(seg);
+    w   = hann(seg);
 
     fs = 1/mean(diff(cfdPointTime{i}));
 
@@ -275,7 +276,7 @@ end
 for i = 1:length(surfSignals)
 
     seg = floor(length(surfSignals{i})/8);
-    w = hann(seg);
+    w   = hann(seg);
 
     fs = 1/mean(diff(surfTime{i}));
 
@@ -297,42 +298,180 @@ xlim([fmin fmax]);
 legend('show','Location','southoutside','NumColumns',2);
 
 %% ============================================================
-% LOCAL FFT FUNCTION
+% OASPL CALCULATION
+%% ============================================================
+% Integrate narrowband mean-square pressure contributions
+% over the user-defined frequency range [fmin, fmax].
+%
+% Method:
+%   Xlin (Pa, peak) from localFFT  ->  Xrms = Xlin / sqrt(2)
+%   p_ms(i) = Xrms(i)^2  = (Xlin(i)^2) / 2
+%   OASPL = 10 * log10( sum(p_ms, in band) / PREF^2 )
+%
+% The DC bin (f=0) is excluded; the Nyquist bin is included.
 %% ============================================================
 
-function [f,NB] = localFFT(signal,fs,df_desired,PREF)
+nPt   = length(cfdPointSignals);
+nSurf = length(surfSignals);
+
+oaspl_pt   = zeros(nPt,  1);
+oaspl_surf = zeros(nSurf,1);
+
+colors_pt   = zeros(nPt,  3);
+colors_surf = zeros(nSurf,3);
+
+%% CFD POINT OASPL
+for i = 1:nPt
+
+    fs = 1/mean(diff(cfdPointTime{i}));
+
+    [f, ~, Xlin] = computeNBFFT(cfdPointSignals{i}, fs);
+
+    % Restrict to [fmin, fmax] (exclude DC bin f=0)
+    mask = f >= fmin & f <= fmax;
+
+    % RMS pressure^2 per bin (single-sided spectrum, peak -> rms)
+    p_ms = (Xlin(mask).^2) / 2;
+
+    oaspl_pt(i) = 10 * log10( sum(p_ms) / PREF^2 );
+
+    k = mod(i-1,nColors)+1;
+    lab = baseLAB(k,:);
+    lab(1) = lab(1) + Lshift(2);
+    colors_pt(i,:) = max(min(lab2rgb(lab),1),0);
+end
+
+%% CFD SURFACE OASPL
+for i = 1:nSurf
+
+    fs = 1/mean(diff(surfTime{i}));
+
+    [f, ~, Xlin] = computeNBFFT(surfSignals{i}, fs);
+
+    mask = f >= fmin & f <= fmax;
+
+    p_ms = (Xlin(mask).^2) / 2;
+
+    oaspl_surf(i) = 10 * log10( sum(p_ms) / PREF^2 );
+
+    k = mod(i-1,nColors)+1;
+    lab = baseLAB(k,:);
+    lab(1) = lab(1) + Lshift(3);
+    colors_surf(i,:) = max(min(lab2rgb(lab),1),0);
+end
+
+%% ============================================================
+% OASPL BAR CHART (Figure 4)
+%% ============================================================
+
+figure(4); hold on; grid on;
+title([plotTitle sprintf(' - OASPL [%.0f - %.0f Hz]', fmin, fmax)]);
+ylabel('OASPL [dB re 20 \muPa]');
+
+% Build bar positions: CFD Points first, then CFD Surfaces
+% with a small gap between the two groups
+nTotal   = nPt + nSurf;
+gap      = 0.5;                          % extra gap between groups
+xPt      = (1 : nPt);
+xSurf    = (nPt + 1 + gap) : (nPt + nSurf + gap);
+xAll     = [xPt, xSurf];
+oasplAll = [oaspl_pt; oaspl_surf];
+colAll   = [colors_pt; colors_surf];
+
+% Draw individual colored bars
+for i = 1:nTotal
+    bar(xAll(i), oasplAll(i), 0.7, ...
+        'FaceColor', colAll(i,:), ...
+        'EdgeColor', colAll(i,:)*0.6);
+end
+
+% Annotate bar tops with dB value
+for i = 1:nTotal
+    text(xAll(i), oasplAll(i)/2, ...
+        sprintf('%.1f dB', oasplAll(i)), ...
+        'HorizontalAlignment','center', ...
+        'VerticalAlignment','middle',  ...
+        'Rotation',90, ...
+        'FontSize',12, ...
+        'Color','w', ...
+        'FontWeight','bold');
+end
+
+% X-tick labels
+labelsPt   = cellfun(@(x) ['Point ' x],   cfdPointNames, 'UniformOutput',false);
+labelsSurf = cellfun(@(x) ['Surf '  x],   surfNames,     'UniformOutput',false);
+
+set(gca, ...
+    'XTick',      [xPt, xSurf], ...
+    'XTickLabel', [labelsPt, labelsSurf], ...
+    'XTickLabelRotation', 30);
+
+xlim([0.3, xSurf(end) + 0.7]);
+
+% % Group divider line
+% yl = ylim;
+% xline(nPt + gap/2 + 0.5, '--k', 'Alpha', 0.3);
+% text(mean(xPt),      yl(2) - 0.5*diff(yl)*0.05, 'CFD Point',   ...
+%     'HorizontalAlignment','center','FontSize',9,'Color',[0.4 0.4 0.4]);
+% text(mean(xSurf),    yl(2) - 0.5*diff(yl)*0.05, 'CFD Surface', ...
+%     'HorizontalAlignment','center','FontSize',9,'Color',[0.4 0.4 0.4]);
+
+%% ============================================================
+% PRINT OASPL TABLE TO COMMAND WINDOW
+%% ============================================================
+
+fprintf('\n=== OASPL Summary [%.0f - %.0f Hz] ===\n', fmin, fmax);
+fprintf('%-35s  %10s\n', 'Name', 'OASPL [dB]');
+fprintf('%s\n', repmat('-',1,50));
+for i = 1:nPt
+    fprintf('CFD Point  %-25s  %10.2f\n', cfdPointNames{i}, oaspl_pt(i));
+end
+for i = 1:nSurf
+    fprintf('CFD Surf   %-25s  %10.2f\n', surfNames{i}, oaspl_surf(i));
+end
+fprintf('%s\n\n', repmat('-',1,50));
+
+%% ============================================================
+% LOCAL FFT FUNCTION
+% Returns:
+%   f     - frequency vector [Hz]
+%   NB    - narrowband SPL [dB re PREF]
+%   Xlin  - linear amplitude [Pa, peak, single-sided]
+%% ============================================================
+
+function [f, NB, Xlin] = localFFT(signal, fs, df_desired, PREF)
 
 signal = signal(:);
 
-Nfft = round(fs/df_desired);
+Nfft = round(fs / df_desired);
 
 if mod(Nfft,2) ~= 0
     Nfft = Nfft + 1;
 end
 
-window = hann(Nfft);
-nBlocks = floor(length(signal)/Nfft);
+window  = hann(Nfft);
+nBlocks = floor(length(signal) / Nfft);
 
 if nBlocks < 2
     error('Signal too short for FFT resolution.');
 end
 
-spec = zeros(Nfft,nBlocks);
+spec = zeros(Nfft, nBlocks);
 
 for k = 1:nBlocks
     idx1 = (k-1)*Nfft + 1;
-    idx2 = k*Nfft;
+    idx2 =  k   *Nfft;
 
     x = signal(idx1:idx2);
     X = fft(x .* window);
 
-    spec(:,k) = 2*abs(X)/Nfft;
+    spec(:,k) = 2*abs(X) / Nfft;
 end
 
-Xavg = mean(spec,2);
+Xavg = mean(spec, 2);
 
-f = (0:Nfft/2)' * (fs/Nfft);
-
-NB = 20*log10(Xavg(1:Nfft/2+1)/PREF);
+f    = (0 : Nfft/2)' * (fs / Nfft);
+Xlin = Xavg(1 : Nfft/2+1);          % linear amplitude [Pa peak]
+NB   = 20*log10(Xlin / PREF);        % narrowband SPL [dB]
 
 end

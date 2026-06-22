@@ -1,0 +1,455 @@
+%% highFreqAxialPlotter.m
+%
+% Loads 3-5 high-frequency CFD line-probe CSV files.  For each file the
+% MIDDLE probe point (median index of sorted numeric column prefixes) is
+% extracted and its pressure signal is analysed.
+%
+% Outputs
+%   Figure 1  –  Time History (all locations overlaid)
+%   Figure 2  –  Narrowband SPL  (dB re 20 µPa, log-x axis)
+%   Figure 3  –  PSD             (dB/Hz re 20 µPa, log-x axis)
+%   Figure 4  –  OASPL bar chart + command-window summary table
+%
+% CSV format expected
+%   Column 1   :  "time"  (uniform time step, seconds)
+%   Other cols :  "<pointID>_<quantity>"   e.g.  "050_pressure"
+%   Point IDs are the leading numeric tokens; the median one is used.
+%   Pressure is in Pascals (absolute); DC is removed before analysis.
+%
+% Usage
+%   Run the script directly.  A dialog box collects all parameters.
+%   Then use the file browser to select 3-5 CSV files in order.
+%   A second dialog collects legend labels for those files.
+%
+% Requires: Signal Processing Toolbox  (pwelch, butter, filtfilt, hann)
+% -------------------------------------------------------------------------
+
+clear; clc; close all;
+
+PREF = 20e-6;   % reference pressure [Pa]
+
+%% ============================================================
+%  STEP 1 – PARAMETER DIALOG
+%% ============================================================
+
+answer = inputdlg( ...
+    { ...
+    'Plot Title', ...
+    'Start Time [s]', ...
+    'End Time [s]  (leave 0 for full signal)', ...
+    'FFT df [Hz]   (frequency resolution)', ...
+    'Min Frequency [Hz]', ...
+    'Max Frequency [Hz]'}, ...
+    'Analysis Settings', ...
+    [1 68], ...
+    { ...
+    'CFD Line Probe', ...
+    '0', ...
+    '0', ...
+    '75', ...
+    '100', ...
+    '20000'});
+
+if isempty(answer), return; end
+
+plotTitle    = answer{1};
+tStart       = str2double(answer{2});
+tEnd         = str2double(answer{3});   % 0 → use full signal
+df_desired   = str2double(answer{4});
+fmin         = str2double(answer{5});
+fmax         = str2double(answer{6});
+
+%% ============================================================
+%  STEP 2 – SELECT CSV FILES  (3-5)
+%% ============================================================
+
+[fileNames, filePath] = uigetfile( ...
+    '*.csv', ...
+    'Select 3-5 line-probe CSV files of varying axial locations or edge types', ...
+    'MultiSelect','on');
+
+if isequal(fileNames,0), return; end
+if ischar(fileNames), fileNames = {fileNames}; end
+
+nFiles = numel(fileNames);
+
+if nFiles < 3 || nFiles > 5
+    errordlg( ...
+        sprintf('Please select 3-5 files of varying axial locations or edge types. You selected %d.', nFiles), ...
+        'File Count Error');
+    return
+end
+
+%% ============================================================
+%  STEP 3 – LEGEND LABEL DIALOG
+%% ============================================================
+
+defaultLabels = cellfun(@(f) strrep(f,'.csv',''), fileNames, ...
+    'UniformOutput',false);
+
+legendAnswer = inputdlg( ...
+    arrayfun(@(k) sprintf('Label for file %d:  %s', k, fileNames{k}), ...
+             1:nFiles, 'UniformOutput',false), ...
+    'Legend Labels', ...
+    [1 72], ...
+    defaultLabels);
+
+if isempty(legendAnswer), return; end
+
+legendLabels = legendAnswer;
+
+%% ============================================================
+%  PERCEPTUALLY UNIFORM COLOR SYSTEM  (CIE LAB)
+%  One distinct hue per file; lightness shifted by dataset order.
+%% ============================================================
+
+baseRGB = lines(max(nFiles,7));
+baseLAB = rgb2lab(baseRGB(1:nFiles,:));
+
+% Lightness offsets so colours are visually distinct across 5 datasets
+Lshift = linspace(-18, 18, nFiles);
+
+%% ============================================================
+%  LOAD DATA & EXTRACT MIDDLE-POINT PRESSURE
+%% ============================================================
+
+signals  = cell(nFiles,1);
+timeVecs = cell(nFiles,1);
+midIDs   = cell(nFiles,1);
+
+for fi = 1:nFiles
+
+    fullPath = fullfile(filePath, fileNames{fi});
+
+    opts = detectImportOptions(fullPath);
+    opts.DataLines = [2 Inf];
+    T = readtable(fullPath, opts);
+
+    allCols = T.Properties.VariableNames;
+
+    % ---- find time column (first column) --------------------------------
+    t = T{:,1};
+
+    % ---- identify sorted numeric point prefixes -------------------------
+    prefixes = extractPointPrefixes(allCols);
+    prefSort = sort(prefixes);
+
+    if isempty(prefSort)
+        error('No numeric point prefixes found in %s', fileNames{fi});
+    end
+
+    midID  = prefSort{ ceil(numel(prefSort)/2) };
+    midIDs{fi} = midID;
+
+    % ---- find pressure column for middle point --------------------------
+    pressCol = [midID '_pressure'];
+
+    colMatch = find(strcmpi(pressCol, allCols), 1);
+
+    if isempty(colMatch)
+        error('Column "%s" not found in %s', pressCol, fileNames{fi});
+    end
+
+    p = T{:, colMatch};
+
+    % ---- apply time window ---------------------------------------------
+    if tEnd > 0
+        mask = t >= tStart & t <= tEnd;
+    else
+        mask = t >= tStart;
+    end
+
+    t = t(mask);
+    p = p(mask);
+
+    p = p - mean(p);    % remove DC
+
+    signals{fi}  = p;
+    timeVecs{fi} = t;
+
+end
+
+%% ============================================================
+%  FIGURE 1 – TIME HISTORY
+%% ============================================================
+
+figure('Name','Time History','Color','w');
+hold on; grid on;
+
+title([plotTitle ' – Time History'], 'FontSize',13,'FontWeight','bold')
+xlabel('Time [s]',    'FontSize',12)
+ylabel('Pressure [Pa]','FontSize',12)
+
+for fi = 1:nFiles
+    plotColor = getColor(baseLAB, fi, Lshift);
+    plot(timeVecs{fi}, signals{fi}, ...
+        'Color',    plotColor, ...
+        'LineWidth', 1.2, ...
+        'DisplayName', legendLabels{fi});
+end
+
+legend('show','Location','southoutside','NumColumns',3)
+
+%% ============================================================
+%  FIGURE 2 – NARROWBAND SPL
+%% ============================================================
+
+figure('Name','Narrowband SPL','Color','w');
+hold on; grid on;
+
+title([plotTitle ' – Narrowband SPL'], 'FontSize',13,'FontWeight','bold')
+xlabel('Frequency [Hz]',         'FontSize',12)
+ylabel('SPL [dB re 20 \muPa]',  'FontSize',12)
+set(gca,'XScale','log')
+
+oaspl_labels = cell(nFiles,1);
+oaspl_td     = zeros(nFiles,1);
+oaspl_color  = zeros(nFiles,3);
+
+for fi = 1:nFiles
+
+    sig = signals{fi};
+    t   = timeVecs{fi};
+    fs  = 1 / mean(diff(t));
+
+    [f_nb, NB] = localFFT(sig, fs, df_desired, PREF);
+
+    plotColor = getColor(baseLAB, fi, Lshift);
+
+    semilogx(f_nb, NB, ...
+        'Color',    plotColor, ...
+        'LineWidth', 2, ...
+        'DisplayName', legendLabels{fi});
+
+    % Time-domain OASPL (band-limited Butterworth)
+    oaspl_labels{fi} = legendLabels{fi};
+    oaspl_td(fi)     = computeOASPL_TD(sig, fs, fmin, fmax, PREF);
+    oaspl_color(fi,:)= plotColor;
+
+end
+
+xlim([fmin fmax])
+legend('show','Location','southoutside','NumColumns',3)
+
+%% ============================================================
+%  FIGURE 3 – PSD
+%% ============================================================
+
+figure('Name','PSD','Color','w');
+hold on; grid on;
+
+title([plotTitle ' – PSD'], 'FontSize',13,'FontWeight','bold')
+xlabel('Frequency [Hz]',  'FontSize',12)
+ylabel('PSD [dB/Hz re 20 \muPa^2/Hz]', 'FontSize',12)
+set(gca,'XScale','log')
+
+oaspl_psd = nan(nFiles,1);
+
+for fi = 1:nFiles
+
+    sig = signals{fi};
+    t   = timeVecs{fi};
+    fs  = 1 / mean(diff(t));
+
+    seg = floor(length(sig) / 8);
+
+    if seg < 32, continue; end
+
+    w = hann(seg);
+
+    [P, f_psd] = pwelch(sig, w, round(seg/2), [], fs);
+
+    plotColor = getColor(baseLAB, fi, Lshift);
+
+    semilogx(f_psd, 10*log10(P / PREF^2), ...
+        'Color',    plotColor, ...
+        'LineWidth', 2, ...
+        'DisplayName', legendLabels{fi});
+
+    % OASPL cross-check via PSD integration
+    oaspl_psd(fi) = computeOASPL_PSD(f_psd, P, fmin, fmax, PREF);
+
+end
+
+xlim([fmin fmax])
+legend('show','Location','southoutside','NumColumns',3)
+
+%% ============================================================
+%  FIGURE 4 – OASPL BAR CHART
+%% ============================================================
+
+figure('Name','OASPL','Color','w');
+hold on; grid on;
+
+title( ...
+    [plotTitle ' – OASPL (' num2str(fmin) '–' num2str(fmax) ' Hz)'], ...
+    'FontSize',13,'FontWeight','bold')
+ylabel('OASPL [dB re 20 \muPa]', 'FontSize',12)
+
+b = bar(categorical(oaspl_labels, oaspl_labels), oaspl_td, 0.55, ...
+        'FaceColor','flat');
+b.CData = oaspl_color;
+
+% Value labels on bars
+for fi = 1:nFiles
+    text(fi, oaspl_td(fi), sprintf('%.1f dB', oaspl_td(fi)), ...
+        'HorizontalAlignment','center', ...
+        'VerticalAlignment',  'bottom', ...
+        'FontSize', 10, 'FontWeight','bold');
+end
+
+ySpan = max(oaspl_td) - min(oaspl_td);
+if ySpan < 5, ySpan = 5; end
+ylim([min(oaspl_td) - ySpan*0.15,  max(oaspl_td) + ySpan*0.25])
+xtickangle(30)
+
+%% ============================================================
+%  COMMAND-WINDOW OASPL SUMMARY TABLE
+%% ============================================================
+
+fprintf('\n=== OASPL Summary (%.0f–%.0f Hz band) ===\n', fmin, fmax);
+fprintf('%-40s  %14s  %14s  %10s\n', ...
+    'Label','OASPL_TD [dB]','OASPL_PSD [dB]','Diff [dB]');
+fprintf('%s\n', repmat('-',1,84));
+
+for fi = 1:nFiles
+    if isnan(oaspl_psd(fi))
+        fprintf('%-40s  %14.2f  %14s  %10s\n', ...
+            oaspl_labels{fi}, oaspl_td(fi), 'N/A', 'N/A');
+    else
+        fprintf('%-40s  %14.2f  %14.2f  %10.2f\n', ...
+            oaspl_labels{fi}, oaspl_td(fi), oaspl_psd(fi), ...
+            oaspl_td(fi) - oaspl_psd(fi));
+    end
+end
+
+fprintf('\nMiddle probe point IDs used:\n');
+for fi = 1:nFiles
+    fprintf('  %s  →  point %s\n', fileNames{fi}, midIDs{fi});
+end
+fprintf('\n');
+
+%% ============================================================
+%  LOCAL HELPER FUNCTIONS
+%% ============================================================
+
+function [f, NB] = localFFT(signal, fs, df_desired, PREF)
+% Narrowband SPL via block-averaged FFT.
+% Nfft is chosen so that df = fs/Nfft ≈ df_desired.
+
+    signal = signal(:) - mean(signal);
+
+    Nfft = round(fs / df_desired);
+    if mod(Nfft,2) ~= 0, Nfft = Nfft + 1; end
+
+    if Nfft > length(signal)
+        % Signal too short for requested df: use full-signal single FFT
+        Nfft = 2^nextpow2(length(signal));
+        if Nfft > length(signal)
+            Nfft = length(signal);
+            if mod(Nfft,2) ~= 0, Nfft = Nfft - 1; end
+        end
+        X = fft(signal(1:Nfft) .* hann(Nfft));
+        X = 2 * abs(X) / Nfft;
+        f  = (0 : Nfft/2)' * (fs / Nfft);
+        NB = 20*log10( X(1:Nfft/2+1) / PREF );
+        return
+    end
+
+    window  = hann(Nfft);
+    nBlocks = floor(length(signal) / Nfft);
+
+    if nBlocks < 2
+        X = fft(signal(1:Nfft) .* window);
+        X = 2 * abs(X) / Nfft;
+        f  = (0 : Nfft/2)' * (fs / Nfft);
+        NB = 20*log10( X(1:Nfft/2+1) / PREF );
+        return
+    end
+
+    spec = zeros(Nfft, nBlocks);
+    for n = 1:nBlocks
+        idx1 = (n-1)*Nfft + 1;
+        idx2 = n * Nfft;
+        X = fft(signal(idx1:idx2) .* window);
+        spec(:,n) = 2 * abs(X) / Nfft;
+    end
+
+    Xavg = mean(spec, 2);
+    f    = (0 : Nfft/2)' * (fs / Nfft);
+    NB   = 20*log10( Xavg(1:Nfft/2+1) / PREF );
+
+end
+
+% -----------------------------------------------------------------
+
+function OASPL = computeOASPL_TD(signal, fs, fmin, fmax, PREF)
+% Band-limited RMS via zero-phase Butterworth bandpass filter.
+
+    signal = signal(:) - mean(signal);
+    nyq    = fs / 2;
+
+    loCut = max(fmin,  1e-3);
+    hiCut = min(fmax,  nyq * 0.999);
+
+    if hiCut <= loCut
+        warning('computeOASPL_TD:bandInvalid', ...
+            'Band [%.1f %.1f] Hz invalid for fs=%.1f Hz. Using full-band RMS.', ...
+            fmin, fmax, fs);
+        OASPL = 20*log10( rms(signal) / PREF );
+        return
+    end
+
+    Wn = [loCut hiCut] / nyq;
+    [b, a]  = butter(4, Wn, 'bandpass');
+    p_filt  = filtfilt(b, a, signal);
+    OASPL   = 20*log10( rms(p_filt) / PREF );
+
+end
+
+% -----------------------------------------------------------------
+
+function OASPL = computeOASPL_PSD(f, P, fmin, fmax, PREF)
+% Integrates the one-sided PSD over [fmin fmax] → OASPL.
+
+    mask = f >= fmin & f <= fmax;
+
+    if nnz(mask) < 2
+        OASPL = NaN;
+        return
+    end
+
+    p_meansq = trapz(f(mask), P(mask));
+    OASPL    = 10*log10( p_meansq / PREF^2 );
+
+end
+
+% -----------------------------------------------------------------
+
+function prefixes = extractPointPrefixes(colNames)
+% Returns sorted unique numeric prefix strings from "<prefix>_<qty>" cols.
+
+    prefixes = {};
+    for k = 1:numel(colNames)
+        parts = strsplit(colNames{k}, '_');
+        if numel(parts) >= 2 && ~isnan(str2double(extract(parts{1},digitsPattern)))
+            if ~ismember(parts{1}, prefixes)
+                prefixes{end+1} = parts{1}; %#ok<AGROW>
+            end
+        end
+    end
+    prefixes = sort(prefixes);
+
+end
+
+% -----------------------------------------------------------------
+
+function rgb = getColor(baseLAB, idx, Lshift)
+% Apply per-dataset LAB lightness shift and clamp to [0 1].
+
+    lab      = baseLAB(idx,:);
+    lab(1)   = lab(1) + Lshift(idx);
+    rgb      = lab2rgb(lab);
+    rgb      = max(min(rgb, 1), 0);
+
+end

@@ -7,6 +7,7 @@
 %   - Time window filtering
 %   - Narrowband SPL (FFT averaged)
 %   - PSD (Welch)
+%   - OASPL (time-domain RMS, cross-checked via PSD integration)
 %
 %% ============================================================
 
@@ -224,7 +225,7 @@ for i = 1:length(cfdFiles)
         'DisplayName',['CFD ' cfdNames{i}]);
     end
 
-legend('show');
+legend('show','Location','southoutside','NumColumns', 3);
 
 %% ============================================================
 % FFT FUNCTION (ROBUST)
@@ -245,6 +246,12 @@ set(gca,'XScale','log');
 %% EXPERIMENT FFT
 fsExp = 1/mean(diff(timeExp));
 
+% Storage for OASPL bar chart / summary table
+oaspl_labels = {};
+oaspl_td = [];      % time-domain OASPL (from RMS of p(t))
+oaspl_psd = [];      % OASPL integrated from PSD (cross-check)
+oaspl_isCFD = [];    % 0 = exp, 1 = CFD
+
 for i = 1:length(expSignals)
 
     [f,NB] = computeNBFFT(expSignals{i},fsExp);
@@ -260,6 +267,11 @@ for i = 1:length(expSignals)
     semilogx(f,NB,'LineWidth',2,...
         'Color',plotColor,...
         'DisplayName',['Exp ' legendNames{k}]);
+
+    %% OASPL (time domain), band-limited to [fmin fmax] via bandpass-equivalent RMS
+    oaspl_td(end+1,1) = computeOASPL_TD(expSignals{i},fsExp,fmin,fmax,PREF); %#ok<SAGROW>
+    oaspl_labels{end+1,1} = ['Exp ' legendNames{k}]; %#ok<SAGROW>
+    oaspl_isCFD(end+1,1) = 0; %#ok<SAGROW>
 end
 
 %% CFD FFT
@@ -281,10 +293,15 @@ for i = 1:length(cfdSignals)
     semilogx(f,NB,'-','LineWidth',2,...
         'Color',plotColor,...
         'DisplayName',['CFD ' cfdNames{i}]);
+
+    %% OASPL (time domain)
+    oaspl_td(end+1,1) = computeOASPL_TD(cfdSignals{i},fsCFD,fmin,fmax,PREF); %#ok<SAGROW>
+    oaspl_labels{end+1,1} = ['CFD ' cfdNames{i}]; %#ok<SAGROW>
+    oaspl_isCFD(end+1,1) = 1; %#ok<SAGROW>
 end
 
 xlim([fmin fmax]);
-legend('show', 'Location','southoutside', 'NumColumns', 2);
+legend('show', 'Location','southoutside', 'NumColumns', 3);
 
 %% ============================================================
 % PSD
@@ -295,6 +312,8 @@ title([plotTitle ' - PSD']);
 xlabel('Frequency [Hz]');
 ylabel('PSD [dB/Hz]');
 set(gca,'XScale','log');
+
+psdIdxCounter = 0;
 
 %% EXP PSD
 for i = 1:length(expSignals)
@@ -315,6 +334,10 @@ for i = 1:length(expSignals)
     semilogx(f,10*log10(P),'LineWidth',2,...
         'Color',plotColor,...
         'DisplayName',['Exp ' legendNames{k}]);
+
+    %% OASPL cross-check via PSD integration over [fmin fmax]
+    psdIdxCounter = psdIdxCounter + 1;
+    oaspl_psd(psdIdxCounter,1) = computeOASPL_PSD(f,P,fmin,fmax,PREF); %#ok<SAGROW>
 end
 
 %% CFD PSD
@@ -339,13 +362,71 @@ for i = 1:length(cfdSignals)
     semilogx(f,10*log10(P),'-','LineWidth',2,...
         'Color',plotColor,...
         'DisplayName',['CFD ' cfdNames{i}]);
+
+    %% OASPL cross-check via PSD integration over [fmin fmax]
+    psdIdxCounter = psdIdxCounter + 1;
+    oaspl_psd(psdIdxCounter,1) = computeOASPL_PSD(f,P,fmin,fmax,PREF); %#ok<SAGROW>
 end
 
 xlim([fmin fmax]);
-legend('show','Location','southoutside','NumColumns', 2);
+legend('show','Location','southoutside','NumColumns', 3);
 
 %% ============================================================
-% LOCAL FUNCTION
+% OASPL SUMMARY (bar chart + table)
+%% ============================================================
+
+figure(4); hold on; grid on;
+title([plotTitle ' - OASPL (' num2str(fmin) '-' num2str(fmax) ' Hz)']);
+ylabel('OASPL [dB re 20 \muPa]');
+
+barColors = zeros(length(oaspl_labels),3);
+
+% Reconstruct per-entry color (same logic used above) so bars match line colors
+ptrExp = 1;
+ptrCfd = 1;
+for i = 1:length(oaspl_labels)
+    if oaspl_isCFD(i) == 0
+        k = chIdx(ptrExp);
+        lab = baseLAB(k,:);
+        lab(1) = lab(1) + Lshift(1);
+        ptrExp = ptrExp + 1;
+    else
+        k = find(strcmp(cfdNames{ptrCfd}, cfdNames),1);
+        if isempty(k), k = mod(ptrCfd-1,nChannels)+1; end
+        lab = baseLAB(k,:);
+        lab(1) = lab(1) + Lshift(2);
+        ptrCfd = ptrCfd + 1;
+    end
+    c = lab2rgb(lab);
+    barColors(i,:) = max(min(c,1),0);
+end
+
+b = bar(categorical(oaspl_labels,oaspl_labels), oaspl_td, 'FaceColor','flat');
+b.CData = barColors;
+
+% Annotate bars with both TD and PSD-integrated values
+% for i = 1:length(oaspl_labels)
+%     txt = sprintf('%.1f dB\n(PSD: %.1f)', oaspl_td(i), oaspl_psd(i));
+%     text(i, oaspl_td(i), txt, ...
+%         'HorizontalAlignment','center', ...
+%         'VerticalAlignment','bottom', ...
+%         'FontSize',9);
+% end
+
+ylim([0, max(oaspl_td)*1.15]);
+xtickangle(45);
+
+%% Print summary table to command window
+fprintf('\n=== OASPL Summary (%.0f-%.0f Hz band) ===\n', fmin, fmax);
+fprintf('%-15s %15s %15s %15s\n','Label','OASPL_TD [dB]','OASPL_PSD [dB]','Diff [dB]');
+for i = 1:length(oaspl_labels)
+    fprintf('%-15s %15.2f %15.2f %15.2f\n', ...
+        oaspl_labels{i}, oaspl_td(i), oaspl_psd(i), oaspl_td(i)-oaspl_psd(i));
+end
+fprintf('\n');
+
+%% ============================================================
+% LOCAL FUNCTIONS
 %% ============================================================
 
 function [f,NB] = localFFT(signal,fs,df_desired,PREF)
@@ -387,5 +468,58 @@ Xavg = mean(spec,2);
 f = (0:Nfft/2)' * (fs/Nfft);
 
 NB = 20*log10(Xavg(1:Nfft/2+1)/PREF);
+
+end
+
+function OASPL = computeOASPL_TD(signal,fs,fmin,fmax,PREF)
+% Computes OASPL directly from the time-domain signal using its RMS,
+% after band-limiting via a zero-phase Butterworth bandpass filter to
+% [fmin fmax]. This is the most direct OASPL definition:
+%   OASPL = 20*log10(p_rms / PREF)
+%
+% If fmin/fmax span (effectively) the full available bandwidth, the
+% filter step still applies cleanly since Nyquist clamps fmax.
+
+signal = signal(:) - mean(signal);
+
+nyq = fs/2;
+
+loCut = max(fmin, 1e-3);          % avoid 0 Hz edge case
+hiCut = min(fmax, nyq*0.999);     % stay safely below Nyquist
+
+if hiCut <= loCut
+    % Degenerate band (e.g. fmax > Nyquist and fmin close to it);
+    % fall back to broadband RMS with a warning.
+    warning('computeOASPL_TD:bandInvalid', ...
+        'Requested band [%.1f %.1f] Hz invalid relative to fs=%.1f Hz. Using full bandwidth.', ...
+        fmin,fmax,fs);
+    p_rms = rms(signal);
+else
+    Wn = [loCut hiCut] / nyq;
+    [b,a] = butter(4, Wn, 'bandpass');
+    p_filt = filtfilt(b,a,signal);
+    p_rms = rms(p_filt);
+end
+
+OASPL = 20*log10(p_rms / PREF);
+
+end
+
+function OASPL = computeOASPL_PSD(f,P,fmin,fmax,PREF)
+% Cross-check: integrates the one-sided PSD (Pa^2/Hz) over [fmin fmax]
+% to recover mean-square pressure, then converts to OASPL.
+%   p_rms^2 = integral( P(f) df ) over the band
+%   OASPL = 10*log10( p_rms^2 / PREF^2 )
+
+mask = f >= fmin & f <= fmax;
+
+if nnz(mask) < 2
+    OASPL = NaN;
+    return;
+end
+
+p_meansq = trapz(f(mask), P(mask));
+
+OASPL = 10*log10(p_meansq / PREF^2);
 
 end
