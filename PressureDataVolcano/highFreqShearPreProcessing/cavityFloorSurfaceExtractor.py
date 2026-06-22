@@ -7,9 +7,9 @@ from paraview.simple import *
 # USER INPUTS
 # ============================================================
 
-input_file = "/home/bollerma/LESdata/SSWT/fullCav/revisedMeshStudy/test1m/test1mSSWTM2_002/latest.volcano"
+input_file = "/home/bollerma/LESdata/SSWT/fullCav/revisedMeshStudy/test3m/test3mSSWTM2_002/latest.volcano"
 
-output_csv = "/home/bollerma/LESdata/SSWT/fullCav/revisedMeshStudy/test1m/test1mSSWTM2_002/cavFloorSurfacePressureData.csv"
+output_csv = "/home/bollerma/LESdata/SSWT/fullCav/revisedMeshStudy/test3m/test3mSSWTM2_002/cavFloorSurfacePressureData.csv"
 
 # ============================================================
 # READ VOLCANO FILE
