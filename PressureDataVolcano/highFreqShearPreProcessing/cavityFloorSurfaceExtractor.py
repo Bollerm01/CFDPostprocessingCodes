@@ -35,6 +35,8 @@ surface = VolcanoSlice(
 
 surface.MinMaxField = 'pressureavg'
 surface.InterpolatedField = 'pressureavg'
+surface.SlicePoint = [0.0, 0.0002, 0.0] # Intersects first cell of cav floor
+surface.SliceNormal = [0, 1, 0]
 surface.Crinkle = 0
 
 # Force pipeline update
