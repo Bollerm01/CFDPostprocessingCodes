@@ -6,7 +6,7 @@ from paraview.simple import *
 # ============================================================
 # USER INPUTS
 # ============================================================
-rootDir = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD17/RD17_022"
+rootDir = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD52/RD52_057"
 
 input_file = f"{rootDir}/latest.volcano"
 
