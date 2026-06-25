@@ -1,0 +1,469 @@
+%% ============================================================
+% Multiple Edge CFD vs Experimental Kulite Cross Plotter 
+% CFD Data: Point Data
+%% ============================================================
+
+clear; clc; close all;
+
+%% ============================================================
+% CONSTANTS with calibration
+%% ============================================================
+
+PREF = 20e-6;
+PSI_TO_PA = 6894.757;
+
+sensor_sens = 0.03;   % V/psi
+
+gain = [ ...
+    65.3 65.9 65.1 67.15 65.2 66.4 ];
+
+channelNames = { ...
+    'Voltage_5','Voltage_1','Voltage_2', ...
+    'Voltage_3','Voltage_4','Voltage_0' };
+
+legendNames = { 'K1','K2','K3','K4','K5','K6' };
+
+%% ============================================================
+% COLOR SYSTEM
+%% ============================================================
+
+nColors = max(nCases,10);
+
+baseRGB = lines(nColors);
+baseLAB = rgb2lab(baseRGB);
+
+expShift = -20;   % darker
+cfdShift = +15;   % lighter
+
+%% ============================================================
+% CASE SETUP
+%% ============================================================
+
+answer = inputdlg( ...
+    {'Number of Cases','Kulite Location (K1-K6)'}, ...
+    'Case Setup', ...
+    [1 50], ...
+    {'2','K1'});
+
+if isempty(answer)
+    return
+end
+
+nCases = str2double(answer{1});
+selectedKulite = upper(strtrim(answer{2}));
+
+kIdx = find(strcmp(selectedKulite,legendNames));
+
+if isempty(kIdx)
+    error('Invalid Kulite selection.');
+end
+
+caseNames = cell(nCases,1);
+
+expFiles = cell(nCases,1);
+expPaths = cell(nCases,1);
+
+cfdFiles = cell(nCases,1);
+cfdPaths = cell(nCases,1);
+
+for c = 1:nCases
+
+    tmp = inputdlg( ...
+        sprintf('Name for Case %i',c), ...
+        'Case Name', ...
+        1, ...
+        {sprintf('Case%i',c)});
+
+    if isempty(tmp)
+        return
+    end
+
+    caseNames{c} = tmp{1};
+
+    [expFiles{c},expPaths{c}] = uigetfile( ...
+        '*.csv', ...
+        sprintf('Select Experimental File for %s',caseNames{c}));
+
+    if isequal(expFiles{c},0)
+        return
+    end
+
+    [cfdFiles{c},cfdPaths{c}] = uigetfile( ...
+        {'*.dat;*.txt','CFD Files'}, ...
+        sprintf('Select CFD File for %s',caseNames{c}));
+
+    if isequal(cfdFiles{c},0)
+        return
+    end
+
+end
+
+
+%% ============================================================
+% USER SETTINGS
+%% ============================================================
+
+answer = inputdlg( ...
+    { ...
+    'Plot Title', ...
+    'Start Time [s]', ...
+    'End Time [s]', ...
+    'FFT df [Hz]', ...
+    'Min Frequency [Hz]', ...
+    'Max Frequency [Hz]'}, ...
+    'Settings', ...
+    [1 50], ...
+    { ...
+    'CFD vs Experiment', ...
+    '0','10','75','100','20000'});
+
+if isempty(answer), return; end
+
+plotTitle = answer{1};
+tStart = str2double(answer{2});
+tEnd   = str2double(answer{3});
+
+df_desired = str2double(answer{4});
+fmin = str2double(answer{5});
+fmax = str2double(answer{6});
+
+%% ============================================================
+% EXPERIMENT PROCESSING (MULTI FILE)
+%% ============================================================
+
+expSignals = {};
+expLabels  = {};
+expTimeRef = {};
+
+figure(1); hold on; grid on;
+title([plotTitle ' - Time History']);
+xlabel('Time [s]');
+ylabel('Pressure [Pa]');
+
+expCount = 0;
+
+for c = 1:nCases
+
+    T = readtable( ...
+        fullfile(expPaths{c},expFiles{c}), ...
+        'VariableNamingRule','modify');
+
+    timeExpFull = T.Time_;
+
+    timeMaskExp = ...
+        timeExpFull >= tStart & ...
+        timeExpFull <= tEnd;
+
+    timeExp = timeExpFull(timeMaskExp);
+
+    V = T.(channelNames{kIdx});
+    V = V(timeMaskExp);
+
+    p = (V ./ (sensor_sens*gain(kIdx))) * PSI_TO_PA;
+
+    p = p - mean(p);
+
+    expSignals{c} = p;
+    expTimeRef{c} = timeExp;
+
+    expLabels{c} = sprintf('Exp - %s',caseNames{c});
+
+    plotColor = getCaseColor(c,false,baseLAB);
+
+    plot(timeExp,p,...
+        'LineWidth',1.5,...
+        'Color',plotColor,...
+        'DisplayName',expLabels{c});
+end
+
+%% ============================================================
+% CFD PROCESSING
+%% ============================================================
+
+cfdSignals = {};
+cfdTime = {};
+cfdLabels = {};
+
+for c = 1:nCases
+
+    fname = fullfile( ...
+        cfdPaths{c}, ...
+        cfdFiles{c});
+
+    fid = fopen(fname);
+
+    data = textscan(fid,'%f %f', ...
+        'CommentStyle','#', ...
+        'CollectOutput',true);
+
+    fclose(fid);
+
+    data = data{1};
+
+    t = data(:,1);
+    p = data(:,2);
+
+    mask = t >= tStart & t <= tEnd;
+
+    t = t(mask);
+    p = p(mask);
+
+    p = p - mean(p);
+
+    cfdSignals{c} = p;
+    cfdTime{c} = t;
+
+    cfdLabels{c} = sprintf('CFD - %s',caseNames{c});
+
+    plotColor = getCaseColor(c,true,baseLAB);
+
+    figure(1)
+
+    plot(t,p,'--',...
+        'LineWidth',1.5,...
+        'Color',plotColor,...
+        'DisplayName',cfdLabels{c});
+end
+
+legend('show','Location','southoutside','NumColumns',3);
+
+%% ============================================================
+% FFT FUNCTION
+%% ============================================================
+
+computeNBFFT = @(sig,fs) localFFT(sig,fs,df_desired,PREF);
+
+%% ============================================================
+% NARROWBAND SPL
+%% ============================================================
+
+figure(2); hold on; grid on;
+title([plotTitle ' - Narrowband SPL']);
+xlabel('Frequency [Hz]');
+ylabel('SPL [dB]');
+set(gca,'XScale','log');
+
+oaspl_td = [];
+oaspl_psd = [];
+oaspl_labels = [];
+oaspl_isCFD = [];
+
+%% EXP FFT
+for i = 1:length(expSignals)
+
+    fsExp = 1/mean(diff(expTimeRef{i}));
+
+    [f,NB] = computeNBFFT(expSignals{i},fsExp);
+
+    plotColor = getCaseColor(i,false,baseLAB);
+
+    semilogx(f,NB,'LineWidth',2, ...
+        'Color', plotColor, ...
+        'DisplayName',sprintf('Exp - %s',caseNames{i}));
+
+    oaspl_td(end+1,1) = computeOASPL_TD(expSignals{i},fsExp,fmin,fmax,PREF);
+    oaspl_labels{end+1,1} = sprintf('Exp - %s',caseNames{i});
+    oaspl_isCFD(end+1,1) = 0;
+end
+
+%% CFD FFT
+for i = 1:length(cfdSignals)
+
+    fsCFD = 1/mean(diff(cfdTime{i}));
+
+    [f,NB] = computeNBFFT(cfdSignals{i},fsCFD);
+
+    plotColor = getCaseColor(i,true,baseLAB);
+
+    semilogx(f,NB,'LineWidth',2, ...
+        'Color', plotColor, ...
+        'DisplayName',sprintf('CFD - %s',caseNames{i}));
+
+    oaspl_td(end+1,1) = computeOASPL_TD(cfdSignals{i},fsCFD,fmin,fmax,PREF);
+    oaspl_labels{end+1,1} = sprintf('CFD - %s',caseNames{i});
+    oaspl_isCFD(end+1,1) = 1;
+end
+
+xlim([fmin fmax]);
+legend('show','Location','southoutside','NumColumns',3);
+
+%% ============================================================
+% PSD
+%% ============================================================
+
+figure(3); hold on; grid on;
+title([plotTitle ' - PSD']);
+xlabel('Frequency [Hz]');
+ylabel('PSD [dB/Hz]');
+set(gca,'XScale','log');
+
+psdCount = 0;
+
+for i = 1:length(expSignals)
+
+    fsExp = 1/mean(diff(expTimeRef{i}));
+    seg = floor(length(expSignals{i})/8);
+    w = hann(seg);
+
+    [P,f] = pwelch(expSignals{i},w,round(seg/2),[],fsExp);
+
+    plotColor = getCaseColor(i,false,baseLAB);
+
+    semilogx(f,10*log10(P),'LineWidth',2, ...
+        'Color', plotColor, ...
+        'DisplayName',sprintf('Exp - %s',caseNames{i}));
+
+    psdCount = psdCount + 1;
+    oaspl_psd(psdCount,1) = computeOASPL_PSD(f,P,fmin,fmax,PREF);
+end
+
+for i = 1:length(cfdSignals)
+
+    fsCFD = 1/mean(diff(cfdTime{i}));
+    seg = floor(length(cfdSignals{i})/8);
+    w = hann(seg);
+
+    [P,f] = pwelch(cfdSignals{i},w,round(seg/2),[],fsCFD);
+
+    plotColor = getCaseColor(i,true,baseLAB);
+
+    semilogx(f,10*log10(P),'LineWidth',2, ...
+        'Color', plotColor, ...
+        'DisplayName',sprintf('CFD - %s',caseNames{i}));
+
+    psdCount = psdCount + 1;
+    oaspl_psd(psdCount,1) = computeOASPL_PSD(f,P,fmin,fmax,PREF);
+end
+
+xlim([fmin fmax]);
+legend('show','Location','southoutside','NumColumns',3);
+
+%% ============================================================
+% OASPL SUMMARY (bar chart + table)
+%% ============================================================
+
+figure(4); hold on; grid on;
+title([plotTitle ' - OASPL (' num2str(fmin) '-' num2str(fmax) ' Hz)']);
+ylabel('OASPL [dB re 20 \muPa]');
+
+barColors = zeros(length(oaspl_labels),3);
+
+% Reconstruct per-entry color (same logic used above) so bars match line colors
+ptrExp = 1;
+ptrCfd = 1;
+for i = 1:length(oaspl_labels)
+    if oaspl_isCFD(i) == 0
+        k = chIdx(ptrExp);
+        kColor = mod(k-1,nColors)+1;
+
+        lab = baseLAB(kColor,:);
+        lab(1) = lab(1) + Lshift(1);
+        ptrExp = ptrExp + 1;
+    else
+        k = find(strcmp(cfdNames{ptrCfd}, legendNames),1);
+        if isempty(k), k = mod(ptrCfd-1,nColors)+1; end
+        kColor = mod(k-1,nColors)+1;
+
+        lab = baseLAB(kColor,:);
+        lab(1) = lab(1) + Lshift(2);
+        ptrCfd = ptrCfd + 1;
+    end
+    c = lab2rgb(lab);
+    barColors(i,:) = max(min(c,1),0);
+end
+
+b = bar(categorical(oaspl_labels,oaspl_labels), oaspl_psd, 'FaceColor','flat');
+b.CData = barColors;
+
+% Annotate bars with both TD and PSD-integrated values
+for i = 1:length(oaspl_labels)
+    txt = sprintf('%.1f dB', oaspl_psd(i));
+    text(i, oaspl_psd(i)/2, txt, ...
+        'HorizontalAlignment', 'center', ...
+        'VerticalAlignment',   'middle', ...
+        'Rotation',            90, ...
+        'FontSize',            12, ...
+        'Color',               'w', ...
+        'FontWeight',          'bold');
+end
+
+ylim([0, max(oaspl_td)*1.15]);
+xtickangle(45);
+
+%% Print summary table to command window
+fprintf('\n=== OASPL Summary (%.0f-%.0f Hz band) ===\n', fmin, fmax);
+fprintf('%-15s %15s %15s %15s\n','Label','OASPL_TD [dB]','OASPL_PSD [dB]','Diff [dB]');
+for i = 1:length(oaspl_labels)
+    fprintf('%-15s %15.2f %15.2f %15.2f\n', ...
+        oaspl_labels{i}, oaspl_td(i), oaspl_psd(i), oaspl_td(i)-oaspl_psd(i));
+end
+fprintf('\n');
+
+%% ============================================================
+% LOCAL FUNCTIONS
+%% ============================================================
+
+function c = getCaseColor(caseNum,isCFD,baseLAB)
+
+idx = mod(caseNum-1,size(baseLAB,1))+1;
+
+lab = baseLAB(idx,:);
+
+if isCFD
+    lab(1) = min(100,lab(1)+15);
+else
+    lab(1) = max(0,lab(1)-20);
+end
+
+c = lab2rgb(lab);
+c = max(min(c,1),0);
+
+end
+function [f,NB] = localFFT(signal,fs,df_desired,PREF)
+
+signal = signal(:);
+
+Nfft = round(fs/df_desired);
+if mod(Nfft,2)~=0, Nfft=Nfft+1; end
+
+window = hann(Nfft);
+nBlocks = floor(length(signal)/Nfft);
+
+spec = zeros(Nfft,nBlocks);
+
+for k = 1:nBlocks
+    x = signal((k-1)*Nfft+1:k*Nfft);
+    X = fft(x.*window);
+    spec(:,k) = 2*abs(X)/Nfft;
+end
+
+Xavg = mean(spec,2);
+f = (0:Nfft/2)'*(fs/Nfft);
+NB = 20*log10(Xavg(1:Nfft/2+1)/PREF);
+
+end
+
+function OASPL = computeOASPL_TD(signal,fs,fmin,fmax,PREF)
+
+signal = signal(:) - mean(signal);
+nyq = fs/2;
+
+lo = max(fmin,1e-3);
+hi = min(fmax,nyq*0.999);
+
+if hi<=lo
+    OASPL = 20*log10(rms(signal)/PREF);
+else
+    [b,a] = butter(4,[lo hi]/nyq,'bandpass');
+    p = filtfilt(b,a,signal);
+    OASPL = 20*log10(rms(p)/PREF);
+end
+
+end
+
+function OASPL = computeOASPL_PSD(f,P,fmin,fmax,PREF)
+
+mask = f>=fmin & f<=fmax;
+OASPL = 10*log10(trapz(f(mask),P(mask))/PREF^2);
+
+end

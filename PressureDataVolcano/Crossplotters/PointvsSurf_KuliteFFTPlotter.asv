@@ -178,7 +178,7 @@ for i = 1:length(surfFiles)
 
     plot(t,p,'-','LineWidth',1, ...
         'Color',c, ...
-        'DisplayName',['Surf ' surfNames{i}]);
+        'DisplayName',['CFD Surf ' surfNames{i}]);
 end
 
 legend('show');
@@ -215,7 +215,7 @@ for i = 1:length(cfdPointSignals)
 
     semilogx(f,NB,'LineWidth',2, ...
         'Color',c, ...
-        'DisplayName',['Point ' cfdPointNames{i}]);
+        'DisplayName',['CFD Point ' cfdPointNames{i}]);
 end
 
 %% CFD SURFACE FFT
@@ -234,7 +234,7 @@ for i = 1:length(surfSignals)
 
     semilogx(f,NB,'-','LineWidth',1, ...
         'Color',c, ...
-        'DisplayName',['Surf ' surfNames{i}]);
+        'DisplayName',['CFD Surf ' surfNames{i}]);
 end
 
 xlim([fmin fmax]);
@@ -267,9 +267,9 @@ for i = 1:length(cfdPointSignals)
 
     c = max(min(lab2rgb(lab),1),0);
 
-    semilogx(f,10*log10(P),'LineWidth',2, ...
+    semilogx(f,10*log10(P),'LineWidth',1, ...
         'Color',c, ...
-        'DisplayName',['Point ' cfdPointNames{i}]);
+        'DisplayName',['CFD Point ' cfdPointNames{i}]);
 end
 
 %% CFD SURFACE PSD
@@ -291,7 +291,7 @@ for i = 1:length(surfSignals)
 
     semilogx(f,10*log10(P),'-','LineWidth',1, ...
         'Color',c, ...
-        'DisplayName',['Surf ' surfNames{i}]);
+        'DisplayName',['CFD Surf ' surfNames{i}]);
 end
 
 xlim([fmin fmax]);

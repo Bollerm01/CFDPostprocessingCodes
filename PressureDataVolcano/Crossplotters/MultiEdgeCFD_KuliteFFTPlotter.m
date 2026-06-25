@@ -453,23 +453,22 @@ grid on
 title([plotTitle ' - OASPL (' num2str(fmin) '-' num2str(fmax) ' Hz)'])
 ylabel('OASPL [dB re 20 \muPa]')
 
-b = bar(categorical(oaspl_labels,oaspl_labels), oaspl_td, 'FaceColor','flat');
+b = bar(categorical(oaspl_labels,oaspl_labels), oaspl_psd, 'FaceColor','flat');
 b.CData = oaspl_color;
 
-% Annotation of OASPL ongraph
-% for i = 1:length(oaspl_labels)
-%     if isnan(oaspl_psd(i))
-%         txt = sprintf('%.1f dB', oaspl_td(i));
-%     else
-%         txt = sprintf('%.1f dB\n(PSD: %.1f)', oaspl_td(i), oaspl_psd(i));
-%     end
-%     text(i, oaspl_td(i), txt, ...
-%         'HorizontalAlignment','center', ...
-%         'VerticalAlignment','bottom', ...
-%         'FontSize',9);
-% end
+% Annotate bars with both TD and PSD-integrated values
+for i = 1:length(oaspl_labels)
+    txt = sprintf('%.1f dB', oaspl_psd(i));
+    text(i, oaspl_psd(i)/2, txt, ...
+        'HorizontalAlignment', 'center', ...
+        'VerticalAlignment',   'middle', ...
+        'Rotation',            90, ...
+        'FontSize',            12, ...
+        'Color',               'w', ...
+        'FontWeight',          'bold');
+end
 
-ylim([0, max(oaspl_td)*1.15])
+ylim([0, max(oaspl_psd)*1.15])
 xtickangle(45)
 
 %% Print summary table to command window

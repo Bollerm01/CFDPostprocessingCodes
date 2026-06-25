@@ -42,18 +42,16 @@ legendNames = { ...
     'K1','K2','K3','K4','K5','K6' };
 
 %% ============================================================
-% PERCEPTUALLY UNIFORM COLOR SYSTEM (CIE LAB)
+% COLOR SYSTEM
 %% ============================================================
 
-nChannels = length(legendNames);
+nColors = 10;
+baseRGB = lines(nColors);
+baseLAB = rgb2lab(baseRGB);
 
-baseRGB = lines(nChannels);     % channel identity colors
-baseLAB = rgb2lab(baseRGB);     % convert to LAB space
-
-% Dataset brightness shift:
-% (CFD vs Exp or multiple CFD files)
-% 1 = dark, 2 = medium, 3 = bright, 4+ = progressively brighter
-Lshift = [-20 -5 +10 +20];
+% Experimental = darker
+% CFD = brighter
+Lshift = [-15 +15];
 
 %% ============================================================
 % USER INPUT: EXPERIMENT FILE
@@ -66,7 +64,8 @@ if isequal(expFile,0), return; end
 T = readtable(fullfile(expPath,expFile),...
     'VariableNamingRule','modify');
 
-timeExpFull = T.Voltage_0_Time_;
+% timeExpFull = T.Voltage_0_Time_;
+timeExpFull = T.Time_;
 
 %% ============================================================
 % USER INPUT: CFD FILES (MULTI)
@@ -161,9 +160,10 @@ for i = 1:length(chIdx)
 
     expSignals{i} = p;
 
-    lab = baseLAB(k,:);
+    kColor = mod(k-1,nColors)+1;
 
-    lab(1) = lab(1) + Lshift(1); % experiments = baseline dark shift
+    lab = baseLAB(kColor,:);
+    lab(1) = lab(1) + Lshift(1); shift
     
     plotColor = lab2rgb(lab);
     plotColor = max(min(plotColor,1),0);
@@ -209,12 +209,15 @@ for i = 1:length(cfdFiles)
     cfdSignals{i} = p;
     cfdTime{i} = t;
 
-    k = find(strcmp(cfdNames{i}, cfdNames),1);
-    if isempty(k), k = mod(i-1,nChannels)+1; end
-    
-    lab = baseLAB(k,:);
-    
-    % CFD brighter than experiment
+    k = find(strcmp(locationName,legendNames),1);
+
+    if isempty(k)
+        k = mod(i-1,nColors)+1;
+    end
+
+    kColor = mod(k-1,nColors)+1;
+
+    lab = baseLAB(kColor,:);
     lab(1) = lab(1) + Lshift(2);
     
     plotColor = lab2rgb(lab);
@@ -257,8 +260,9 @@ for i = 1:length(expSignals)
     [f,NB] = computeNBFFT(expSignals{i},fsExp);
 
     k = chIdx(i);
+    kColor = mod(k-1,nColors)+1;
 
-    lab = baseLAB(k,:);
+    lab = baseLAB(kColor,:);
     lab(1) = lab(1) + Lshift(1);
     
     plotColor = lab2rgb(lab);
@@ -281,10 +285,12 @@ for i = 1:length(cfdSignals)
 
     [f,NB] = computeNBFFT(cfdSignals{i},fsCFD);
 
-    k = find(strcmp(cfdNames{i}, cfdNames),1);
-    if isempty(k), k = mod(i-1,nChannels)+1; end
+    k = find(strcmp(cfdNames{i}, legendNames),1);
+    if isempty(k), k = mod(i-1,nColors)+1; end
     
-    lab = baseLAB(k,:);
+    kColor = mod(k-1,nColors)+1;
+
+    lab = baseLAB(kColor,:);
     lab(1) = lab(1) + Lshift(2);
     
     plotColor = lab2rgb(lab);
@@ -324,8 +330,9 @@ for i = 1:length(expSignals)
     [P,f] = pwelch(expSignals{i},w,round(seg/2),[],fsExp);
 
     k = chIdx(i);
+    kColor = mod(k-1,nColors)+1;
 
-    lab = baseLAB(k,:);
+    lab = baseLAB(kColor,:);
     lab(1) = lab(1) + Lshift(1);
     
     plotColor = lab2rgb(lab);
@@ -350,10 +357,12 @@ for i = 1:length(cfdSignals)
 
     [P,f] = pwelch(cfdSignals{i},w,round(seg/2),[],fsCFD);
 
-    k = find(strcmp(cfdNames{i}, cfdNames),1);
-    if isempty(k), k = mod(i-1,nChannels)+1; end
-    
-    lab = baseLAB(k,:);
+    k = find(strcmp(cfdNames{i}, legendNames),1);
+    if isempty(k), k = mod(i-1,nColors)+1; end
+
+    kColor = mod(k-1,nColors)+1;
+
+    lab = baseLAB(kColor,:);
     lab(1) = lab(1) + Lshift(2);
     
     plotColor = lab2rgb(lab);
@@ -387,13 +396,17 @@ ptrCfd = 1;
 for i = 1:length(oaspl_labels)
     if oaspl_isCFD(i) == 0
         k = chIdx(ptrExp);
-        lab = baseLAB(k,:);
+        kColor = mod(k-1,nColors)+1;
+
+        lab = baseLAB(kColor,:);
         lab(1) = lab(1) + Lshift(1);
         ptrExp = ptrExp + 1;
     else
-        k = find(strcmp(cfdNames{ptrCfd}, cfdNames),1);
-        if isempty(k), k = mod(ptrCfd-1,nChannels)+1; end
-        lab = baseLAB(k,:);
+        k = find(strcmp(cfdNames{ptrCfd}, legendNames),1);
+        if isempty(k), k = mod(ptrCfd-1,nColors)+1; end
+        kColor = mod(k-1,nColors)+1;
+
+        lab = baseLAB(kColor,:);
         lab(1) = lab(1) + Lshift(2);
         ptrCfd = ptrCfd + 1;
     end
@@ -401,17 +414,20 @@ for i = 1:length(oaspl_labels)
     barColors(i,:) = max(min(c,1),0);
 end
 
-b = bar(categorical(oaspl_labels,oaspl_labels), oaspl_td, 'FaceColor','flat');
+b = bar(categorical(oaspl_labels,oaspl_labels), oaspl_psd, 'FaceColor','flat');
 b.CData = barColors;
 
 % Annotate bars with both TD and PSD-integrated values
-% for i = 1:length(oaspl_labels)
-%     txt = sprintf('%.1f dB\n(PSD: %.1f)', oaspl_td(i), oaspl_psd(i));
-%     text(i, oaspl_td(i), txt, ...
-%         'HorizontalAlignment','center', ...
-%         'VerticalAlignment','bottom', ...
-%         'FontSize',9);
-% end
+for i = 1:length(oaspl_labels)
+    txt = sprintf('%.1f dB', oaspl_psd(i));
+    text(i, oaspl_psd(i)/2, txt, ...
+        'HorizontalAlignment', 'center', ...
+        'VerticalAlignment',   'middle', ...
+        'Rotation',            90, ...
+        'FontSize',            12, ...
+        'Color',               'w', ...
+        'FontWeight',          'bold');
+end
 
 ylim([0, max(oaspl_td)*1.15]);
 xtickangle(45);

@@ -1,0 +1,426 @@
+%% ============================================================
+% Merged CFD + Experimental Surface Pressure Plotter
+%
+% Overlays normalized pressure on the XZ plane for:
+%   - CFD data       (ParaView CSV, pressureavg column)
+%   - Experimental   (Scanivalve CSV, CHAN1-CHAN9, gauge psi)
+%
+% Outputs:
+%   1) Overlaid 3D scatter/surface plot (CFD surface + Exp markers)
+%   2) Overlaid 2D contour map
+%
+%% ============================================================
+
+clear; clc; close all;
+
+%% ============================================================
+% SELECT CFD FILE
+%% ============================================================
+
+[cfdFile, cfdPath] = uigetfile('*.csv', 'Select CFD Surface Pressure CSV (ParaView)');
+if isequal(cfdFile, 0)
+    error('No CFD file selected.');
+end
+csvCFD = fullfile(cfdPath, cfdFile);
+
+%% ============================================================
+% SELECT EXPERIMENTAL FILE
+%% ============================================================
+
+[expFile, expPath] = uigetfile('*.csv', 'Select Scanivalve Experimental CSV');
+if isequal(expFile, 0)
+    error('No experimental file selected.');
+end
+csvExp = fullfile(expPath, expFile);
+
+%% ============================================================
+% BAROMETRIC PRESSURE INPUT
+%% ============================================================
+
+answer = inputdlg( ...
+    'Enter barometric pressure (inHg):', ...
+    'Barometric Pressure', 1, {'29.175'});
+
+if isempty(answer)
+    error('No barometric pressure entered.');
+end
+
+baro_inHg = str2double(answer{1});
+if isnan(baro_inHg)
+    error('Invalid barometric pressure.');
+end
+
+%% ============================================================
+% NORMALIZATION PRESSURE INPUT
+%% ============================================================
+
+normAns = inputdlg( ...
+    {'Enter CFD normalization pressure (Pa):', ...
+     'Enter Experimental normalization pressure (psia):'}, ...
+    'Normalization Pressures', 1, ...
+    {'159000', '30.0'});
+
+if isempty(normAns)
+    error('No normalization pressures entered.');
+end
+
+Pnorm_CFD = str2double(normAns{1});   % Pa
+Pnorm_Exp = str2double(normAns{2}) * 6894.757293;  % psia -> Pa
+
+if isnan(Pnorm_CFD) || Pnorm_CFD <= 0
+    error('Invalid CFD normalization pressure.');
+end
+if isnan(Pnorm_Exp) || Pnorm_Exp <= 0
+    error('Invalid experimental normalization pressure.');
+end
+
+%% ============================================================
+% CONSTANTS
+%% ============================================================
+
+PSI_TO_PA  = 6894.757293;
+INHG_TO_PA = 3386.389;
+
+baroPa = baro_inHg * INHG_TO_PA;
+
+%% ============================================================
+% SENSOR LOCATIONS (shared by both datasets)
+%% ============================================================
+
+sensorNames = {'S1','S2','S3','S4','S5','S6','S7','S8','S9'};
+
+sensorXZ = [
+    2.16000  -0.0635;
+    2.16000  -0.0381;
+    2.16000   0.0000;
+    2.17143  -0.0635;
+    2.17143  -0.0381;
+    2.17143   0.0000;
+    2.18286  -0.0635;
+    2.18286  -0.0381;
+    2.18286   0.0000];
+
+%% ============================================================
+% READ & PROCESS CFD DATA
+%% ============================================================
+
+T_cfd = readtable(csvCFD);
+
+x_cfd = T_cfd.Points_0;
+z_cfd = T_cfd.Points_2;
+p_cfd = T_cfd.pressureavg;
+
+% Keep only z < 1 (original filter)
+idx_cfd = z_cfd < 1;
+x_cfd = x_cfd(idx_cfd);
+z_cfd = z_cfd(idx_cfd);
+p_cfd = p_cfd(idx_cfd);
+
+% Normalize
+p_cfd_norm = p_cfd ./ Pnorm_CFD;
+
+% Extract CFD pressure at each sensor location (nearest point)
+sensorP_CFD_norm = zeros(9, 1);
+for k = 1:9
+    dx = x_cfd - sensorXZ(k,1);
+    dz = z_cfd - sensorXZ(k,2);
+    [~, I] = min(dx.^2 + dz.^2);
+    sensorP_CFD_norm(k) = p_cfd_norm(I);
+end
+
+%% ============================================================
+% READ & PROCESS EXPERIMENTAL DATA
+%% ============================================================
+
+T_exp = readtable(csvExp);
+vars   = strtrim(T_exp.Properties.VariableNames);
+
+sensorPressurePa  = zeros(9, 1);
+sensorPressurePsi = zeros(9, 1);
+
+for k = 1:9
+    channelName = sprintf('CHAN%d', k);
+    col = find(strcmp(vars, channelName), 1);
+    if isempty(col)
+        error('Column %s not found in experimental CSV.', channelName);
+    end
+    gaugePsi = mean(T_exp{:, col}, 'omitnan');
+    sensorPressurePsi(k) = gaugePsi;
+    sensorPressurePa(k)  = gaugePsi * PSI_TO_PA + baroPa;
+end
+
+sensorP_Exp_norm = sensorPressurePa ./ Pnorm_Exp;
+
+%% ============================================================
+% PRINT SUMMARY TO CONSOLE
+%% ============================================================
+
+fprintf('\n=== Experimental Sensor Pressures ===\n');
+fprintf('Barometric Pressure  = %.4f inHg  (%.2f Pa)\n', baro_inHg, baroPa);
+fprintf('Exp Norm Pressure    = %.2f Pa\n\n', Pnorm_Exp);
+
+for k = 1:9
+    fprintf('%s:  %.4f psig   %.2f Pa   Norm = %.5f\n', ...
+        sensorNames{k}, sensorPressurePsi(k), sensorPressurePa(k), sensorP_Exp_norm(k));
+end
+
+fprintf('\n=== CFD Sensor Pressures (nearest point) ===\n');
+for k = 1:9
+    fprintf('%s:  Norm = %.5f\n', sensorNames{k}, sensorP_CFD_norm(k));
+end
+
+%% ============================================================
+% BUILD CFD INTERPOLATED SURFACE for 3D overlay
+%% ============================================================
+
+F_cfd = scatteredInterpolant(x_cfd, z_cfd, p_cfd_norm, 'natural', 'none');
+
+xg = linspace(min(x_cfd), max(x_cfd), 300);
+zg = linspace(min(z_cfd), max(z_cfd), 300);
+[XG, ZG] = meshgrid(xg, zg);
+PG_cfd = F_cfd(XG, ZG);
+
+%% ============================================================
+% BUILD EXPERIMENTAL INTERPOLATED SURFACE (mirrored, extended)
+%% ============================================================
+
+sensorXZ_mirror = sensorXZ;
+sensorXZ_mirror(:,2) = -sensorXZ_mirror(:,2);
+
+interpX = [sensorXZ(:,1);        sensorXZ_mirror(:,1)];
+interpZ = [sensorXZ(:,2);        sensorXZ_mirror(:,2)];
+interpP = [sensorPressurePa;     sensorPressurePa];
+
+% Boundary extension
+xmin_exp = 2.1485;   xmax_exp = 2.19475;
+zmin_exp = -0.0765;  zmax_exp =  0.0765;
+
+leftX = xmin_exp * ones(6,1);
+leftZ = [-0.0635; -0.0381; 0.0; 0.0381; 0.0635; 0.0];
+leftP = [sensorPressurePa(1); sensorPressurePa(2); sensorPressurePa(3); ...
+         sensorPressurePa(2); sensorPressurePa(1); sensorPressurePa(3)];
+
+rightX = xmax_exp * ones(6,1);
+rightZ = leftZ;
+rightP = [sensorPressurePa(7); sensorPressurePa(8); sensorPressurePa(9); ...
+          sensorPressurePa(8); sensorPressurePa(7); sensorPressurePa(9)];
+
+bottomX = [2.16000; 2.17143; 2.18286];
+bottomZ = zmin_exp * ones(3,1);
+bottomP = [sensorPressurePa(1); sensorPressurePa(4); sensorPressurePa(7)];
+
+topX = bottomX;
+topZ = zmax_exp * ones(3,1);
+topP = bottomP;
+
+% Four corners of the domain — pressure assigned by nearest sensor column/row
+% so linear interpolation fills the full rectangle without clipping.
+%   Bottom-left  (xmin, zmin) -> mirrors S1 (x=2.16, outer z)
+%   Bottom-right (xmax, zmin) -> mirrors S7 (x=2.18286, outer z)
+%   Top-left     (xmin, zmax) -> mirrors S1
+%   Top-right    (xmax, zmax) -> mirrors S7
+cornerX = [xmin_exp; xmax_exp; xmin_exp; xmax_exp];
+cornerZ = [zmin_exp; zmin_exp; zmax_exp; zmax_exp];
+cornerP = [sensorPressurePa(1); sensorPressurePa(7); ...
+           sensorPressurePa(1); sensorPressurePa(7)];
+
+interpX = [interpX; leftX; rightX; bottomX; topX; cornerX];
+interpZ = [interpZ; leftZ; rightZ; bottomZ; topZ; cornerZ];
+interpP = [interpP; leftP; rightP; bottomP; topP; cornerP];
+
+interpP_norm = interpP ./ Pnorm_Exp;
+
+% Linear interpolation for the experimental surface; 'none' extrapolation
+% leaves NaN outside the convex hull so the surface stays physically honest.
+F_exp = scatteredInterpolant(interpX, interpZ, interpP_norm, 'linear', 'none');
+
+xg_exp = linspace(xmin_exp, xmax_exp, 350);
+zg_exp = linspace(zmin_exp, zmax_exp, 350);
+[XG_exp, ZG_exp] = meshgrid(xg_exp, zg_exp);
+PG_exp = F_exp(XG_exp, ZG_exp);
+
+%% ============================================================
+% =============================================================
+% FIGURE 1 — OVERLAID 3D PLOT
+%   CFD: interpolated surface (semi-transparent)
+%   Exp: linearly interpolated surface (semi-transparent, wire-framed)
+% =============================================================
+%% ============================================================
+
+figure('Color','w','Position',[100 100 1300 750]);
+
+% --- CFD surface (semi-transparent so Exp surface shows through) ---
+hCFD = surf(XG, ZG, PG_cfd, ...
+    'EdgeColor', 'none', ...
+    'FaceAlpha', 0.65, ...
+    'DisplayName', 'CFD Surface');
+hold on;
+
+% --- Experimental linearly-interpolated surface ---
+% Use a fixed single colour with a different alpha so the two surfaces
+% are clearly distinguishable while sharing the same axes.
+% hExp = surf(XG_exp, ZG_exp, PG_exp, ...
+%     'EdgeColor', 'none', ...
+%     'FaceAlpha', 0.60, ...
+%     'FaceColor', 'flat', ...          % coloured by CData (PG_exp)
+%     'CData',     PG_exp, ...
+%     'DisplayName', 'Experimental Surface (linear interp)');
+
+hExp = surf(XG_exp, ZG_exp, PG_exp, ...
+    'EdgeColor', 'none', ...
+    'FaceAlpha', 0.60, ...          % coloured by CData (PG_exp)
+    'CData',     PG_exp, ...
+    'DisplayName', 'Experimental Interpolated Surface Data');
+
+% Overlay a wire-frame on the Exp surface so it reads as distinct
+% surf(XG_exp, ZG_exp, PG_exp, ...
+%     'EdgeColor', [1 1 1], ...
+%     'EdgeAlpha', 0.10, ...
+%     'FaceColor', 'none', ...
+%     'HandleVisibility', 'off');
+
+% --- Sensor markers: Exp circles colored by their normalized pressure ---
+scatter3(sensorXZ(:,1), sensorXZ(:,2), sensorP_Exp_norm, ...
+    140, sensorP_Exp_norm, 'o', 'filled', ...
+    'MarkerEdgeColor', 'k', 'LineWidth', 1.5, ...
+    'DisplayName', 'Scanivalve Sensor Values');
+
+scatter3(sensorXZ(:,1), sensorXZ(:,2), sensorP_CFD_norm, ...
+    100, 'k', '^', 'filled', ...
+    'DisplayName', 'CFD @ sensor location');
+
+% --- Vertical dashed lines connecting CFD and Exp at each sensor ---
+for k = 1:9
+    plot3([sensorXZ(k,1) sensorXZ(k,1)], ...
+          [sensorXZ(k,2) sensorXZ(k,2)], ...
+          [sensorP_CFD_norm(k) sensorP_Exp_norm(k)], ...
+          'k--', 'LineWidth', 0.8, 'HandleVisibility', 'off');
+end
+
+% --- Sensor labels (placed above the higher of the two values) ---
+for k = 1:9
+    pTop = max(sensorP_CFD_norm(k), sensorP_Exp_norm(k));
+    text(sensorXZ(k,1), sensorXZ(k,2), pTop + 0.002, ...
+        ['  ' sensorNames{k}], ...
+        'FontSize', 9, 'FontWeight', 'bold', 'Color', 'k');
+end
+
+legend('Location', 'northeast', 'FontSize', 10);
+
+xlabel('X Location (m)');
+ylabel('Spanwise Z (m)');
+zlabel('Normalized Pressure  P / P_{ref}');
+title('Overlaid Normalized Pressure — CFD Surface vs Experimental Surface');
+
+colormap(turbo);
+cb = colorbar;
+cb.Label.String = 'P / P_{ref}';
+
+shading interp;
+grid on; box on;
+view(45, 30);
+set(gca, 'FontSize', 12, 'YDir', 'reverse');
+
+%% ============================================================
+% =============================================================
+% FIGURE 2 — OVERLAID 2D CONTOUR MAP
+%   CFD: background contourf
+%   Exp: overlaid contour lines + filled scatter markers
+% =============================================================
+%% ============================================================
+
+figure('Color','w','Position',[150 150 1200 700]);
+
+% --- CFD contour background ---
+contourf(XG, ZG, PG_cfd, 40, 'LineColor','none');
+hold on;
+
+% --- Exp contour lines ---
+contour(XG_exp, ZG_exp, PG_exp, 15, 'LineColor','w', 'LineWidth', 1.2);
+
+% --- Exp sensor scatter ---
+scatter(sensorXZ(:,1), sensorXZ(:,2), 120, sensorP_Exp_norm, ...
+    'filled', 'MarkerEdgeColor','w', 'LineWidth', 1.5);
+
+% --- Sensor labels ---
+for k = 1:9
+    text(sensorXZ(k,1), sensorXZ(k,2), ...
+        ['  ' sensorNames{k}], ...
+        'FontSize', 9, 'FontWeight', 'bold', 'Color', 'w');
+end
+
+xlabel('X Location (m)');
+ylabel('Spanwise Z (m)');
+title('Overlaid 2D Pressure Field — CFD (fill) + Experimental (contours & markers)');
+
+colormap(turbo);
+cb = colorbar;
+cb.Label.String = 'P / P_{ref}  (CFD scale)';
+
+grid on; box on;
+set(gca, 'FontSize', 12, 'YDir', 'reverse');
+axis tight;
+
+%% ============================================================
+% =============================================================
+% FIGURE 3 — SIDE-BY-SIDE SUBPLOT COMPARISON
+% =============================================================
+%% ============================================================
+
+figure('Color','w','Position',[200 200 1400 600]);
+
+% -- CFD subplot --
+subplot(1,2,1);
+contourf(XG, ZG, PG_cfd, 30, 'LineColor','none');
+hold on;
+scatter(sensorXZ(:,1), sensorXZ(:,2), 80, sensorP_CFD_norm, ...
+    'filled', 'MarkerEdgeColor','k');
+for k = 1:9
+    text(sensorXZ(k,1), sensorXZ(k,2), ['  ' sensorNames{k}], ...
+        'FontSize', 8, 'FontWeight','bold', 'Color','k');
+end
+xlabel('X (m)'); ylabel('Z (m)');
+title('CFD Normalized Pressure');
+colormap(turbo); colorbar;% clim([0.1 0.2]);
+set(gca,'FontSize',11,'YDir','reverse');
+axis tight;
+
+% -- Exp subplot --
+subplot(1,2,2);
+contourf(XG_exp, ZG_exp, PG_exp, 30, 'LineColor','none');
+hold on;
+scatter(sensorXZ(:,1), sensorXZ(:,2), 80, sensorP_Exp_norm, ...
+    'filled', 'MarkerEdgeColor','k');
+for k = 1:9
+    text(sensorXZ(k,1), sensorXZ(k,2), ['  ' sensorNames{k}], ...
+        'FontSize', 8, 'FontWeight','bold', 'Color','k');
+end
+xlabel('X (m)'); ylabel('Z (m)');
+title('Experimental Normalized Pressure (Mirrored)');
+colormap(turbo); colorbar; %clim([0.1 0.2]);
+set(gca,'FontSize',11,'YDir','reverse');
+xlim([xmin_exp xmax_exp]);
+ylim([zmin_exp zmax_exp]);
+
+sgtitle('CFD vs Experimental Surface Pressure Comparison', 'FontSize',14,'FontWeight','bold');
+
+%% ============================================================
+% SUMMARY TABLE
+%% ============================================================
+
+Results = table( ...
+    sensorNames(:), ...
+    sensorXZ(:,1), ...
+    sensorXZ(:,2), ...
+    sensorPressurePsi, ...
+    sensorPressurePa, ...
+    sensorP_Exp_norm, ...
+    sensorP_CFD_norm, ...
+    sensorP_Exp_norm - sensorP_CFD_norm, ...
+    'VariableNames', { ...
+    'Sensor', 'X_m', 'Z_m', ...
+    'GaugePressure_psig', 'AbsPressure_Pa', ...
+    'Exp_NormP', 'CFD_NormP', 'Delta_ExpMinusCFD'});
+
+fprintf('\n=== Sensor Comparison Table ===\n');
+disp(Results);

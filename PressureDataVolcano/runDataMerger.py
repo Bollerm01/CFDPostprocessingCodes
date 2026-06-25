@@ -5,10 +5,11 @@ import shutil
 # USER INPUTS
 # ==========================
 
-root1 = Path("/home/bollerma/LESdata/SSWT/sliceCav/J140/RD52si/surfaceData")
-root2 = Path("/home/bollerma/LESdata/SSWT/sliceCav/J140/RD52si/surfaceData2")
-root3 = Path("/home/bollerma/LESdata/SSWT/sliceCav/J140/RD52si/surfaceData3")
-dest_root = Path("/home/bollerma/LESdata/SSWT/sliceCav/J140/RD52si/surfaceDataCombined")
+root1 = Path("/data/bollerma/LES/SSWT/sliceCav/RD52s/surfaceData")
+root2 = Path("/data/bollerma/LES/SSWT/sliceCav/RD52s/surfaceData2")
+root3 = Path("/data/bollerma/LES/SSWT/sliceCav/RD52s/surfaceData3")
+root4 = Path("/data/bollerma/LES/SSWT/sliceCav/RD52s/surfaceData4")
+dest_root = Path("/data/bollerma/LES/SSWT/sliceCav/RD52s/surfaceDataCombined")
 
 # ==========================
 # COPY FUNCTION
@@ -42,5 +43,8 @@ copy_tree(root2, dest_root)
 
 print("Copying third dataset (overwriting duplicates)...")
 copy_tree(root3, dest_root)
+
+print("Copying fourth dataset (overwriting duplicates)...")
+copy_tree(root4, dest_root)
 
 print("Done.")

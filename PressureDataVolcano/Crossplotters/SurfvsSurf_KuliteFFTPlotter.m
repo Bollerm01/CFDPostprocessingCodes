@@ -137,7 +137,7 @@ for i = 1:length(aFiles)
 
     plot(t,p,'-','LineWidth',1.2, ...
         'Color',c, ...
-        'DisplayName',['CFD Slice ', aNames{i}]);
+        'DisplayName',['Slice ', aNames{i}]);
 end
 
 %% ============================================================
@@ -168,7 +168,7 @@ for i = 1:length(bFiles)
 
     plot(t,p,'-','LineWidth',1.4, ...
         'Color',c, ...
-        'DisplayName',['CFD Full ', bNames{i}]);
+        'DisplayName',['Full ', bNames{i}]);
 end
 
 legend('show');
@@ -204,7 +204,7 @@ for i = 1:length(A_sig)
 
     semilogx(f,NB,'LineWidth',2, ...
         'Color',c, ...
-        'DisplayName',['CFD Slice ', aNames{i}]);
+        'DisplayName',['Slice ', aNames{i}]);
 end
 
 %% DATASET B FFT
@@ -222,7 +222,7 @@ for i = 1:length(B_sig)
 
     semilogx(f,NB,'-','LineWidth',2, ...
         'Color',c, ...
-        'DisplayName',['CFD Full ', bNames{i}]);
+        'DisplayName',['Full ', bNames{i}]);
 end
 
 xlim([fmin fmax]);
@@ -256,7 +256,7 @@ for i = 1:length(A_sig)
 
     semilogx(f,10*log10(P),'LineWidth',2, ...
         'Color',c, ...
-        'DisplayName',['CFD Slice ', aNames{i}]);
+        'DisplayName',['Slice ', aNames{i}]);
 end
 
 %% DATASET B PSD
@@ -277,24 +277,19 @@ for i = 1:length(B_sig)
 
     semilogx(f,10*log10(P),'-','LineWidth',2, ...
         'Color',c, ...
-        'DisplayName',['CFD Full ', bNames{i}]);
+        'DisplayName',['Full ', bNames{i}]);
 end
 
 xlim([fmin fmax]);
 legend('show','Location','southoutside','NumColumns',2);
 
 %% ============================================================
-% OASPL CALCULATION
-%% ============================================================
-% Integrate narrowband mean-square pressure contributions
-% over the user-defined frequency range [fmin, fmax].
+% OASPL CALCULATION (PSD INTEGRATION)
 %
-% Method:
-%   Xlin (Pa, peak) from localFFT  ->  Xrms = Xlin / sqrt(2)
-%   p_ms(i) = Xrms(i)^2  = (Xlin(i)^2) / 2
-%   OASPL = 10 * log10( sum(p_ms, in band) / PREF^2 )
+% Matches SurfaceCFDvsExp_KuliteFFTPlotter.m
 %
-% The DC bin (f=0) is excluded; the Nyquist bin is included.
+% OASPL = 10*log10( integral(PSD df) / PREF^2 )
+%
 %% ============================================================
 
 nA = length(aFiles);
@@ -307,45 +302,68 @@ colors_A = zeros(nA,3);
 colors_B = zeros(nB,3);
 
 %% DATASET A OASPL
+
 for i = 1:nA
 
     fs = 1/mean(diff(A_time{i}));
 
-    [f, ~, Xlin] = computeNBFFT(A_sig{i}, fs);
+    seg = floor(length(A_sig{i})/8);
+    w   = hann(seg);
 
-    % Restrict to [fmin, fmax] (exclude DC bin f=0)
+    [P,f] = pwelch(A_sig{i}, ...
+                   w, ...
+                   round(seg/2), ...
+                   [], ...
+                   fs);
+
     mask = f >= fmin & f <= fmax;
 
-    % RMS pressure^2 per bin (single-sided spectrum, peak -> rms)
-    p_ms = (Xlin(mask).^2) / 2;
-
-    oaspl_A(i) = 10 * log10( sum(p_ms) / PREF^2 );
+    if nnz(mask) < 2
+        oaspl_A(i) = NaN;
+    else
+        p_meansq = trapz(f(mask), P(mask));
+        oaspl_A(i) = 10*log10(p_meansq / PREF^2);
+    end
 
     k = mod(i-1,nColors)+1;
     lab = baseLAB(k,:);
     lab(1) = lab(1) + Lshift(1);
+
     colors_A(i,:) = max(min(lab2rgb(lab),1),0);
+
 end
 
 %% DATASET B OASPL
+
 for i = 1:nB
 
     fs = 1/mean(diff(B_time{i}));
 
-    [f, ~, Xlin] = computeNBFFT(B_sig{i}, fs);
+    seg = floor(length(B_sig{i})/8);
+    w   = hann(seg);
+
+    [P,f] = pwelch(B_sig{i}, ...
+                   w, ...
+                   round(seg/2), ...
+                   [], ...
+                   fs);
 
     mask = f >= fmin & f <= fmax;
 
-    p_ms = (Xlin(mask).^2) / 2;
-
-    oaspl_B(i) = 10 * log10( sum(p_ms) / PREF^2 );
+    if nnz(mask) < 2
+        oaspl_B(i) = NaN;
+    else
+        p_meansq = trapz(f(mask), P(mask));
+        oaspl_B(i) = 10*log10(p_meansq / PREF^2);
+    end
 
     k = mod(i-1,nColors)+1;
     lab = baseLAB(k,:);
     lab(1) = lab(1) + Lshift(2);
-    colors_B(i,:) = max(min(lab2rgb(lab),1),0);
-end
 
+    colors_B(i,:) = max(min(lab2rgb(lab),1),0);
+
+end
 %% ============================================================
 % OASPL BAR CHART (Figure 4)
 %% ============================================================
