@@ -86,7 +86,7 @@ answer = inputdlg( ...
     {'Plot Title','Start Time [s]','End Time [s]', ...
      'FFT df [Hz]','Min Frequency [Hz]','Max Frequency [Hz]'}, ...
     'Settings', [1 50], ...
-    {'Experimental Kulite R/D Comparison','0','10','75','100','20000'});
+    {'Experimental Kulite R/D Comparison','0','10','100','100','20000'});
 
 if isempty(answer), return; end
 
@@ -126,7 +126,7 @@ hbAnswer = inputdlg( ...
      'Phase Delay alpha', ...
      'Number of Modes to Display'}, ...
     'Heller & Bliss Cavity Resonance Parameters', [1 60], ...
-    {'0.1','0.02','100','0.3','1.4','0.57','0.25','6'});
+    {'0.068','0.0186','694','2.0','1.4','0.57','0.25','6'});
 
 if isempty(hbAnswer), return; end
 
@@ -268,9 +268,6 @@ end
 
 xlim([fmin fmax]);
 
-% --- Overlay Heller & Bliss mode lines on SPL plot ---
-overlayHBmodes(HB, fmin, fmax);
-
 legend('show','Location','southoutside','NumColumns', 3);
 
 %% ============================================================
@@ -319,9 +316,6 @@ end
 
 xlim([fmin fmax]);
 
-% --- Overlay Heller & Bliss mode lines on PSD plot ---
-overlayHBmodes(HB, fmin, fmax);
-
 legend('show','Location','southoutside','NumColumns', 3);
 
 %% ============================================================
@@ -332,12 +326,12 @@ figure(4); hold on; grid on;
 title([plotTitle ' - OASPL (' num2str(fmin) '-' num2str(fmax) ' Hz)']);
 ylabel('OASPL [dB re 20 \muPa]');
 
-b = bar(categorical(oaspl_labels,oaspl_labels), oaspl_td, 'FaceColor','flat');
+b = bar(categorical(oaspl_labels,oaspl_labels), oaspl_psd, 'FaceColor','flat');
 b.CData = oaspl_color;
 
 for i = 1:length(oaspl_labels)
-    txt = sprintf('%.1f dB', oaspl_td(i));
-    text(i, oaspl_td(i)/2, txt, ...
+    txt = sprintf('%.1f dB', oaspl_psd(i));
+    text(i, oaspl_psd(i)/2, txt, ...
         'HorizontalAlignment','center', ...
         'VerticalAlignment','middle', ...
         'Rotation',90, ...
@@ -346,7 +340,7 @@ for i = 1:length(oaspl_labels)
         'FontWeight','bold');
 end
 
-ylim([0, max(oaspl_td)*1.15]);
+ylim([0, max(oaspl_psd)*1.15]);
 xtickangle(45);
 
 %% Print summary table to command window
@@ -359,78 +353,49 @@ end
 fprintf('\n');
 
 %% ============================================================
-% FIGURE 5 — HELLER & BLISS MODE SUMMARY
+% FIGURE 5 — NARROWBAND SPL WITH HELLER & BLISS MODE OVERLAY
 %% ============================================================
-% Standalone figure showing all H&B predicted mode frequencies,
-% with in-range modes highlighted and annotated.
+% Identical narrowband SPL content to Figure 2, with H&B mode lines
+% added as vertical dashed lines. Mode number labels are placed
+% alternately to the right and left of each line so they never
+% intersect the line itself.
 
 figure(5); hold on; grid on;
-title(sprintf('%s - Heller & Bliss Cavity Modes\n(L/D = %.2f,  M_{\\infty} = %.3f,  U_{\\infty} = %.1f m/s)', ...
-    plotTitle, HB.L/HB.D, HB.Minf, HB.Uinf));
-xlabel('Mode Number n');
-ylabel('Frequency [Hz]');
+title(sprintf('%s - Narrowband SPL + H&B Modes\n(L/D = %.2f,  M_{\\infty} = %.3f,  U_{\\infty} = %.1f m/s,  \\kappa = %.3f,  \\alpha = %.3f)', ...
+    plotTitle, HB.L/HB.D, HB.Minf, HB.Uinf, HB.kappa, HB.alpha));
+xlabel('Frequency [Hz]');
+ylabel('SPL [dB re 20 \muPa]');
+set(gca,'XScale','log');
 
-% --- Plot all modes as a connected line ---
-plot(HB.modes, HB.freq, 'k-o', ...
-    'LineWidth', 1.5, ...
-    'MarkerSize', 7, ...
-    'MarkerFaceColor', [0.7 0.7 0.7], ...
-    'DisplayName', 'H&B Predicted Modes');
+for e = 1:nExp
 
-% --- Highlight in-range modes ---
-inRangeModes = HB.modes(HB.inRange);
-inRangeFreqs = HB.freq(HB.inRange);
+    fsExp = 1/mean(diff(expTime{e}));
 
-scatter(inRangeModes, inRangeFreqs, 80, [0.85 0.15 0.15], 'filled', ...
-    'DisplayName', sprintf('In range [%.0f–%.0f Hz]', fmin, fmax));
+    for i = 1:length(expSignals{e})
 
-% --- Annotate each mode ---
-for n = 1:HB.Nmodes
-    clr = [0.3 0.3 0.3];
-    wt  = 'normal';
-    if HB.inRange(n)
-        clr = [0.7 0.05 0.05];
-        wt  = 'bold';
+        [f5,NB5] = computeNBFFT(expSignals{e}{i},fsExp);
+
+        k = chIdx(i);
+
+        lab = baseLAB(k,:);
+        lab(1) = lab(1) + Lshift(min(e,length(Lshift)));
+
+        plotColor = lab2rgb(lab);
+        plotColor = max(min(plotColor,1),0);
+
+        semilogx(f5,NB5,'LineWidth',2, ...
+            'Color',plotColor, ...
+            'DisplayName', ...
+            ['Exp ' expNames{e} ' ' legendNames{k}]);
     end
-    text(HB.modes(n) + 0.05, HB.freq(n), ...
-        sprintf('n=%d\n%.0f Hz', HB.modes(n), HB.freq(n)), ...
-        'FontSize', 8, ...
-        'Color', clr, ...
-        'FontWeight', wt, ...
-        'VerticalAlignment', 'middle');
 end
 
-% --- Draw horizontal band showing plot frequency range ---
-yline(fmin, '--', sprintf('f_{min} = %.0f Hz', fmin), ...
-    'Color', [0 0.45 0.74], 'LineWidth', 1.2, ...
-    'LabelHorizontalAlignment', 'left');
-yline(fmax, '--', sprintf('f_{max} = %.0f Hz', fmax), ...
-    'Color', [0 0.45 0.74], 'LineWidth', 1.2, ...
-    'LabelHorizontalAlignment', 'left');
+xlim([fmin fmax]);
 
-% Shade the in-range band
-ylims_temp = [min(HB.freq)*0.8, max(HB.freq)*1.15];
-patch([0.5 HB.Nmodes+0.5 HB.Nmodes+0.5 0.5], ...
-      [fmin fmin fmax fmax], ...
-      [0 0.45 0.74], 'FaceAlpha', 0.06, 'EdgeColor', 'none', ...
-      'DisplayName', 'Plot frequency range');
+% --- Draw H&B mode lines with offset labels ---
+overlayHBmodesOffsetLabels(HB, fmin, fmax);
 
-ylim(ylims_temp);
-xlim([0.5, HB.Nmodes + 0.5]);
-xticks(1:HB.Nmodes);
-
-% Add parameter annotation box
-paramStr = sprintf( ...
-    'L = %.4f m\nD = %.4f m\nL/D = %.2f\n\\kappa = %.3f\n\\alpha = %.3f\n\\gamma = %.3f', ...
-    HB.L, HB.D, HB.L/HB.D, HB.kappa, HB.alpha, HB.gamma);
-annotation('textbox', [0.72 0.15 0.20 0.28], ...
-    'String', paramStr, ...
-    'FitBoxToText', 'on', ...
-    'BackgroundColor', [1 1 0.9], ...
-    'EdgeColor', [0.5 0.5 0.5], ...
-    'FontSize', 8);
-
-legend('show', 'Location', 'northwest');
+legend('show','Location','southoutside','NumColumns',3);
 
 %% ============================================================
 % LOCAL FFT FUNCTION
@@ -526,60 +491,81 @@ OASPL = 10*log10(p_meansq / PREF^2);
 end
 
 %% ============================================================
-% HELLER & BLISS OVERLAY HELPER
+% HELLER & BLISS OVERLAY HELPER — OFFSET LABELS
 %% ============================================================
 
-function overlayHBmodes(HB, fmin, fmax)
-% Draws vertical dashed lines for each Heller & Bliss mode that falls
-% within [fmin, fmax] on the current axes (assumed semilogx).
-% Lines are drawn BEFORE the legend is built so they appear in it.
-% Out-of-range modes are drawn as lighter, thinner lines outside the
-% xlim but are clipped automatically.
+function overlayHBmodesOffsetLabels(HB, fmin, fmax)
+% Draws vertical dashed lines for each H&B mode within [fmin, fmax]
+% on the current semilogx axes.
+%
+% Labels are placed to the RIGHT of odd-numbered (within-range) modes
+% and to the LEFT of even-numbered ones, alternating so adjacent lines
+% never share the same side. The label is never drawn on top of the
+% line itself — it is nudged horizontally by a small log-space offset.
 
-ax = gca;
-yLims = ylim(ax);   % grab current y-limits (may expand later; use 'tight' reference)
+ax  = gca;
+hbColor = [0.80 0.40 0.00];   % dark amber
 
-% A dark amber color for H&B lines — visually distinct from data
-hbColor = [0.80 0.40 0.00];
+% Collect only the in-range modes so we can alternate L/R cleanly
+inRangeModes = HB.modes(HB.inRange);
+inRangeFreqs = HB.freq(HB.inRange);
 
-firstInRange = true;
+% Log-space nudge: shift label by this fraction of a decade
+logNudgeFrac = 0.009;   % fraction of log10(fmax/fmin) per side
 
-for n = 1:HB.Nmodes
+firstLine = true;
 
-    fMode = HB.freq(n);
+for idx = 1:length(inRangeModes)
 
-    if fMode < fmin || fMode > fmax
-        continue   % skip out-of-range modes entirely on these plots
-    end
+    n     = inRangeModes(idx);
+    fMode = inRangeFreqs(idx);
 
-    % First in-range line carries the legend entry; rest use HandleVisibility off
-    if firstInRange
+    % --- Vertical dashed line ---
+    if firstLine
         dispName = 'H&B Modes';
         hVis     = 'on';
-        firstInRange = false;
+        firstLine = false;
     else
         dispName = '';
         hVis     = 'off';
     end
 
     xline(fMode, '--', ...
-        'Color',     hbColor, ...
-        'LineWidth', 1.4, ...
-        'Alpha',     0.85, ...
+        'Color',            hbColor, ...
+        'LineWidth',        1.4, ...
+        'Alpha',            0.85, ...
         'DisplayName',      dispName, ...
-        'HandleVisibility', hVis, ...
-        'LabelHorizontalAlignment', 'center', ...
-        'LabelVerticalAlignment',   'top');
+        'HandleVisibility', hVis);
 
-    % Mode number label near the top of the axes
-    % Place at 97% of the current y-axis height
-    yLabel = yLims(1) + 0.97*(yLims(2) - yLims(1));
+    % --- Label position: alternate right / left ---
+    % Work in log space so the offset is visually consistent across
+    % a logarithmic x-axis.
+    logRange = log10(fmax) - log10(fmin);
+    logNudge = logNudgeFrac * logRange;   % absolute log10 offset
+    
+    % Even → label to the LEFT of the line
+    fLabel = 10^(log10(fMode) - logNudge);
+    hAlign = 'right';
 
-    text(fMode, yLabel, sprintf('n=%d', n), ...
+    % if mod(idx, 2) == 1
+    %     % Odd  → label to the RIGHT of the line
+    %     fLabel = 10^(log10(fMode) + logNudge);
+    %     hAlign = 'left';
+    % else
+    %     % Even → label to the LEFT of the line
+    %     fLabel = 10^(log10(fMode) - logNudge);
+    %     hAlign = 'right';
+    % end
+
+    % Place label near the top (95 % of y range)
+    yLims  = ylim(ax);
+    yLabel = yLims(1) + 0.99*(yLims(2) - yLims(1));
+
+    text(fLabel, yLabel, sprintf('%d', n), ...
         'Color',               hbColor, ...
         'FontSize',            8, ...
         'FontWeight',          'bold', ...
-        'HorizontalAlignment', 'center', ...
+        'HorizontalAlignment', hAlign, ...
         'VerticalAlignment',   'top', ...
         'Clipping',            'on');
 end
