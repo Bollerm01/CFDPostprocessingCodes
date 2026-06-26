@@ -143,7 +143,9 @@ HB.Nmodes  = round(str2double(hbAnswer{8}));
 %
 %   denominator = M_inf + (1/kappa) * sqrt(1 + (gamma-1)/2 * M_inf^2)
 %
-HB.denom = HB.Minf + (1/HB.kappa) * sqrt(1 + (HB.gamma - 1)/2 * HB.Minf^2);
+HB.denom = HB.Minf * ...
+           sqrt(1 + (HB.gamma - 1)/2 * HB.Minf^2) ...
+           + (1/HB.kappa);
 
 HB.modes = (1:HB.Nmodes)';
 HB.freq  = (HB.Uinf / HB.L) * (HB.modes - HB.alpha) / HB.denom;
@@ -303,7 +305,7 @@ for e = 1:nExp
         plotColor = lab2rgb(lab);
         plotColor = max(min(plotColor,1),0);
         
-        semilogx(f,10*log10(P),'LineWidth',2, ...
+        semilogx(f,10*log10(P / PREF^2),'LineWidth',2, ...
             'Color',plotColor, ...
             'DisplayName', ...
             ['Exp ' expNames{e} ' ' legendNames{k}]);

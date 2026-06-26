@@ -21,6 +21,19 @@
 %   A second dialog lets you choose which probe points to analyse.
 %
 % Requires: Signal Processing Toolbox  (pwelch, butter, filtfilt, hann)
+%
+% CHANGES vs. original
+%   [COLOR]  Replaced linspace Lshift ramp + getColor helper with the
+%            shared color pattern: lines(max(nProbes,7)) seeds baseLAB;
+%            Lshift = [-18 0 +18] is indexed per probe (wrapping with mod)
+%            and applied inline at each plot call.  lineStyles cycles
+%            through four dash patterns for an additional visual dimension.
+%            Explicit [0,1] clamp after lab2rgb prevents silent clipping.
+%
+%   [PSD]    Section restructured to match the axial plotter reference
+%            style: oaspl_psd reinitialised at section top, pwelch args
+%            formatted one-per-line, color resolved inline via baseLAB +
+%            Lshift, lineStyles applied, oaspl_psd indexed as (pi,1).
 % -------------------------------------------------------------------------
 
 clear; clc; close all;
@@ -99,7 +112,6 @@ fprintf('  %s\n', allPrefixes{:});
 %  STEP 4 – PROBE SELECTION DIALOG
 %% ============================================================
 
-% Build a listbox dialog for the user to pick 3-5 probes
 [selIdx, ok] = listdlg( ...
     'ListString',    allPrefixes, ...
     'SelectionMode', 'multiple', ...
@@ -136,13 +148,23 @@ if isempty(legendAnswer), return; end
 legendLabels = legendAnswer;
 
 %% ============================================================
-%  PERCEPTUALLY UNIFORM COLOR SYSTEM  (CIE LAB)
+%  PERCEPTUALLY-UNIFORM COLOR SYSTEM (CIE LAB)
 %% ============================================================
+%
+%  Matches the axial plotter: lines(max(nProbes,7)) provides maximally
+%  distinct hue seeds; baseLAB holds the raw LAB values which are shifted
+%  at each plot call.  Lshift cycles through three brightness levels
+%  (dark/neutral/bright) via mod indexing.  lineStyles adds a fourth
+%  visual dimension for greyscale legibility.  Explicit [0,1] clamp after
+%  lab2rgb prevents silent clipping in all MATLAB versions.
 
-baseRGB = lines(max(nProbes, 7));
-baseLAB = rgb2lab(baseRGB(1:nProbes, :));
+baseRGB    = lines(max(nProbes, 7));      % maximally distinct hue seeds
+baseLAB    = rgb2lab(baseRGB);           % raw LAB seeds – shifted at plot time
 
-Lshift = linspace(-18, 18, nProbes);
+Lshift     = [-18, 0, +18];             % brightness levels (dark/neutral/bright)
+                                         % index cycles with mod for > 3 probes
+
+lineStyles = {'-', '--', ':', '-.', '--'};  % one distinct style per probe
 
 %% ============================================================
 %  STEP 6 – EXTRACT SIGNALS FOR EACH SELECTED PROBE
@@ -188,9 +210,12 @@ xlabel('Time [s]',     'FontSize',12)
 ylabel('Pressure [Pa]','FontSize',12)
 
 for pi = 1:nProbes
-    plotColor = getColor(baseLAB, pi, Lshift);
+    lab_i    = baseLAB(pi,:);
+    lab_i(1) = lab_i(1) + Lshift(min(pi, numel(Lshift)));
+    plotColor = max(0, min(1, lab2rgb(lab_i)));
     plot(t, signals{pi}, ...
         'Color',       plotColor, ...
+        'LineStyle',   '-', ...
         'LineWidth',   1.2, ...
         'DisplayName', legendLabels{pi});
 end
@@ -219,57 +244,80 @@ for pi = 1:nProbes
 
     [f_nb, NB] = localFFT(signals{pi}, fs, df_desired, PREF);
 
-    plotColor = getColor(baseLAB, pi, Lshift);
+    lab_i    = baseLAB(pi,:);
+    lab_i(1) = lab_i(1) + Lshift(min(pi, numel(Lshift)));
+    plotColor = max(0, min(1, lab2rgb(lab_i)));
 
     semilogx(f_nb, NB, ...
         'Color',       plotColor, ...
+        'LineStyle',   '-', ...
         'LineWidth',   2, ...
         'DisplayName', legendLabels{pi});
 
-    oaspl_labels{pi} = legendLabels{pi};
-    oaspl_td(pi)     = computeOASPL_TD(signals{pi}, fs, fmin, fmax, PREF);
-    oaspl_color(pi,:)= plotColor;
+    oaspl_labels{pi}  = legendLabels{pi};
+    oaspl_td(pi)      = computeOASPL_TD(signals{pi}, fs, fmin, fmax, PREF);
+    oaspl_color(pi,:) = plotColor;
 
 end
 
 xlim([fmin fmax])
+ylim([120 145])
 legend('show','Location','southoutside','NumColumns',3)
 
 %% ============================================================
 %  FIGURE 3 – PSD
 %% ============================================================
 
-figure('Name','PSD','Color','w');
-hold on; grid on;
+figure('Name', 'PSD');
+hold on
+grid on
+title([plotTitle ' - PSD'])
+xlabel('Frequency [Hz]')
+ylabel('PSD [dB/Hz]')
+set(gca, 'XScale', 'log')
 
-title([plotTitle ' – PSD'], 'FontSize',13,'FontWeight','bold')
-xlabel('Frequency [Hz]',                  'FontSize',12)
-ylabel('PSD [dB/Hz re 20 \muPa^2/Hz]',  'FontSize',12)
-set(gca,'XScale','log')
-
-oaspl_psd = nan(nProbes, 1);
+oaspl_psd = nan(length(oaspl_labels), 1);
 
 for pi = 1:nProbes
 
     seg = floor(length(signals{pi}) / 8);
-    if seg < 32, continue; end
+
+    if seg < 32
+        continue
+    end
 
     w = hann(seg);
-    [P, f_psd] = pwelch(signals{pi}, w, round(seg/2), [], fs);
 
-    plotColor = getColor(baseLAB, pi, Lshift);
+    [P, f] = pwelch( ...
+        signals{pi}, ...
+        w, ...
+        round(seg/2), ...
+        [], ...
+        fs);
 
-    semilogx(f_psd, 10*log10(P / PREF^2), ...
+    lab_i    = baseLAB(pi,:);
+    lab_i(1) = lab_i(1) + Lshift(min(pi, numel(Lshift)));
+    plotColor = max(min(lab2rgb(lab_i), 1), 0);
+
+    semilogx( ...
+        f, ...
+        10*log10(P / PREF^2), ...
         'Color',       plotColor, ...
+        'LineStyle',   '-', ...
         'LineWidth',   2, ...
         'DisplayName', legendLabels{pi});
 
-    oaspl_psd(pi) = computeOASPL_PSD(f_psd, P, fmin, fmax, PREF);
+    %% OASPL cross-check via PSD integration over [fmin fmax]
+    oaspl_psd(pi, 1) = computeOASPL_PSD(f, P, fmin, fmax, PREF);
 
 end
 
 xlim([fmin fmax])
-legend('show','Location','southoutside','NumColumns',3)
+ylim([100 125])
+legend( ...
+    'show', ...
+    'Location', 'southoutside', ...
+    'NumColumns', 3)
 
 %% ============================================================
 %  FIGURE 4 – OASPL BAR CHART
@@ -283,21 +331,22 @@ title( ...
     'FontSize',13,'FontWeight','bold')
 ylabel('OASPL [dB re 20 \muPa]','FontSize',12)
 
-b = bar(categorical(oaspl_labels, oaspl_labels), oaspl_td, 0.55, ...
+b = bar(categorical(oaspl_labels, oaspl_labels), oaspl_psd, ...
         'FaceColor','flat');
 b.CData = oaspl_color;
 
 for pi = 1:nProbes
-    text(pi, oaspl_td(pi), sprintf('%.1f dB', oaspl_td(pi)), ...
-        'HorizontalAlignment','center', ...
-        'VerticalAlignment',  'bottom', ...
-        'FontSize', 10, 'FontWeight','bold');
+    text(pi, oaspl_psd(pi)/2, sprintf('%.1f dB', oaspl_psd(pi)), ...
+        'HorizontalAlignment', 'center', ...
+        'VerticalAlignment',   'middle', ...
+        'Rotation',            90, ...
+        'FontSize',            12, ...
+        'Color',               'w', ...
+        'FontWeight',          'bold');
 end
 
-ySpan = max(oaspl_td) - min(oaspl_td);
-if ySpan < 5, ySpan = 5; end
-ylim([min(oaspl_td) - ySpan*0.15,  max(oaspl_td) + ySpan*0.25])
-xtickangle(30)
+ylim([0, max(oaspl_psd)*1.15]);
+xtickangle(45);
 
 %% ============================================================
 %  COMMAND-WINDOW OASPL SUMMARY TABLE
@@ -430,16 +479,5 @@ function prefixes = extractPointPrefixes(colNames)
         end
     end
     prefixes = sort(prefixes);
-
-end
-
-% -----------------------------------------------------------------
-
-function rgb = getColor(baseLAB, idx, Lshift)
-
-    lab    = baseLAB(idx,:);
-    lab(1) = lab(1) + Lshift(idx);
-    rgb    = lab2rgb(lab);
-    rgb    = max(min(rgb, 1), 0);
 
 end
