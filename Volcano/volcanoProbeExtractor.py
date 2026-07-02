@@ -7,32 +7,43 @@ import os
 
 # --- Input volcano file ---
 #EDIT WHEN ITERATING THROUGH
-VOLCANO_FILE = r"/home/bollerma/LESdata/SSWT/fullCav/meshStudy/test5/test5M2SSWT_001/latest.volcano"
+VOLCANO_FILE = r"/home/bollerma/LESdata/SSWT/fullCav/revisedMeshStudy/test2m/test2mSSWTM2_000"
 
 # --- Output directory ---
-OUTPUT_DIR = r"/home/bollerma/LESdata/SSWT/fullCav/meshStudy/probeOutput"
+OUTPUT_DIR = r"/home/bollerma/LESdata/SSWT/fullCav/revisedMeshStudy/test2m/test2mSSWTM2_000/probeOutput"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # --- Variables to load from the volcano file ---
+# POINT_ARRAYS = [
+#     "velocitymag",
+#     "velocitymagavg",
+#     "velocityx",
+#     "velocityxavg",
+#     "velocityy",
+#     "velocityyavg",
+#     "velocityz",
+#     "velocityzavg",
+#     "pressure",
+#     "pressureavg",
+#     "qcriterion",
+#     "reynoldsstressxx",
+#     "reynoldsstressxy",
+#     "reynoldsstressxz",
+#     "reynoldsstressyy",
+#     "reynoldsstressyz",
+#     "reynoldsstresszz",
+#     "tke"
+# ]
 POINT_ARRAYS = [
-    "velocitymag",
-    "velocitymagavg",
-    "velocityx",
-    "velocityxavg",
-    "velocityy",
-    "velocityyavg",
-    "velocityz",
-    "velocityzavg",
-    "pressure",
+    "machnumberavg",
     "pressureavg",
-    "qcriterion",
     "reynoldsstressxx",
-    "reynoldsstressxy",
-    "reynoldsstressxz",
     "reynoldsstressyy",
-    "reynoldsstressyz",
     "reynoldsstresszz",
-    "tke"
+    "tke",
+    "velocityxavg",
+    "velocityyavg",
+    "velocityzavg"
 ]
 
 # --- Z-plane slice location ---
@@ -44,9 +55,9 @@ LINE_RESOLUTION = 500
 # --- Probe line definitions ---
 # label : {start:[x,y,z], end:[x,y,z]}
 PROBE_LINES = {
-    "xL_neg2": {
-        "start": [2.01169, 0.01884, 0.0],
-        "end":   [2.01169, 0.05603, 0.0],
+    "US": {
+        "start": [2.0801, 0.018593, 0.0],
+        "end":   [2.0801, 0.055779, 0.0],
     },
     "xL_0p03": {
         "start": [2.15058, 0.0, 0.0],
@@ -81,9 +92,14 @@ PROBE_LINES = {
         "end":   [2.21695, 0.04648, 0.0],
     },
     "xL_1p2": {
-        "start": [2.230629, 0.024791, -0.0381],
-        "end":   [2.230629, 0.014965, -0.0381],
+        "start": [2.230629, 0.014965, 0.0],
+        "end":   [2.230629, 0.05215, 0.0],
+    },
+    "DS": {
+        "start": [2.3078, 0.018593, 0.0],
+        "end":   [2.3078, 0.055779, 0.0],
     }
+
 }
 
 

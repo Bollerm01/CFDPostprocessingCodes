@@ -77,13 +77,11 @@ function import_and_plot_excel()
     nCurves = nFiles;
     legendLabels = cell(1,nCurves);
     
-    for k = 1:nCurves
-        prompt = sprintf("Enter label %d: ", k);
-        dlgtitle = 'Legend Labels';
-        definput = sprintf("Data %d", k);
-        dims = [1 35];
-        legendLabels{k} = inputdlg(prompt,dlgtitle,dims,definput);
-    end
+    prompt = sprintf("Enter label %d: ", k);
+    dlgtitle = 'Legend Labels';
+    definput = sprintf("Data %d", k);
+    dims = [1 35];
+    legendLabels{k} = inputdlg(prompt,dlgtitle,dims,definput);
 
     %% --- Loop through each subfolder ---
     for f = 1:6
@@ -133,16 +131,16 @@ function import_and_plot_excel()
 
         %% --- Generate plots ---
         % Mach
-        save_overlay(M, Y, legendLabels, savePrefix, saveSub,...
-                     'Avg. Mach', 'Overlay: Mach Number vs y', 'mach', xRangeMach);
+        save_overlay(M, Y, files, savePrefix, saveSub,...
+                     'machnumberavg', 'Overlay: Mach Number vs y', 'mach', xRangeMach);
 
         % Pressure
-        save_overlay(P, Y, legendLabels, savePrefix, saveSub,...
-                     'Avg. Pressure (Pa)', 'Overlay: Pressure vs y', 'pressure', xRangePressure);
+        save_overlay(P, Y, files, savePrefix, saveSub,...
+                     'pressureavg (Pa)', 'Overlay: Pressure vs y', 'pressure', xRangePressure);
 
         % Velocity
-        save_overlay(Vx, Y, legendLabels, savePrefix, saveSub,...
-                     'Avg. Axial Velocity (m/s)', 'Overlay: Axial Velocity vs y', 'velocityx', xRangeVelocity);
+        save_overlay(Vx, Y, files, savePrefix, saveSub,...
+                     'velocityxavg (m/s)', 'Overlay: Velocity X vs y', 'velocityx', xRangeVelocity);
 
         fprintf('Folder "%s" processed successfully.\n', subfolders(f).name);
     end
@@ -184,7 +182,7 @@ function save_overlay(xData, yData, legendLabels, savePrefix, saveFolder, xLabel
     hold on; grid on;
 
     nCurves = numel(xData);
-    % legendLabels = cell(1,nCurves);
+    legendLabels = cell(1,nCurves);
 
     for k = 1:nCurves
         plot(xData{k}, yData{k}, 'LineWidth', 2);
@@ -211,7 +209,7 @@ function save_overlay(xData, yData, legendLabels, savePrefix, saveFolder, xLabel
     xlabel(xLabel);
     ylabel('y (m)');
     title(titleText, 'Interpreter','none');
-    legend([legendLabels{:}], 'Interpreter','tex', 'Location','northwest');
+    legend(legendLabels, 'Interpreter','tex', 'Location','northwest');
 
     % --- Apply x-axis limits only if specified for this plot type ---
     if ~isempty(xRange)
@@ -224,11 +222,6 @@ function save_overlay(xData, yData, legendLabels, savePrefix, saveFolder, xLabel
     % Save JPEG
     print(fig, fullfile(saveFolder, sprintf('%s_%s.jpg', savePrefix, tag)),...
           '-djpeg','-r300');
-
-    % Save vector PDF
-    exportgraphics(fig, ...
-    fullfile(saveFolder, sprintf('%s_%s.pdf', savePrefix, tag)), ...
-    'ContentType','vector');
 
     close(fig);
 end
