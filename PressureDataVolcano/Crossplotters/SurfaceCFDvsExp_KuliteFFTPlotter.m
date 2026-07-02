@@ -64,8 +64,8 @@ if isequal(expFile,0), return; end
 T = readtable(fullfile(expPath,expFile),...
     'VariableNamingRule','modify');
 
-% timeExpFull = T.Voltage_0_Time_;
-timeExpFull = T.Time_;
+timeExpFull = T.Voltage_0_Time_;
+% timeExpFull = T.Time_;
 
 %% ============================================================
 % USER INPUT: CFD FILES (MULTI)

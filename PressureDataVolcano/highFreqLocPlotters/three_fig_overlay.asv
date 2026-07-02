@@ -1,0 +1,37 @@
+%0. Pulls the .fig files using a GUI
+[figFiles, figPaths] = uigetfile("Select the 3 fig files",".fig", "MultiSelect","on");
+
+
+
+
+% 1. Open the three .fig files (keep them hidden so they don't pop up)
+fig1 = openfig(fullfile(figFiles(1), figPaths(1)), 'invisible');
+fig2 = openfig(fullfile(figFiles(2), figPaths(2)), 'invisible');
+fig3 = openfig(fullfile(figFiles(3), figPaths(3)), 'invisible');
+
+% 2. Get the axes handles for each
+ax1 = gca(fig1);
+ax2 = gca(fig2);
+ax3 = gca(fig3);
+
+% 3. Extract the children (lines, scatter points, etc.) from each axis
+ch1 = get(ax1, 'Children');
+ch2 = get(ax2, 'Children');
+ch3 = get(ax3, 'Children');
+
+% 4. Create a new master figure and axis
+masterFig = figure();
+masterAx = axes(masterFig);
+
+% 5. Copy the contents of the first figure's axes over to the master axis
+copyobj(ch1, masterAx);
+
+% Turn 'hold on' on the master axis so the next additions overlay instead of replace
+hold(masterAx, 'on');
+
+% 6. Copy the contents of the second and third figures
+copyobj(ch2, masterAx);
+copyobj(ch3, masterAx);
+
+% Turn 'hold off' once all are overlaid
+hold(masterAx, 'off');

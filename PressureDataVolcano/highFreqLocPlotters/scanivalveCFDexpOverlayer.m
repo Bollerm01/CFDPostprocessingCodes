@@ -182,6 +182,10 @@ PG_cfd = F_cfd(XG, ZG);
 
 %% ============================================================
 % BUILD EXPERIMENTAL INTERPOLATED SURFACE (mirrored, extended)
+%   NOTE: Interpolation strategy matched to ExpScanivalvePlotter.m
+%   ('natural','nearest' scatteredInterpolant, 350x350 grid spanning
+%   the full min/max of the extended point cloud) so the experimental
+%   surface renders identically across both scripts.
 %% ============================================================
 
 sensorXZ_mirror = sensorXZ;
@@ -213,29 +217,25 @@ topX = bottomX;
 topZ = zmax_exp * ones(3,1);
 topP = bottomP;
 
-% Four corners of the domain — pressure assigned by nearest sensor column/row
-% so linear interpolation fills the full rectangle without clipping.
-%   Bottom-left  (xmin, zmin) -> mirrors S1 (x=2.16, outer z)
-%   Bottom-right (xmax, zmin) -> mirrors S7 (x=2.18286, outer z)
-%   Top-left     (xmin, zmax) -> mirrors S1
-%   Top-right    (xmax, zmax) -> mirrors S7
-cornerX = [xmin_exp; xmax_exp; xmin_exp; xmax_exp];
-cornerZ = [zmin_exp; zmin_exp; zmax_exp; zmax_exp];
-cornerP = [sensorPressurePa(1); sensorPressurePa(7); ...
-           sensorPressurePa(1); sensorPressurePa(7)];
+interpX = [interpX; leftX; rightX; bottomX; topX];
+interpZ = [interpZ; leftZ; rightZ; bottomZ; topZ];
+interpP = [interpP; leftP; rightP; bottomP; topP];
 
-interpX = [interpX; leftX; rightX; bottomX; topX; cornerX];
-interpZ = [interpZ; leftZ; rightZ; bottomZ; topZ; cornerZ];
-interpP = [interpP; leftP; rightP; bottomP; topP; cornerP];
-
+% Normalize (matches ExpScanivalvePlotter.m: interpP normalized in place,
+% sensorP_norm computed separately from sensorPressurePa)
 interpP_norm = interpP ./ Pnorm_Exp;
 
-% Linear interpolation for the experimental surface; 'none' extrapolation
-% leaves NaN outside the convex hull so the surface stays physically honest.
-F_exp = scatteredInterpolant(interpX, interpZ, interpP_norm, 'linear', 'none');
+% Match ExpScanivalvePlotter.m exactly: 'natural' interpolation with
+% 'nearest' extrapolation (instead of 'linear'/'none'), and grid spans
+% the full min/max of the (now un-cornered) point cloud rather than a
+% fixed xmin_exp/xmax_exp/zmin_exp/zmax_exp box.
+F_exp = scatteredInterpolant(interpX, interpZ, interpP_norm, 'natural', 'nearest');
 
-xg_exp = linspace(xmin_exp, xmax_exp, 350);
-zg_exp = linspace(zmin_exp, zmax_exp, 350);
+nx_exp = 350;
+nz_exp = 350;
+
+xg_exp = linspace(min(interpX), max(interpX), nx_exp);
+zg_exp = linspace(min(interpZ), max(interpZ), nz_exp);
 [XG_exp, ZG_exp] = meshgrid(xg_exp, zg_exp);
 PG_exp = F_exp(XG_exp, ZG_exp);
 
@@ -243,7 +243,7 @@ PG_exp = F_exp(XG_exp, ZG_exp);
 % =============================================================
 % FIGURE 1 — OVERLAID 3D PLOT
 %   CFD: interpolated surface (semi-transparent)
-%   Exp: linearly interpolated surface (semi-transparent, wire-framed)
+%   Exp: natural-neighbor interpolated surface (semi-transparent)
 % =============================================================
 %% ============================================================
 
@@ -256,28 +256,12 @@ hCFD = surf(XG, ZG, PG_cfd, ...
     'DisplayName', 'CFD Surface');
 hold on;
 
-% --- Experimental linearly-interpolated surface ---
-% Use a fixed single colour with a different alpha so the two surfaces
-% are clearly distinguishable while sharing the same axes.
-% hExp = surf(XG_exp, ZG_exp, PG_exp, ...
-%     'EdgeColor', 'none', ...
-%     'FaceAlpha', 0.60, ...
-%     'FaceColor', 'flat', ...          % coloured by CData (PG_exp)
-%     'CData',     PG_exp, ...
-%     'DisplayName', 'Experimental Surface (linear interp)');
-
+% --- Experimental interpolated surface ---
 hExp = surf(XG_exp, ZG_exp, PG_exp, ...
     'EdgeColor', 'none', ...
     'FaceAlpha', 0.60, ...          % coloured by CData (PG_exp)
     'CData',     PG_exp, ...
     'DisplayName', 'Experimental Interpolated Surface Data');
-
-% Overlay a wire-frame on the Exp surface so it reads as distinct
-% surf(XG_exp, ZG_exp, PG_exp, ...
-%     'EdgeColor', [1 1 1], ...
-%     'EdgeAlpha', 0.10, ...
-%     'FaceColor', 'none', ...
-%     'HandleVisibility', 'off');
 
 % --- Sensor markers: Exp circles colored by their normalized pressure ---
 scatter3(sensorXZ(:,1), sensorXZ(:,2), sensorP_Exp_norm, ...
@@ -315,51 +299,13 @@ title('Overlaid Normalized Pressure — CFD Surface vs Experimental Surface');
 colormap(turbo);
 cb = colorbar;
 cb.Label.String = 'P / P_{ref}';
+% clim([0.116 0.1412]);
+clim([0.13 0.145]);
 
 shading interp;
 grid on; box on;
 view(45, 30);
 set(gca, 'FontSize', 12, 'YDir', 'reverse');
-
-%% ============================================================
-% =============================================================
-% FIGURE 2 — OVERLAID 2D CONTOUR MAP
-%   CFD: background contourf
-%   Exp: overlaid contour lines + filled scatter markers
-% =============================================================
-%% ============================================================
-
-% figure('Color','w','Position',[150 150 1200 700]);
-% 
-% % --- CFD contour background ---
-% contourf(XG, ZG, PG_cfd, 40, 'LineColor','none');
-% hold on;
-% 
-% % --- Exp contour lines ---
-% contour(XG_exp, ZG_exp, PG_exp, 15, 'LineColor','w', 'LineWidth', 1.2);
-% 
-% % --- Exp sensor scatter ---
-% scatter(sensorXZ(:,1), sensorXZ(:,2), 120, sensorP_Exp_norm, ...
-%     'filled', 'MarkerEdgeColor','w', 'LineWidth', 1.5);
-% 
-% % --- Sensor labels ---
-% for k = 1:9
-%     text(sensorXZ(k,1), sensorXZ(k,2), ...
-%         ['  ' sensorNames{k}], ...
-%         'FontSize', 9, 'FontWeight', 'bold', 'Color', 'w');
-% end
-% 
-% xlabel('X Location (m)');
-% ylabel('Spanwise Z (m)');
-% title('Overlaid 2D Pressure Field — CFD (fill) + Experimental (contours & markers)');
-% 
-% colormap(turbo);
-% cb = colorbar;
-% cb.Label.String = 'P / P_{ref}  (CFD scale)';
-% 
-% grid on; box on;
-% set(gca, 'FontSize', 12, 'YDir', 'reverse');
-% axis tight;
 
 %% ============================================================
 % =============================================================
@@ -374,31 +320,40 @@ subplot(1,2,1);
 contourf(XG, ZG, PG_cfd, 30, 'LineColor','none');
 hold on;
 scatter(sensorXZ(:,1), sensorXZ(:,2), 80, sensorP_CFD_norm, ...
-    'filled', 'MarkerEdgeColor','k');
+    'filled', 'MarkerEdgeColor','w');
 for k = 1:9
-    text(sensorXZ(k,1), sensorXZ(k,2), ['  ' sensorNames{k}], ...
-        'FontSize', 8, 'FontWeight','bold', 'Color','k');
+    text(sensorXZ(k,1), sensorXZ(k,2), ['    ' sensorNames{k}], ...
+        'FontSize', 8, 'FontWeight','bold', 'Color','w');
 end
 xlabel('X (m)'); ylabel('Z (m)');
 title('CFD Normalized Pressure');
-colormap(turbo); colorbar;% clim([0.1 0.2]);
+colormap(turbo); 
+cb = colorbar; %clim([0.1 0.2]);
+cb.Label.String = 'P / P_{ref}';
+% clim([0.116 0.1412]);
+clim([0.13 0.145]);
 set(gca,'FontSize',11,'YDir','reverse');
-axis tight;
+% axis tight;
 
 % -- Exp subplot --
 subplot(1,2,2);
 contourf(XG_exp, ZG_exp, PG_exp, 30, 'LineColor','none');
 hold on;
 scatter(sensorXZ(:,1), sensorXZ(:,2), 80, sensorP_Exp_norm, ...
-    'filled', 'MarkerEdgeColor','k');
+    'filled', 'MarkerEdgeColor','w');
 for k = 1:9
-    text(sensorXZ(k,1), sensorXZ(k,2), ['  ' sensorNames{k}], ...
-        'FontSize', 8, 'FontWeight','bold', 'Color','k');
+    text(sensorXZ(k,1), sensorXZ(k,2), ['    ' sensorNames{k}], ...
+        'FontSize', 8, 'FontWeight','bold', 'Color','w');
 end
 xlabel('X (m)'); ylabel('Z (m)');
-title('Experimental Normalized Pressure (Mirrored)');
-colormap(turbo); colorbar; %clim([0.1 0.2]);
+title('Experimental Normalized Pressure');
+colormap(turbo); 
+cb = colorbar; %clim([0.1 0.2]);
+cb.Label.String = 'P / P_{ref}';
+% clim([0.116 0.1412]);
+clim([0.13 0.145]);
 set(gca,'FontSize',11,'YDir','reverse');
+% axis equal;
 xlim([xmin_exp xmax_exp]);
 ylim([zmin_exp zmax_exp]);
 

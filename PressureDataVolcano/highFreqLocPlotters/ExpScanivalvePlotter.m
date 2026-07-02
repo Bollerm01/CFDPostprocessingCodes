@@ -33,7 +33,7 @@ answer = inputdlg( ...
     'Enter barometric pressure (inHg):', ...
     'Barometric Pressure', ...
     1, ...
-    {'29.175'});
+    {'29.24'});
 
 if isempty(answer)
     error('No barometric pressure entered.');
@@ -232,7 +232,7 @@ scatter3(sensorXZ(:,1), sensorXZ(:,2), sensorP_norm, ...
 
 for k = 1:length(sensorNames)
     text(sensorXZ(k,1),sensorXZ(k,2),sensorP_norm(k), ...
-        ['  ' sensorNames{k}], ...
+        ['        ' sensorNames{k}], ...
         'FontWeight','bold');
 end
 
@@ -240,17 +240,20 @@ xlabel('X Location (m)')
 ylabel('Spanwise Z (m)')
 zlabel('Normalized Pressure')
 
-title('Mirrored Surface Pressure Distribution (Normalized)')
+title('Experimental Cavity Floor Pressure Distribution')
 
 view(45,30)
 colormap(turbo)
-colorbar
+cb = colorbar;
+cb.Label.String = 'P / P_{ref}';
+clim([0.1380 0.1412]);
 
 shading interp
 grid on
 box on
 set(gca,'FontSize',12)
 set(gca, 'YDir','reverse')
+
 
 %% ============================================================
 % CONTOUR PLOT (NORMALIZED)
@@ -261,17 +264,17 @@ figure('Color','w','Position',[150 150 1100 700]);
 contourf(XG,ZG,PG,30,'LineColor','none');
 hold on;
 
-scatter(sensorXZ(:,1),sensorXZ(:,2),100,'k','filled');
+scatter(sensorXZ(:,1),sensorXZ(:,2),100,'white','filled');
 
 for k = 1:length(sensorNames)
     text(sensorXZ(k,1),sensorXZ(k,2), ...
-        [' ' sensorNames{k}], ...
-        'FontWeight','bold');
+        ['    ' sensorNames{k}], ...
+        'FontWeight','bold', 'Color', 'w');
 end
 
 xlabel('X Location (m)')
 ylabel('Spanwise Location Z (m)')
-title('Mirrored Surface Pressure Contours (Normalized)')
+title('Experimental Cavity Floor Surface Pressure Contours')
 
 axis equal
 xlim([xmin xmax])
@@ -281,6 +284,7 @@ colormap(turbo)
 
 cb = colorbar;
 cb.Label.String = 'P / P_{ref}';
+clim([0.1380 0.1412]);
 
 grid on
 box on

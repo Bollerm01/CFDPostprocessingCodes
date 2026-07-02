@@ -20,8 +20,9 @@ clear; clc; close all;
 %% ============================================================
 
 PREF    = 20e-6;
-NDOM    = 3;          % number of domains
-MAXFILE = 2;          % max CSVs per domain
+% NDOM    = 3;
+NDOM = 2;             % number of domains
+MAXFILE = 3;          % max CSVs per domain
 
 %% ============================================================
 % COLOR SYSTEM
@@ -33,7 +34,8 @@ MAXFILE = 2;          % max CSVs per domain
 nColors  = 10;
 baseRGB  = lines(nColors);
 baseLAB  = rgb2lab(baseRGB);
-Lshift   = [-15, +15];   % file 1 darker, file 2 brighter
+% Lshift   = [-15, +15];   % file 1 darker, file 2 brighter
+Lshift = [-15, 0, +15];
 
 %% ============================================================
 % DOMAIN LABELS  (edit these to match your case names)
@@ -149,7 +151,8 @@ for d = 1:NDOM
             'VariableNamingRule','preserve');
 
         t = T.time;
-        p = T.pressure;
+        % p = T.pressure;
+        p = T.pressure_mean;
 
         mask = t >= tStart & t <= tEnd;
         t    = t(mask);
@@ -160,8 +163,9 @@ for d = 1:NDOM
 
         % Build legend label from filename (strip extension)
         [~,stem] = fileparts(domFiles{d}{f});
-        domLabel{d}{f} = sprintf('%s – %s', domainNames{d}, stem);
-
+        % domLabel{d}{f} = sprintf('%s – %s', domainNames{d}, stem);
+        kuliteName = split(stem, '_');
+        domLabel{d}{f} = sprintf('%s – %s', domainNames{d}, kuliteName{1});
         % Color: domain selects hue family, file index shifts lightness
         k   = mod(d-1, nColors) + 1;
         lab = baseLAB(k,:);
@@ -281,6 +285,8 @@ for d = 1:NDOM
         allOASPL  = [allOASPL;  oaspl];                %#ok<AGROW>
         allColors = [allColors;  domColor{d}(f,:)];    %#ok<AGROW>
         allLabels{end+1} = domLabel{d}{f};             %#ok<AGROW>
+        % kuliteLabel = split(domLabel{d}{f}, '_');
+        % allLabels{end+1} = kuliteLabel(1);            %#ok<AGROW>
     end
 end
 
@@ -330,15 +336,15 @@ for i = 1:length(allOASPL)
 end
 
 % Domain group labels above bars
-yl = ylim;
-for d = 1:NDOM
-    if length(domSig{d}) == 0, continue; end
-    text(groupCenters(d), yl(2) * 0.97, domainNames{d}, ...
-        'HorizontalAlignment', 'center', ...
-        'FontSize',            10, ...
-        'FontWeight',          'bold', ...
-        'Color',               [0.25 0.25 0.25]);
-end
+% yl = ylim;
+% for d = 1:NDOM
+%     if length(domSig{d}) == 0, continue; end
+%     text(groupCenters(d), yl(2) * 0.97, domainNames{d}, ...
+%         'HorizontalAlignment', 'center', ...
+%         'FontSize',            10, ...
+%         'FontWeight',          'bold', ...
+%         'Color',               [0.25 0.25 0.25]);
+% end
 
 set(gca, ...
     'XTick',              xTicks, ...
