@@ -7,10 +7,10 @@ import os
 
 # --- Input volcano file ---
 #EDIT WHEN ITERATING THROUGH
-VOLCANO_FILE = r"/home/bollerma/LESdata/SSWT/fullCav/revisedMeshStudy/test2m/test2mSSWTM2_000"
+VOLCANO_FILE = r"/home/bollerma/LESdata/SSWT/fullCav/revisedMeshStudy/test1m/test1mSSWTM2_002"
 
 # --- Output directory ---
-OUTPUT_DIR = r"/home/bollerma/LESdata/SSWT/fullCav/revisedMeshStudy/test2m/test2mSSWTM2_000/probeOutput"
+OUTPUT_DIR = r"/home/bollerma/LESdata/SSWT/fullCav/revisedMeshStudy/test1m/test1mSSWTM2_002/probeOutput"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # --- Variables to load from the volcano file ---
