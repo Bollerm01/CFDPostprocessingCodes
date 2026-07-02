@@ -7,7 +7,7 @@ import os
 
 # --- Input volcano file ---
 #EDIT WHEN ITERATING THROUGH
-VOLCANO_FILE = r"/home/bollerma/LESdata/SSWT/fullCav/revisedMeshStudy/test1m/test1mSSWTM2_002"
+VOLCANO_FILE = r"/home/bollerma/LESdata/SSWT/fullCav/revisedMeshStudy/test1m/test1mSSWTM2_002/latest.volcano"
 
 # --- Output directory ---
 OUTPUT_DIR = r"/home/bollerma/LESdata/SSWT/fullCav/revisedMeshStudy/test1m/test1mSSWTM2_002/probeOutput"
