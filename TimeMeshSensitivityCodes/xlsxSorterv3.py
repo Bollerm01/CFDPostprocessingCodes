@@ -13,8 +13,11 @@ from tkinter import filedialog, messagebox
 # ---------------------------------------------------------------
 
 def extract_prefix(filename):
-    """Extract string before first underscore."""
-    return filename.split("_")[0]
+    # """Extract string before first underscore."""
+    """Extract location string (last part between _ and filetype)."""
+    # return filename.split("_")[0] # returns the location plus file ext
+    loc = filename.split("_")[-1] # returns the location plus file ext
+    return loc.split(".")[0] # returns just the location (first element)
 
 def extract_test_suffix(dir_path):
     folder = os.path.basename(os.path.normpath(dir_path))

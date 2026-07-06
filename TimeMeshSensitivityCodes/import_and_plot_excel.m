@@ -5,7 +5,7 @@
 function import_and_plot_excel()
 
     %% --- Select MAIN folder containing 6 subfolders ---
-    mainFolder = uigetdir('E:\Boller CFD\AVIATION CFD\TimeSensitivityData',...
+    mainFolder = uigetdir('E:\Boller CFD',...
                           'Select the MAIN folder with 6 subfolders');
     if isequal(mainFolder,0)
         disp('No folder selected.');
@@ -13,7 +13,7 @@ function import_and_plot_excel()
     end
 
     %% --- Select output folder ---
-    outFolder = uigetdir('E:\Boller CFD\AVIATION CFD\TimeSensitivityData\output',...
+    outFolder = uigetdir('E:\Boller CFD',...
                          'Select Output Folder');
     if isequal(outFolder,0)
         disp('No output folder selected.');
@@ -25,9 +25,9 @@ function import_and_plot_excel()
     subfolders = folderInfo([folderInfo.isdir] &...
                             ~ismember({folderInfo.name},{'.','..'}));
 
-    if numel(subfolders) ~= 6
-        error('Expected exactly 6 subfolders, but found %d.', numel(subfolders));
-    end
+    % if numel(subfolders) ~= 6
+    %     error('Expected exactly 6 subfolders, but found %d.', numel(subfolders));
+    % end
 
     %% --- Ask user for number of Excel files (constant across folders) ---
     answer = inputdlg(...
@@ -86,7 +86,7 @@ function import_and_plot_excel()
     end
 
     %% --- Loop through each subfolder ---
-    for f = 1:6
+    for f = 1:length(subfolders)
         folderPath = fullfile(mainFolder, subfolders(f).name);
 
         fprintf('\n=============================\n');
@@ -119,10 +119,32 @@ function import_and_plot_excel()
 
         for i = 1:nFiles
             T = readtable(fullfile(path, files{i}));
-            Y{i}  = T.y;
+            Y{i}  = T.Y;
             M{i}  = T.machnumberavg;
             P{i}  = T.pressureavg;
             Vx{i} = T.velocityxavg;
+        end
+
+        %% --- Interpolate onto a common Y grid of 50 pts---
+        for i = 1:nFiles
+
+            yFine = linspace(min(Y{i}),max(Y{i}),50).';
+
+            % Finds unique y-values
+            [Yu, idx] = unique(Y{i}, 'stable');
+
+            Y{i}  = Yu;
+            M{i}  = M{i}(idx);
+            P{i}  = P{i}(idx);
+            Vx{i} = Vx{i}(idx);
+
+            % Interpolates onto the grid
+            M{i}  = interp1(Y{i},M{i}, yFine,'pchip');
+            P{i}  = interp1(Y{i},P{i}, yFine,'pchip');
+            Vx{i} = interp1(Y{i},Vx{i},yFine,'pchip');
+        
+            Y{i} = yFine;
+        
         end
 
         %% --- Create output subfolder ---
@@ -148,7 +170,7 @@ function import_and_plot_excel()
     end
 
     disp('=============================================');
-    disp('All 6 folders processed. Plots saved.');
+    disp('All folders processed. Plots saved.');
     disp('=============================================');
 end
 
