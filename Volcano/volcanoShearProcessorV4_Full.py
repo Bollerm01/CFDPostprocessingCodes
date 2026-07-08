@@ -153,9 +153,9 @@ CAMERA_PRESETS = {
     },
     # ---- 3D view — camera taken from the final settled position in the trace ----
     "3D": {
-        "CameraPosition":   [2.1051604957726604, 0.03234277490998999, 0.2683454272289884],
-        "CameraFocalPoint": [2.1844556862485516, 0.022498125470631562, 0.013678328874460863],
-        "CameraViewUp":     [0.022805472243977675, 0.9992427000033796, -0.03152676522710961],
+        "CameraPosition":   [2.10516, 0.0323428, 0.268345],
+        "CameraFocalPoint": [2.18446, 0.0224981, 0.0136783],
+        "CameraViewUp":     [0.0228055, 0.999243, -0.0315268],
         "ParallelScale":    1.2967534046463778,
         "InteractionMode":  "3D",
         # Colorbar layout matches the trace: horizontal, centred near the bottom
