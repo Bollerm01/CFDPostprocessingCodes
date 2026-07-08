@@ -317,7 +317,7 @@ def make_3D_composite_view(yz_x_positions, xy_z_positions, scalar, output_fname=
     # ---- 1. Create and store XY slice proxies ----
     for z in xy_z_positions:
         fname = f"XY_z{z:+0.5f}_3D_{scalar}"
-        sl    = make_slice([0, 0, 0], [1, 0, 1], fname, scalar)
+        sl    = make_slice([0, 0, z], [0, 0, 1], fname, scalar)
         # disp = Show(sl, view)
         # disp.Opacity = 0.7
         slices.append(sl)
