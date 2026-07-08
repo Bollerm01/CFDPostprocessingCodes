@@ -21,7 +21,7 @@ folder_path = os.path.dirname(INPUT_FILE)
 file_name   = os.path.basename(folder_path)
 
 # Scalars to render
-SCALARS = ["pressure", "pressureavg"]
+SCALARS = ["pressure"]
 # SCALARS = [
 #     "velocityx", "velocityxavg", "tke", "pressure", "pressureavg",
 #     "vorticitymag", "vorticitymagavg"
@@ -156,7 +156,7 @@ CAMERA_PRESETS = {
         "CameraPosition":   [2.10516, 0.0323428, 0.268345],
         "CameraFocalPoint": [2.18446, 0.0224981, 0.0136783],
         "CameraViewUp":     [0.0228055, 0.999243, -0.0315268],
-        "ParallelScale":    1.2967534046463778,
+        "ParallelScale":    0.75, #was 1.2967534046463778
         "InteractionMode":  "3D",
         # Colorbar layout matches the trace: horizontal, centred near the bottom
         "Colorbar": {
@@ -164,7 +164,7 @@ CAMERA_PRESETS = {
             "Position":    [0.35328840970350406, 0.04477611940298508],
             "Length":      0.33,
         }
-    },
+    }
 }
 
 # ============================================================
