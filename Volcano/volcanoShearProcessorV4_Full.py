@@ -1,21 +1,24 @@
 from paraview.simple import *
 import os
+import sys
 
 # Code to generate thesis 3D contours for R/D sweep (0.0, 0.09, 0.17, 0.52)
-# Input: latest.volcano file for the full-width R/D cavity
-# Output: Folder with 3D and 2D layouts of the domain slices
+# Input: latest.volcano file for the full-width R/D cavity (first argument after the script call)
+# Output: Folder with 3D and 2D layouts of the domain slices (second argument ")
 
 # ============================================================
 # ======================= USER INPUT =========================
 # ============================================================
 
 # Full Inputs
-INPUT_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD00/RD00_004/latest.volcano" # RD00 Path
+# INPUT_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD00/RD00_004/latest.volcano" # RD00 Path
 # INPUT_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD09/RD09_001/latest.volcano" # RD09 Path
 # INPUT_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD17/RD17_022/latest.volcano" # RD17 Path
 # INPUT_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD52/RD52_057/latest.volcano" # RD52 Path
+INPUT_FILE = sys.argv[1]
 
-OUTPUT_DIR = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/3DfigOutput/RD00debug"
+# OUTPUT_DIR = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/3DfigOutput/RD00debug"
+OUTPUT_DIR = sys.argv[2]
 
 folder_path = os.path.dirname(INPUT_FILE)
 file_name   = os.path.basename(folder_path)
