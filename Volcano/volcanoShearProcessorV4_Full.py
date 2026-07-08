@@ -180,7 +180,7 @@ for i in range(len(INPUT_FILES)):
     # ===================== LOAD DATA ============================
     # ============================================================
 
-    src = OpenDataFile(INPUT_FILE)
+    src = OpenDataFile(INPUT_FILES[i])
     RenameSource(file_name, src)
     src.CellArrayStatus = SCALARS
 
