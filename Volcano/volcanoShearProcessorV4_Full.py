@@ -296,7 +296,7 @@ for i in range(len(INPUT_FILES)):
         Render(view)
 
         SaveScreenshot(
-            os.path.join(OUTPUT_DIR, f"{fname}_{scalar}_Volcano.png"),
+            os.path.join(OUTPUT_DIRS[i], f"{fname}_{scalar}_Volcano.png"),
             view, ImageResolution=IMG_RES, TransparentBackground=1
         )
         Hide(sl, view)
