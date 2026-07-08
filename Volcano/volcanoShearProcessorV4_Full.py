@@ -66,16 +66,16 @@ SCALAR_COLORMAPS = {
 # ======================= SLICE POSITIONS ====================
 # ============================================================
 
-# Debugging slice sets
-YZ_SLICE_X = [2.1508, 2.1691, 2.1793151, 2.19847, 2.216945]  # x/L = 0.03, 0.3, 0.73, 1
-XY_SLICE_Z  = [-0.0381, 0, 0.0381]
-XZ_SLICE_Y  = [0.0093, 0.001]
+# Full Loop
+# YZ_SLICE_X = [2.1508, 2.1691, 2.1793151, 2.19847, 2.216945]  # x/L = 0.03, 0.3, 0.73, 1
+# XY_SLICE_Z  = [-0.0381, 0, 0.0381]
+# XZ_SLICE_Y  = [0.0093, 0.001]
 
-# Full loop
-# YZ_SLICE_X = [2.011691, 2.080109, 2.114318, 2.15057954, 2.16015806, 2.1690524, 2.1793151,
-#               2.18889362, 2.19847214, 2.20736648, 2.216945, 2.223063, 2.307804104]
-# XY_SLICE_Z = [-0.0381, 0.00, 0.0381]
-# XZ_SLICE_Y = [0.0182, 0.0093, 0.003, 0.001]
+# Debug Loop
+YZ_SLICE_X = [2.1793151]  # x/L = 0.03, 0.3, 0.73, 1
+XY_SLICE_Z  = [0.0]
+XZ_SLICE_Y  = [0.0093]
+
 
 # YZ slices shown in the 3D composite view (subset of YZ_SLICE_X).
 # Corresponds to the slices named qPlane / 3qPlane / xL0p3 / 0p86 / xL1p2 / farwall
