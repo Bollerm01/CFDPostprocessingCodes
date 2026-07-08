@@ -244,7 +244,7 @@ def apply_camera_and_colorbar(lut, preset_name, array_name):
     bar.Title = cbPreset
     bar.ComponentTitle = ""
     bar.TitleFontSize  = 12
-    bar.LabelFontSize  = 12
+    bar.LabelFontSize  = 10
     bar.TitleColor     = [0.0, 0.0, 0.0]
     bar.LabelColor     = [0.0, 0.0, 0.0]
 
@@ -332,11 +332,7 @@ def make_3D_composite_view(yz_x_positions, xy_z_positions, scalar, output_fname=
     surfDisp.ColorArrayName = ['POINTS', '']
     ColorBy(surfDisp, value=None)         # solid color / no scalar mapping
     surfDisp.Opacity = 0.15
-
-    # ---- 4. Show all slices, disable lighting, apply shared LUT ----
     lut = GetColorTransferFunction(scalar)
-    apply_lut_range(lut, scalar)
-    apply_lut_preset(lut, scalar)
 
     for sl in slices:
         SetActiveSource(sl)
@@ -352,6 +348,10 @@ def make_3D_composite_view(yz_x_positions, xy_z_positions, scalar, output_fname=
         ColorBy(disp, (loc, scalar))
         disp.DisableLighting = 1
         disp.SetScalarBarVisibility(view, True)
+
+    # ---- 4. Show all slices, disable lighting, apply shared LUT ----
+    apply_lut_range(lut, scalar)
+    apply_lut_preset(lut, scalar)
 
     # ---- 5. Camera, colourbar, render, save ----
     apply_camera_and_colorbar(lut, "3D", scalar)
