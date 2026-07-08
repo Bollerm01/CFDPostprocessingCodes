@@ -379,6 +379,24 @@ for i in range(len(INPUT_FILES)):
 
         print(f"3D composite saved: {output_fname}_{scalar}_Volcano.png")
 
+    def delete_downstream_pipeline(source_proxy):
+        # Retrieve all pipeline objects and their inputs
+        sources = GetSources()
+        
+        # Track items to delete so we don't modify the dict while iterating
+        to_delete = []
+        
+        for name, obj in sources.items():
+            proxy_instance = obj[0]
+            # Check if the current proxy depends on our target source
+            if hasattr(proxy_instance, 'Input') and proxy_instance.Input == source_proxy:
+                to_delete.append(proxy_instance)
+                
+        # Recursively delete children and disconnect them
+        for child in to_delete:
+            delete_downstream_pipeline(child)
+            Delete(child)
+
 
     # ============================================================
     # ===================== EXECUTION ============================
@@ -404,4 +422,5 @@ for i in range(len(INPUT_FILES)):
     print(f"\nAll slices rendered correctly for {INPUT_FILES[i]}.")
 
     # Cleans up the pipeline 
+    delete_downstream_pipeline(src)
     Delete(src)
