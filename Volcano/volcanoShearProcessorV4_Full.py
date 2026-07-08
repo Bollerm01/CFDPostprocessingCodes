@@ -343,8 +343,8 @@ def make_3D_composite_view(yz_x_positions, xy_z_positions, scalar, output_fname=
         active_proxy = GetActiveSource()
         disp = Show(sl, view)
         active_name = [name for (name, proxy) in GetSources().items() if proxy == active_proxy]
-        print(f"Active Name: {active_name(0)}")
-        if "XY" in active_name(0):
+        print(f"Active Name: {active_name[0]}")
+        if "XY" in active_name[0]:
             disp.Opacity = 0.7 # sets opacity of the axial plane for display
             print("Opacity set successfully")
         loc  = array_location(sl, scalar)
