@@ -1,6 +1,6 @@
-# File to combine all of the extracted .DAT files set up in the Volcano simulation 
-# Input: Root directory with subdirectories full of .DAT files for each run 
-# Output: Single .XSLX file for each run with columns for each field of data
+# File to combine all of the extracted .DAT files set up in the Volcano simulation
+# Input: Root directory with subdirectories full of .DAT files for each run
+# Output: Single .XLSX file for each run with columns for each field of data
 
 import pandas as pd
 import re
@@ -19,7 +19,9 @@ def extract_probe_number(name):
 # GUI: Get root directory
 # ---------------------------------------------------------------
 Tk().withdraw()
-root_dir = filedialog.askdirectory(title="Select the root directory containing all data sets")
+root_dir = filedialog.askdirectory(
+    title="Select the root directory containing all data sets"
+)
 
 if not root_dir:
     raise SystemExit("No root directory selected. Exiting.")
@@ -33,8 +35,11 @@ all_dat_files = [
     if f.lower().endswith(".dat")
 ]
 
-# Coords files match pattern: XX.coords.dat
-coords_files = [f for f in all_dat_files if re.match(r".+\.coords\.dat$", os.path.basename(f))]
+coords_files = [
+    f for f in all_dat_files
+    if re.match(r".+\.coords\.dat$", os.path.basename(f))
+]
+
 data_files = [f for f in all_dat_files if f not in coords_files]
 
 if not coords_files:
@@ -47,8 +52,7 @@ print(f"Found {len(coords_files)} coords files.")
 print(f"Found {len(data_files)} data files.")
 
 # ---------------------------------------------------------------
-# Group files by leading prefix before first '.' 
-# (Example: US.coords.dat → 'US')
+# Group files by prefix
 # ---------------------------------------------------------------
 def get_prefix(filename):
     return os.path.basename(filename).split(".")[0]
@@ -65,55 +69,107 @@ for f in data_files:
 # Process each prefix group
 # ---------------------------------------------------------------
 for prefix in coords_groups.keys():
+
     print(f"\nProcessing prefix group: {prefix}")
 
-    # Expect exactly one coords file per group
     coords_path = coords_groups[prefix][0]
 
-    # Load coords file
     coords = pd.read_csv(
         coords_path,
         sep=r"\s+",
         comment="#",
         header=None,
-        usecols=[0, 1, 2, 3],
-        names=["probe_num", "x", "y", "z"]
+        usecols=[0,1,2,3],
+        names=["probe_num","x","y","z"]
     )
+
     coords.set_index("probe_num", inplace=True)
 
-    # Process all data files for this prefix
+    # -----------------------------------------------------------
+    # Process every variable
+    # -----------------------------------------------------------
     for fpath in data_groups.get(prefix, []):
+
         filename = os.path.basename(fpath)
 
-        # Extract variable name from filename like: US.machavg.dat -> machavg
         parts = filename.split(".")
         variable_name = parts[1] if len(parts) > 2 else filename
 
-        # Load entire file (no header)
-        df = pd.read_csv(fpath, sep=r"\s+", comment="#", header=None)
-
-        # The FIRST LINE of the file is actually the header
+        # Read header
         with open(fpath, "r") as f:
             header_line = f.readline().strip()
 
         header_cols = header_line.lstrip("#").split()
+
+        # Read data
+        df = pd.read_csv(
+            fpath,
+            sep=r"\s+",
+            comment="#",
+            header=None,
+            skiprows=1
+        )
+
         df.columns = header_cols
 
-        # Use last timestep row (skip column 0 = time)
-        last_row = df.iloc[-1, 1:]
+        # -------------------------------------------------------
+        # LAST TIMESTEP VALUES 
+        # -------------------------------------------------------
+        last_row = df.iloc[-1,1:]
 
-        # Convert column header "probe00001" → probe number
-        probe_nums = [extract_probe_number(col) for col in last_row.index]
+        probe_nums = [
+            extract_probe_number(col)
+            for col in last_row.index
+        ]
 
-        # Write the values into coords
-        coords[variable_name] = pd.Series(last_row.values, index=probe_nums)
+        coords[variable_name] = pd.Series(
+            last_row.values,
+            index=probe_nums
+        )
 
-    # Sort by probe number to ensure order
+        # -------------------------------------------------------
+        # Compute velocity statistics
+        # -------------------------------------------------------
+        if variable_name.lower() == "velocityx":
+
+            # Remove time column
+            probe_data = df.iloc[:, 1:]
+
+            # Mean velocity
+            velocity_avg = probe_data.mean(axis=0)
+
+            # RMS velocity
+            velocity_rms = (probe_data**2).mean(axis=0)**0.5
+
+            probe_nums = [
+                extract_probe_number(col)
+                for col in probe_data.columns
+            ]
+
+            coords["velocityxavg"] = pd.Series(
+                velocity_avg.values,
+                index=probe_nums
+            )
+
+            coords["velocityxrms"] = pd.Series(
+                velocity_rms.values,
+                index=probe_nums
+            )
+    # -----------------------------------------------------------
+    # Sort probes
+    # -----------------------------------------------------------
     coords.sort_index(inplace=True)
 
-    # Output Excel filename
-    output_file = os.path.join(root_dir, f"{prefix}_dataCombined.xlsx")
+    # -----------------------------------------------------------
+    # Save Excel
+    # -----------------------------------------------------------
+    output_file = os.path.join(
+        root_dir,
+        f"{prefix}_dataCombined_{prefix}.xlsx"
+    )
+
     coords.to_excel(output_file)
+
     print(f" -> Saved: {output_file}")
 
 print("\n------------------------------------------")
