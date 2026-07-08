@@ -303,8 +303,8 @@ def make_3D_composite_view(yz_x_positions, xy_z_positions, scalar, output_fname=
     for z in xy_z_positions:
         fname = f"XY_z{z:+0.5f}_3D_{scalar}"
         sl    = make_slice([0, 0, z], [1, 0, 0], fname, scalar)
-        disp = Show(sl, view)
-        disp.Opacity = 0.7
+        # disp = Show(sl, view)
+        # disp.Opacity = 0.7
         slices.append(sl)
 
     # ---- 2. Create domain surface ----
@@ -325,7 +325,11 @@ def make_3D_composite_view(yz_x_positions, xy_z_positions, scalar, output_fname=
 
     for sl in slices:
         SetActiveSource(sl)
+        active_proxy = GetActiveSource()
         disp = Show(sl, view)
+        active_name = [name for (name, proxy) in GetSources().items() if proxy == active_proxy]
+        if "XY" in active_name:
+            disp.Opacity = 0.7 # sets opacity of the axial plane for display
         loc  = array_location(sl, scalar)
         ColorBy(disp, (loc, scalar))
         disp.DisableLighting = 1
