@@ -355,6 +355,7 @@ def make_3D_composite_view(yz_x_positions, xy_z_positions, scalar, output_fname=
 
     # ---- 5. Camera, colourbar, render, save ----
     apply_camera_and_colorbar(lut, "3D", scalar)
+    print("Camera applied")
     Render(view)
 
     SaveScreenshot(
