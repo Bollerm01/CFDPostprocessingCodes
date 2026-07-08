@@ -200,18 +200,18 @@ for e = 1:nExp
         p = (V ./ system_sens) * PSI_TO_PA;
         p = p - mean(p);
 
-        %----------------------------------------------------------
-        % Bandpass filter
-        %----------------------------------------------------------
-        nyq = (1/mean(diff(expTime{e})))/2; % Nyquist frequency
-        
-        fLow  = fmin;               % Lower cutoff (Hz)
-        fHigh = fmax;               % Upper cutoff (Hz)
-        
-        [b,a] = butter(5,[fLow fHigh]/nyq,'bandpass');
-        
-        %----------------------------------------------------------
-        p = filtfilt(b,a,p);
+        % %----------------------------------------------------------
+        % % Bandpass filter
+        % %----------------------------------------------------------
+        % nyq = (1/mean(diff(expTime{e})))/2; % Nyquist frequency
+        % 
+        % fLow  = fmin;               % Lower cutoff (Hz)
+        % fHigh = fmax;               % Upper cutoff (Hz)
+        % 
+        % [b,a] = butter(5,[fLow fHigh]/nyq,'bandpass');
+        % 
+        % %----------------------------------------------------------
+        % p = filtfilt(b,a,p);
 
         expSignals{e}{i} = p;
 
