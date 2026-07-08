@@ -47,6 +47,19 @@ SCALAR_RANGES = {
 # ============================================================
 # =========== COLORMAP PRESETS PER SCALAR ====================
 # ============================================================
+DEFAULT_CB_NAME = ''
+
+CB_NAMES = {
+    "velocityx":    "Axial Velocity (m/s)",
+    "velocityxavg": "Avg. Axial Velocity (m/s)",
+
+    "tke":         "TKE (J/kg)",
+    "pressure":    "Pressure (Pa)",
+    "pressureavg": "Avg. Pressure (Pa)",
+
+    "vorticitymag":    "Vorticity Magnitude (1/s)",
+    "vorticitymagavg": "Avg. Vorticity Magnitude (1/s)",
+}
 
 DEFAULT_COLORMAP_PRESET = "Cool to Warm (Extended)"
 
@@ -226,7 +239,9 @@ def apply_camera_and_colorbar(lut, preset_name, array_name):
     bar.Position        = p["Colorbar"]["Position"]
     bar.ScalarBarLength = p["Colorbar"]["Length"]
 
-    bar.Title          = array_name
+    # bar.Title          = array_name
+    cbPreset = CB_NAMES.get(array_name, DEFAULT_CB_NAME)
+    bar.Title = cbPreset
     bar.ComponentTitle = ""
     bar.TitleFontSize  = 12
     bar.LabelFontSize  = 12
@@ -328,10 +343,10 @@ def make_3D_composite_view(yz_x_positions, xy_z_positions, scalar, output_fname=
         active_proxy = GetActiveSource()
         disp = Show(sl, view)
         active_name = [name for (name, proxy) in GetSources().items() if proxy == active_proxy]
-        print(f"Active Name: {active_name}")
-        if "XY" in active_name:
+        print(f"Active Name: {active_name(0)}")
+        if "XY" in active_name(0):
             disp.Opacity = 0.7 # sets opacity of the axial plane for display
-            print("opacity set")
+            print("Opacity set successfully")
         loc  = array_location(sl, scalar)
         ColorBy(disp, (loc, scalar))
         disp.DisableLighting = 1
