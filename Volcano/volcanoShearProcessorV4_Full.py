@@ -314,7 +314,7 @@ def make_3D_composite_view(yz_x_positions, xy_z_positions, scalar, output_fname=
 
     # ---- 3. Show surface (semi-transparent, uncoloured) ----
     surfDisp = Show(surface, view)
-    ColorBy(surfDisp, None)         # solid colour / no scalar mapping
+    ColorBy(surfDisp, ['Points', ''])         # solid color / no scalar mapping
     surfDisp.Opacity = 0.15
 
     # ---- 4. Show all slices, disable lighting, apply shared LUT ----
