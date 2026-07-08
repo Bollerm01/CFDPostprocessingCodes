@@ -18,7 +18,7 @@ INPUT_FILES= [
 ]
 
 OUTPUT_DIRS = [
-    "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/3DfigOutput/RD00debug", #RD00 Output
+    "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/3DfigOutput/RD00", #RD00 Output
     "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/3DfigOutput/RD09", # RD09 Output
     "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/3DfigOutput/RD17", # RD17 Output
     "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/3DfigOutput/RD52", # RD52 Output
