@@ -343,8 +343,8 @@ def make_3D_composite_view(yz_x_positions, xy_z_positions, scalar, output_fname=
         active_proxy = GetActiveSource()
         disp = Show(sl, view)
         active_name = [name for (name, proxy) in GetSources().items() if proxy == active_proxy]
-        print(f"Active Name: {active_name[0]}")
-        if "XY" in active_name[0]:
+        print(f"Active Name: {active_name[0][0]}")
+        if "XY" in active_name[0][0]:
             disp.Opacity = 0.7 # sets opacity of the axial plane for display
             print("Opacity set successfully")
         loc  = array_location(sl, scalar)
@@ -376,15 +376,15 @@ def make_3D_composite_view(yz_x_positions, xy_z_positions, scalar, output_fname=
 for s in SCALARS:
 
     # ---- 2-D slices (YZ, XZ, XY) ----
-    for x in YZ_SLICE_X:
-        create_slice([x, 0, 0], [1, 0, 0], "YZ", f"YZ_x{x:+0.5f}", s)
+    # for x in YZ_SLICE_X:
+    #     create_slice([x, 0, 0], [1, 0, 0], "YZ", f"YZ_x{x:+0.5f}", s)
 
-    for y in XZ_SLICE_Y:
-        create_slice([0, y, 0], [0, 1, 0], "XZ", f"XZ_y{y:+0.5f}", s)
+    # for y in XZ_SLICE_Y:
+    #     create_slice([0, y, 0], [0, 1, 0], "XZ", f"XZ_y{y:+0.5f}", s)
 
-    for z in XY_SLICE_Z:
-        create_slice([0, 0, z], [0, 0, 1], "XY_NEAR", f"XY_near_z{z:+0.5f}", s)
-        # create_slice([0, 0, z], [0, 0, 1], "XY_FAR", f"XY_far_z{z:+0.5f}", s)
+    # for z in XY_SLICE_Z:
+    #     create_slice([0, 0, z], [0, 0, 1], "XY_NEAR", f"XY_near_z{z:+0.5f}", s)
+    #     # create_slice([0, 0, z], [0, 0, 1], "XY_FAR", f"XY_far_z{z:+0.5f}", s)
 
     # ---- 3-D composite view ----
     make_3D_composite_view(YZ_SLICE_X_3D, XY_SLICE_Z_3D, s, output_fname="3D_composite")
