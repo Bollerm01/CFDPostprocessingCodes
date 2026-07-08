@@ -30,11 +30,11 @@ for i in range(len(INPUT_FILES)):
     file_name   = os.path.basename(folder_path)
 
     # Scalars to render
-    SCALARS = ["pressure"]
-    # SCALARS = [
-    #     "velocityx", "velocityxavg", "tke", "pressure", "pressureavg",
-    #     "vorticitymag", "vorticitymagavg"
-    # ]
+    # SCALARS = ["pressure"]
+    SCALARS = [
+        "velocityx", "velocityxavg", "tke", "pressure", "pressureavg",
+        "vorticitymag", "vorticitymagavg"
+    ]
 
     # User-defined scalar ranges (min, max) per array name.
     # If a scalar is not listed the script falls back to the data range.
@@ -89,14 +89,14 @@ for i in range(len(INPUT_FILES)):
     # ============================================================
 
     # Full Loop
-    # YZ_SLICE_X = [2.1508, 2.1691, 2.1793151, 2.19847, 2.216945]  # x/L = 0.03, 0.3, 0.73, 1
-    # XY_SLICE_Z  = [-0.0381, 0, 0.0381]
-    # XZ_SLICE_Y  = [0.0093, 0.001]
+    YZ_SLICE_X = [2.1508, 2.1691, 2.1793151, 2.19847, 2.216945]  # x/L = 0.03, 0.3, 0.73, 1
+    XY_SLICE_Z  = [-0.0381, 0, 0.0381]
+    XZ_SLICE_Y  = [0.0093, 0.001]
 
     # Debug Loop
-    YZ_SLICE_X = [2.1793151]  # x/L = 0.03, 0.3, 0.73, 1
-    XY_SLICE_Z  = [0.0]
-    XZ_SLICE_Y  = [0.0093]
+    # YZ_SLICE_X = [2.1793151]  # x/L = 0.03, 0.3, 0.73, 1
+    # XY_SLICE_Z  = [0.0]
+    # XZ_SLICE_Y  = [0.0093]
 
 
     # YZ slices shown in the 3D composite view (subset of YZ_SLICE_X).
@@ -405,15 +405,15 @@ for i in range(len(INPUT_FILES)):
     for s in SCALARS:
 
         # ---- 2-D slices (YZ, XZ, XY) ----
-        # for x in YZ_SLICE_X:
-        #     create_slice([x, 0, 0], [1, 0, 0], "YZ", f"YZ_x{x:+0.5f}", s)
+        for x in YZ_SLICE_X:
+            create_slice([x, 0, 0], [1, 0, 0], "YZ", f"YZ_x{x:+0.5f}", s)
 
-        # for y in XZ_SLICE_Y:
-        #     create_slice([0, y, 0], [0, 1, 0], "XZ", f"XZ_y{y:+0.5f}", s)
+        for y in XZ_SLICE_Y:
+            create_slice([0, y, 0], [0, 1, 0], "XZ", f"XZ_y{y:+0.5f}", s)
 
-        # for z in XY_SLICE_Z:
-        #     create_slice([0, 0, z], [0, 0, 1], "XY_NEAR", f"XY_near_z{z:+0.5f}", s)
-        #     # create_slice([0, 0, z], [0, 0, 1], "XY_FAR", f"XY_far_z{z:+0.5f}", s)
+        for z in XY_SLICE_Z:
+            create_slice([0, 0, z], [0, 0, 1], "XY_NEAR", f"XY_near_z{z:+0.5f}", s)
+            # create_slice([0, 0, z], [0, 0, 1], "XY_FAR", f"XY_far_z{z:+0.5f}", s)
 
         # ---- 3-D composite view ----
         make_3D_composite_view(YZ_SLICE_X_3D, XY_SLICE_Z_3D, s, output_fname="3D_composite")
