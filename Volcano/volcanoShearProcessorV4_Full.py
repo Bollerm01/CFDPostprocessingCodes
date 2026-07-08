@@ -347,6 +347,7 @@ def make_3D_composite_view(yz_x_positions, xy_z_positions, scalar, output_fname=
         if "XY" in active_name[0][0]:
             disp.Opacity = 0.7 # sets opacity of the axial plane for display
             print("Opacity set successfully")
+        SetActiveSource(sl)
         loc  = array_location(sl, scalar)
         ColorBy(disp, (loc, scalar))
         disp.DisableLighting = 1
