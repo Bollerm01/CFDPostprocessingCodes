@@ -25,7 +25,7 @@ OUTPUT_DIRS = [
 
 ]
 
-for i in len(INPUT_FILES):
+for i in range(len(INPUT_FILES)):
     folder_path = os.path.dirname(INPUT_FILES[i])
     file_name   = os.path.basename(folder_path)
 
