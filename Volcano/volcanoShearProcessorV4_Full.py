@@ -2,8 +2,10 @@ from paraview.simple import *
 import os
 
 # Code to generate thesis 3D contours for R/D sweep (0.0, 0.09, 0.17, 0.52)
-# Input: latest.volcano file for the full-width R/D cavity (first argument after the script call)
-# Output: Folder with 3D and 2D layouts of the domain slices (second argument ")
+# Input: latest.volcano file for the full-width R/D cavity 
+# Output: Folder with 3D and 2D layouts of the domain slices 
+# Loops through all R/D for single execution to generate all data
+
 
 # ============================================================
 # ======================= USER INPUT =========================
@@ -89,7 +91,7 @@ for i in range(len(INPUT_FILES)):
     # ============================================================
 
     # Full Loop
-    YZ_SLICE_X = [2.1508, 2.1691, 2.1793151, 2.19847, 2.216945]  # x/L = 0.03, 0.3, 0.73, 1
+    YZ_SLICE_X = [2.1508, 2.1691, 2.1793151, 2.19847, 2.216945]  # x/L = 0.03, 0.3, 0.45, 0.73, 1
     XY_SLICE_Z  = [-0.0381, 0, 0.0381]
     XZ_SLICE_Y  = [0.0093, 0.001]
 

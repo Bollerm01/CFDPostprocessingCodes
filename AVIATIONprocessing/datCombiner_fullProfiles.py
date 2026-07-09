@@ -204,6 +204,8 @@ csv_columns_to_add = [
     "reynoldsstressyz",
     "reynoldsstresszz",
     "tke",
+    "vorticitymag",
+    "vorticitymagavg"
 ]
 
 # GUI: select folder containing additional profile CSVs

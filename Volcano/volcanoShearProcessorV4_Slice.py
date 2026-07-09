@@ -1,497 +1,429 @@
 from paraview.simple import *
 import os
 
-# Code to generate thesis 3D plot 
+# Code to generate thesis 3D contours for R/D SLICE sweep (0.0, 0.17, 0.52)
+# Input: latest.volcano file for the full-width R/D cavity 
+# Output: Folder with 3D and 2D layouts of the domain slices
 
 # ============================================================
 # ======================= USER INPUT =========================
 # ============================================================
 
-# Slice Inputs
-# INPUT_FILE = "/home/bollerma/LESdata/SSWT/sliceCav/RD00s/SSWTM2Test2s_000/latest.volcano" # RD00 Slice
-# INPUT_FILE = "/home/bollerma/LESdata/SSWT/sliceCav/RD52s/SSWTM2TestRD52s_000/latest.volcano" # RD52 Slice
-
-
 # Full Inputs
-# INPUT_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD00/RD00_004/latest.volcano"
-# INPUT_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD17/RD17_022/latest.volcano" # RD17 Path
-# INPUT_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD52/RD52_057/latest.volcano" # RD52 Path
-
-INPUT_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD00/RD00_reprobing_002/latest.volcano" # RD00 Slice from Kulite probing
-
-OUTPUT_DIR = "/home/bollerma/LESdata/SSWT/sliceCav/contourOutput/RD00" # CHANGE PER RUN
-OUTPUT_DIR = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD00/RD00_reprobing_002/contourOutput"
-
-folder_path = os.path.dirname(INPUT_FILE) # /home/user/project
-file_name = os.path.basename(folder_path) # project
-
-# Debugging scalars
-SCALARS = ["pressure", "pressureavg", "velocityx", "velocityxavg", "tke"]
-# SCALARS = [
-#     "reynoldsstressxx", "reynoldsstressyy", "reynoldsstresszz",
-#     "reynoldsstressxy", "reynoldsstressxz", "reynoldsstressyz",
-#     "velocityx", "velocityxavg", "tke", "pressure", "pressureavg", 
-#     "vorticitymag", "vorticitymagavg"
+# INPUT_FILES= [
+#     "/home/bollerma/LESdata/SSWT/sliceCav/RD00s/SSWTM2Test2s_SurfKulite_003/latest.volcano",  # RD00 Slice path
+#     "/home/bollerma/LESdata/SSWT/sliceCav/RD17s/SSWTM2TestRD17s_SurfKulite_001/latest.volcano", # RD17 Path
+#     "/home/bollerma/LESdata/SSWT/sliceCav/RD52s/SSWTM2TestRD52s_SurfKulite_004/latest.volcano" # RD52 Path
 # ]
+INPUT_FILES= [
+    "/home/bollerma/LESdata/SSWT/sliceCav/RD00s/SSWTM2Test2s_SurfKulite_003/latest.volcano" # RD00 Slice path
+]
 
-ENABLE_SCHLIEREN = True # Change to true if desired
-DENSITY_NAME = "density"
+# OUTPUT_DIRS = [
+#     "/home/bollerma/LESdata/SSWT/sliceCav/3DfigOutput/RD00", # RD00 Output
+#     "/home/bollerma/LESdata/SSWT/sliceCav/3DfigOutput/RD17", # RD17 Output
+#     "/home/bollerma/LESdata/SSWT/sliceCav/3DfigOutput/RD52" # RD52 Output
+# ]
+OUTPUT_DIRS = [
+    "/home/bollerma/LESdata/SSWT/sliceCav/3DfigOutput/RD00debug" # RD00 Output
+]
 
-# <<< NEW: Optional, user-defined scalar ranges (min, max) per array name >>>
-# If a scalar is not in this dictionary, the script will fall back to the
-# actual data range for that array.
-SCALAR_RANGES = {
-    # ---- Example ranges: update to match your dataset ----
-    # Reynolds stresses
-    "reynoldsstressxx": (0.0, 2.4e4),
-    "reynoldsstressyy": (0.0, 6500.0),
-    "reynoldsstresszz": (-100.0, 100.0),
-    "reynoldsstressxy": (-5e3, 1.5e3),
-    "reynoldsstressxz": (-400.0, 250.0),
-    "reynoldsstressyz": (-400.0, 250.0),
+for i in range(len(INPUT_FILES)):
+    folder_path = os.path.dirname(INPUT_FILES[i])
+    file_name   = os.path.basename(folder_path)
 
-    # Velocities
-    "velocityx":    (-160.0, 730.0),
-    "velocityxavg": (-160.0, 730.0),
+    # Scalars to render
+    SCALARS = ["pressure"]
+    # SCALARS = [
+    #     "velocityx", "velocityxavg", "tke", "pressure", "pressureavg",
+    #     "vorticitymag", "vorticitymagavg"
+    # ]
 
-    # Turbulence / pressure
-    "tke":         (0.0, 20000.0),
-    "pressure": (13000.0, 32000.0),
-    "pressureavg": (13000.0, 32000.0),
+    # User-defined scalar ranges (min, max) per array name.
+    # If a scalar is not listed the script falls back to the data range.
+    SCALAR_RANGES = {
+        # Velocities
+        "velocityx":    (-160.0, 730.0),
+        "velocityxavg": (-160.0, 730.0),
 
-    # Vorticity
-    "vorticitymag":    (0.0, 5.0e5),
-    "vorticitymagavg": (0.0, 5.0e5),
+        # Turbulence / pressure
+        "tke":         (0.0, 20000.0),
+        "pressure":    (13000.0, 32000.0),
+        "pressureavg": (13000.0, 32000.0),
 
-    # Schlieren outputs (only used if ENABLE_SCHLIEREN is True)
-    "magDelRho":         (0.0, 120.0),
-    "Schlieren_dRho_dX": (0.0, 90.0),
-    "Schlieren_dRho_dY": (0.0, 90.0),
-}
-# <<< END NEW >>>
+        # Vorticity
+        "vorticitymag":    (0.0, 5.0e5),
+        "vorticitymagavg": (0.0, 5.0e5),
+    }
 
-# ============================================================
-# =========== OPTIONAL: COLORMAP PRESETS PER SCALAR ==========
-# ============================================================
+    # ============================================================
+    # =========== COLORMAP PRESETS PER SCALAR ====================
+    # ============================================================
+    DEFAULT_CB_NAME = ''
 
-# Default colormap if a scalar is not listed here
-DEFAULT_COLORMAP_PRESET = "Cool to Warm (Extended)"
+    CB_NAMES = {
+        "velocityx":    "Axial Velocity (m/s)",
+        "velocityxavg": "Avg. Axial Velocity (m/s)",
 
-# Per-scalar colormap presets
-SCALAR_COLORMAPS = {
-    # Reynolds stresses (example assignments)
-    "reynoldsstressxx": "Turbo",
-    "reynoldsstressyy": "Turbo",
-    "reynoldsstresszz": "Turbo",
-    "reynoldsstressxy": "Turbo",
-    "reynoldsstressxz": "Turbo",
-    "reynoldsstressyz": "Turbo",
+        "tke":         "TKE (J/kg)",
+        "pressure":    "Pressure (Pa)",
+        "pressureavg": "Avg. Pressure (Pa)",
 
-    # Velocities
-    "velocityx":    "Cool to Warm (Extended)",
-    "velocityxavg": "Cool to Warm (Extended)",
+        "vorticitymag":    "Vorticity Magnitude (1/s)",
+        "vorticitymagavg": "Avg. Vorticity Magnitude (1/s)",
+    }
 
-    # Turbulence / pressure
-    "tke":         "Viridis (matplotlib)",
-    "pressure":    "Linear Blue (8_31f)",
-    "pressureavg": "Linear Blue (8_31f)",
+    DEFAULT_COLORMAP_PRESET = "Cool to Warm (Extended)"
 
-    # Vorticity
-    "vorticitymag":    "Inferno (matplotlib)",
-    "vorticitymagavg": "Inferno (matplotlib)",
+    SCALAR_COLORMAPS = {
+        "velocityx":    "Cool to Warm (Extended)",
+        "velocityxavg": "Cool to Warm (Extended)",
 
-    # Schlieren (if/when used)
-    "magDelRho":         "Grayscale",
-    "Schlieren_dRho_dX": "Grayscale",
-    "Schlieren_dRho_dY": "Grayscale",
-}
+        "tke":         "Viridis (matplotlib)",
+        "pressure":    "Linear Blue (8_31f)",
+        "pressureavg": "Linear Blue (8_31f)",
 
-# Debugging loop
-YZ_SLICE_X = [2.15057954, 2.16015806, 2.1793151, 2.20736648, 2.216945]
-XY_SLICE_Z = [0.00]
-XZ_SLICE_Y = [0.0093, 0.001]
+        "vorticitymag":    "Inferno (matplotlib)",
+        "vorticitymagavg": "Inferno (matplotlib)",
+    }
 
-# full loop
-# YZ_SLICE_X = [2.011691, 2.080109, 2.114318, 2.15057954, 2.16015806, 2.1690524, 2.1793151, 2.18889362, 2.19847214, 2.20736648, 2.216945, 2.223063, 2.307804104]
-# XY_SLICE_Z = [-0.0381, 0.00, 0.0381]
-# XZ_SLICE_Y = [0.0182, 0.0093, 0.003, 0.001]
+    # ============================================================
+    # ======================= SLICE POSITIONS ====================
+    # ============================================================
 
-# 3D slices group
-# YZ_SLICE_X_3D = [2.15057954, 2.1793151, 2.216945] #x/L = 0.03, 0.45, 1
-# XY_SLICE_Z_3D = [0.0381]
-# XZ_SLICE_Y_3D = [0.0093,0.001]
+    # Full Loop
+    # YZ_SLICE_X = [2.1508, 2.1691, 2.1793151, 2.19847, 2.216945]  # x/L = 0.03, 0.3, 0.45, 0.73, 1
+    # XY_SLICE_Z  = [0.0]
+    # XZ_SLICE_Y  = [0.0093, 0.001]
 
-IMG_RES = [1920, 1080]
+    # Debug Loop
+    YZ_SLICE_X = [2.1793151]  # x/L = 0.03, 0.3, 0.73, 1
+    XY_SLICE_Z  = [0.0]
+    XZ_SLICE_Y  = [0.0093]
 
-os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-# ============================================================
-# ===================== CAMERA PRESETS =======================
-# ============================================================
+    # YZ slices shown in the 3D composite view (subset of YZ_SLICE_X).
+    # Corresponds to the slices named qPlane / 3qPlane / xL0p3 / 0p86 / xL1p2 / farwall
+    # in the trace.  Adjust to match whatever YZ planes you want visible in the 3D render.
+    YZ_SLICE_X_3D = [2.155, 2.194, 2.23]  # x/L ≈ 0.03, 0.45, 1
+    XY_SLICE_Z_3D = [-0.012] 
 
-CAMERA_PRESETS = {
-    "XY_NEAR": {
-        "CameraPosition":   [2.1922574427684838, 0.018226216790868725, 5.011192474629075],
-        "CameraFocalPoint": [2.1922574427684838, 0.018226216790868725, 0.0],
-        "CameraViewUp":     [0,1,0],
-        "ParallelScale":    0.06142870916705136,
-        "Colorbar": {
-            "Orientation": "Horizontal",
-            "Position":    [0.29, 0.15],
-            "Length":      0.5, # was 0.33
-        }
-    },
-    "XY_FAR": {
-        "CameraPosition":   [1.25, 0.05994982668344116, 5.011016610690195],
-        "CameraFocalPoint": [1.25, 0.05994982668344116, 0.0],
-        "CameraViewUp":     [0,1,0],
-        "ParallelScale":    0.75,
-        "Colorbar": {
-            "Orientation": "Horizontal",
-            "Position":    [0.29, 0.26],
-            "Length":      0.5,
-        }
-    },
-    "YZ": {
-        "CameraPosition":   [2.745205, 0.0887413, 0.0],
-        "CameraFocalPoint": [2.15058,  0.0887413, 0.0],
-        "CameraViewUp":     [0,1,0],
-        "ParallelScale":    0.10,
-        "InteractionMode":  "2D",
-        "Colorbar": {
-            "Orientation": "Vertical",
-            "Position":    [0.80, 0.24],
-            "Length":      0.5,
-        }
-    },
-    "XZ": {
-        "CameraPosition":   [2.19626, 5.25954, -0.0137621],
-        "CameraFocalPoint": [2.19626, 0.240491, -0.0137621],
-        "CameraViewUp":     [-1, 0, 0],
-        "ParallelScale":    0.065, 
-        "InteractionMode":  "3D",
-        "Colorbar": {
-            "Orientation": "Vertical",
-            "Position":    [0.80, 0.38],
-            "Length":      0.5,
-        }
-    },
-    "3D_Near": {
-        "CameraPosition":   [3.47514, 1.07704, 4.42635],
-        "CameraFocalPoint": [2.10515, -0.0598313, -0.266117],
-        "CameraViewUp":     [-0.0835596, 0.973793, -0.21153],
-        "ParallelScale":    0.065,
-        "InteractionMode":  "3D",
-        "Colorbar": {
-            "Orientation": "Horizontal",
-            "Position":    [0.174555, 0.0997015],
-            "Length":      0.5,
-        }
-    },
-    "3D_Top": {
-        "CameraPosition":   [4.50317, 2.18599, 3.42866],
-        "CameraFocalPoint": [2.01636, -0.171346, -0.238507],
-        "CameraViewUp":     [-10.247616, 0.882667, -0.399482],
-        "ParallelScale":    0.065,
-        "InteractionMode":  "3D",
-        "Colorbar": {
-            "Orientation": "Horizontal",
-            "Position":    [0.174555, 0.0997015],
-            "Length":      0.5,
+    IMG_RES = [1920, 1080]
+
+    os.makedirs(OUTPUT_DIRS[i], exist_ok=True)
+
+    # ============================================================
+    # ===================== CAMERA PRESETS =======================
+    # ============================================================
+
+    CAMERA_PRESETS = {
+        "XY_NEAR": {
+            "CameraPosition":   [2.1922574427684838, 0.018226216790868725, 5.011192474629075],
+            "CameraFocalPoint": [2.1922574427684838, 0.018226216790868725, 0.0],
+            "CameraViewUp":     [0, 1, 0],
+            "ParallelScale":    0.06142870916705136,
+            "Colorbar": {
+                "Orientation": "Horizontal",
+                "Position":    [0.29, 0.15],
+                "Length":      0.5,
+            }
+        },
+        "XY_FAR": {
+            "CameraPosition":   [1.25, 0.05994982668344116, 5.011016610690195],
+            "CameraFocalPoint": [1.25, 0.05994982668344116, 0.0],
+            "CameraViewUp":     [0, 1, 0],
+            "ParallelScale":    0.75,
+            "Colorbar": {
+                "Orientation": "Horizontal",
+                "Position":    [0.29, 0.26],
+                "Length":      0.5,
+            }
+        },
+        "YZ": {
+            "CameraPosition":   [2.745205, 0.0887413, 0.0],
+            "CameraFocalPoint": [2.15058,  0.0887413, 0.0],
+            "CameraViewUp":     [0, 1, 0],
+            "ParallelScale":    0.10,
+            "InteractionMode":  "2D",
+            "Colorbar": {
+                "Orientation": "Vertical",
+                "Position":    [0.80, 0.24],
+                "Length":      0.5,
+            }
+        },
+        "XZ": {
+            "CameraPosition":   [2.19626, 5.25954, -0.0137621],
+            "CameraFocalPoint": [2.19626, 0.240491, -0.0137621],
+            "CameraViewUp":     [-1, 0, 0],
+            "ParallelScale":    0.065,
+            "InteractionMode":  "3D",
+            "Colorbar": {
+                "Orientation": "Vertical",
+                "Position":    [0.80, 0.38],
+                "Length":      0.5,
+            }
+        },
+        # ---- 3D view — camera taken from the final settled position in the trace ----
+        "3D": {
+            "CameraPosition":   [2.10516, 0.0323428, 0.268345],
+            "CameraFocalPoint": [2.18446, 0.0224981, 0.0136783],
+            "CameraViewUp":     [0.0228055, 0.999243, -0.0315268],
+            "ParallelScale":    0.1, #was 1.2967534046463778
+            "InteractionMode":  "3D",
+            # Colorbar layout matches the trace: horizontal, centred near the bottom
+            "Colorbar": {
+                "Orientation": "Horizontal",
+                "Position":    [0.35328840970350406, 0.04477611940298508],
+                "Length":      0.33,
+            }
         }
     }
-}
 
-# ============================================================
-# ===================== LOAD DATA ============================
-# ============================================================
+    # ============================================================
+    # ===================== LOAD DATA ============================
+    # ============================================================
 
-src = OpenDataFile(INPUT_FILE)
-RenameSource(file_name, src)
-src.CellArrayStatus = SCALARS + [DENSITY_NAME]
+    src = OpenDataFile(INPUT_FILES[i])
+    RenameSource(file_name, src)
+    src.CellArrayStatus = SCALARS
 
-view = GetActiveViewOrCreate("RenderView")
-view.Background = [0, 0, 0]
-view.CameraParallelProjection = 1
+    view = GetActiveViewOrCreate("RenderView")
+    view.Background = [0, 0, 0]
+    view.CameraParallelProjection = 1
 
-# ============================================================
-# ===================== UTILITIES ============================
-# ============================================================
+    # ============================================================
+    # ===================== UTILITIES ============================
+    # ============================================================
 
-def hide_scalar_bar_for_array(array_name):
-    try:
-        lut = GetColorTransferFunction(array_name)
-        HideScalarBarIfNotNeeded(lut, view)
-    except:
-        pass
-
-def array_location(source, name):
-    pd = source.GetPointDataInformation()
-    cd = source.GetCellDataInformation()
-    if pd.GetArray(name) is not None:
-        return "POINTS"
-    if cd.GetArray(name) is not None:
-        return "CELLS"
-    raise RuntimeError(f"Array '{name}' not found on points or cells")
-
-# Helper to apply user-defined or automatic LUT range
-def apply_lut_range(lut, array_name):
-    """
-    If array_name has a manual range in SCALAR_RANGES, use that range.
-    Otherwise, fall back to the data-derived range.
-    """
-    if array_name in SCALAR_RANGES:
-        vmin, vmax = SCALAR_RANGES[array_name]
-        lut.RescaleTransferFunction(vmin, vmax)
-    else:
-        # Use data range if not specified
-        lut.RescaleTransferFunctionToDataRange()
-
-def apply_lut_preset(lut, array_name):
-    """
-    Choose the colormap preset based on the array name.
-    Falls back to DEFAULT_COLORMAP_PRESET if not specified.
-    """
-    preset = SCALAR_COLORMAPS.get(array_name, DEFAULT_COLORMAP_PRESET)
-    lut.ApplyPreset(preset, True)
-
-def apply_camera_and_colorbar(lut, preset, array_name):
-
-    p = CAMERA_PRESETS[preset]
-
-    # ---- Camera ----
-    view.CameraPosition      = p["CameraPosition"]
-    view.CameraFocalPoint    = p["CameraFocalPoint"]
-    view.CameraViewUp        = p["CameraViewUp"]
-    view.CameraParallelScale = p["ParallelScale"]
-
-    if "InteractionMode" in p:
-        view.InteractionMode = p["InteractionMode"]
-
-    # ---- Scalar bar ----
-    bar = GetScalarBar(lut, view)
-    bar.Visibility = 1 # 0 hides bar
-
-    # --- Reset cached geometry ----
-    bar.AutomaticLabelFormat = 0
-    bar.UseCustomLabels = 0
-    bar.WindowLocation = "Any Location"
-    bar.ScalarBarThickness = bar.ScalarBarThickness  # forces refresh
-
-    bar.Orientation = p["Colorbar"]["Orientation"]
-    bar.Position    = p["Colorbar"]["Position"]
-    bar.ScalarBarLength = p["Colorbar"]["Length"]
-    bar.TitleColor = [0.0, 0.0, 0.0] # black
-    bar.LabelColor = [0.0, 0.0, 0.0] # black
-
-    # ---- Title ----
-    bar.Title = array_name
-    bar.ComponentTitle = ""
-
-    bar.TitleFontSize = 12 # was 18
-    bar.LabelFontSize = 10 # was 16
-
-    # --- Sets background ---
-    # find settings proxy
-    colorPalette = GetSettingsProxy('ColorPalette')
-
-    # Properties modified on colorPalette (white)
-    colorPalette.Background = [1.0, 1.0, 1.0]
-
-    # ---- Sets axis label color -----
-    view.OrientationAxesLabelColor = [0.0, 0.0, 0.0] # black
+    def hide_scalar_bar_for_array(array_name):
+        try:
+            lut = GetColorTransferFunction(array_name)
+            HideScalarBarIfNotNeeded(lut, view)
+        except Exception:
+            pass
 
 
+    def array_location(source, name):
+        pd = source.GetPointDataInformation()
+        cd = source.GetCellDataInformation()
+        if pd.GetArray(name) is not None:
+            return "POINTS"
+        if cd.GetArray(name) is not None:
+            return "CELLS"
+        raise RuntimeError(f"Array '{name}' not found on points or cells")
 
-# ============================================================
-# ===================== SCHLIEREN ============================
-# ============================================================
 
-def schlieren_pipeline(slice_src):
-    # Ensure slice has produced point data
-    slice_src.UpdatePipeline()
+    def apply_lut_range(lut, array_name):
+        if array_name in SCALAR_RANGES:
+            vmin, vmax = SCALAR_RANGES[array_name]
+            lut.RescaleTransferFunction(vmin, vmax)
+        else:
+            lut.RescaleTransferFunctionToDataRange()
 
-    # ---- Gradient of density ----
-    grad = Gradient(Input=slice_src)
-    grad.ScalarArray = ['POINTS', DENSITY_NAME]
-    grad.ResultArrayName = "delRho"
-    grad.UpdatePipeline()
 
-    # ---- |∇ρ| ----
-    mag = Calculator(Input=grad)
-    mag.ResultArrayName = "magDelRho"
-    mag.Function = "mag(delRho)"
-    mag.UpdatePipeline()
+    def apply_lut_preset(lut, array_name):
+        preset = SCALAR_COLORMAPS.get(array_name, DEFAULT_COLORMAP_PRESET)
+        lut.ApplyPreset(preset, True)
 
-    # ---- ∂ρ/∂x ----
-    dx = Calculator(Input=grad)
-    dx.ResultArrayName = "Schlieren_dRho_dX"
-    dx.Function = "delRho[0]"
-    dx.UpdatePipeline()
 
-    # ---- ∂ρ/∂y ----
-    dy = Calculator(Input=grad)
-    dy.ResultArrayName = "Schlieren_dRho_dY"
-    dy.Function = "delRho[1]"
-    dy.UpdatePipeline()
+    def apply_camera_and_colorbar(lut, preset_name, array_name):
+        p = CAMERA_PRESETS[preset_name]
 
-    return [mag, dx, dy]
+        # ---- Camera ----
+        view.CameraPosition      = p["CameraPosition"]
+        view.CameraFocalPoint    = p["CameraFocalPoint"]
+        view.CameraViewUp        = p["CameraViewUp"]
+        view.CameraParallelScale = p["ParallelScale"]
 
-# Helper: Make Slice
-def make_slice(origin, normal, fname, scalar, schlieren=False):
-    """
-    Create and configure a VolcanoSlice but do not show or save.
-    Returns the slice proxy.
-    """
-    sl = VolcanoSlice(registrationName=fname, Input=src)
-    sl.SlicePoint = origin
-    sl.SliceNormal = normal
+        if "InteractionMode" in p:
+            view.InteractionMode = p["InteractionMode"]
 
-    if schlieren:
-        sl.InterpolatedField = DENSITY_NAME
-        sl.MinMaxField = DENSITY_NAME
-    else:
+        # ---- Scalar bar ----
+        bar = GetScalarBar(lut, view)
+        bar.Visibility = 1
+
+        bar.AutomaticLabelFormat = 0
+        bar.UseCustomLabels       = 0
+        bar.WindowLocation        = "Any Location"
+        bar.ScalarBarThickness    = bar.ScalarBarThickness  # force refresh
+
+        bar.Orientation     = p["Colorbar"]["Orientation"]
+        bar.Position        = p["Colorbar"]["Position"]
+        bar.ScalarBarLength = p["Colorbar"]["Length"]
+
+        # bar.Title          = array_name
+        cbPreset = CB_NAMES.get(array_name, DEFAULT_CB_NAME)
+        bar.Title = cbPreset
+        bar.ComponentTitle = ""
+        bar.TitleFontSize  = 12
+        bar.LabelFontSize  = 10
+        bar.TitleColor     = [0.0, 0.0, 0.0]
+        bar.LabelColor     = [0.0, 0.0, 0.0]
+
+        # ---- Background (white) ----
+        colorPalette = GetSettingsProxy('ColorPalette')
+        colorPalette.Background = [1.0, 1.0, 1.0]
+
+        # ---- Axis label colours ----
+        view.OrientationAxesLabelColor   = [0.0, 0.0, 0.0]
+        view.OrientationAxesOutlineColor = [0.0, 0.0, 0.0]
+
+
+    # ============================================================
+    # ===================== 2D SLICE (unchanged) =================
+    # ============================================================
+
+    def make_slice(origin, normal, fname, scalar):
+        """Create a VolcanoSlice; do not show or save."""
+        sl = VolcanoSlice(registrationName=fname, Input=src)
+        sl.SlicePoint        = origin
+        sl.SliceNormal       = normal
         sl.InterpolatedField = scalar
-        sl.MinMaxField = scalar
+        sl.MinMaxField       = scalar
+        sl.Crinkle           = 0
+        return sl
 
-    sl.Crinkle = 0
-    return sl
 
-
-# ============================================================
-# ===================== SLICE ================================
-# ============================================================
-
-def create_slice(origin, normal, preset, fname, scalar, schlieren=False):
-
-    sl = make_slice(origin, normal, fname, scalar, schlieren=schlieren)
-
-    if not schlieren:
+    def create_slice(origin, normal, preset_name, fname, scalar):
+        """Create, render, save, and hide a single 2-D slice."""
+        sl   = make_slice(origin, normal, fname, scalar)
         disp = Show(sl, view)
-        loc = array_location(sl, scalar)
+        loc  = array_location(sl, scalar)
         ColorBy(disp, (loc, scalar))
 
         lut = GetColorTransferFunction(scalar)
-        # Use helper for manual/automatic range
         apply_lut_range(lut, scalar)
-        # Use per-variable colormap
         apply_lut_preset(lut, scalar)
 
-        apply_camera_and_colorbar(lut, preset, scalar)
+        apply_camera_and_colorbar(lut, preset_name, scalar)
         Render(view)
 
-        SaveScreenshot(os.path.join(OUTPUT_DIR, f"{fname}_{scalar}_Volcano.png"),
-                       view, ImageResolution=IMG_RES, TransparentBackground=1)
-        Hide(sl, view)
-        return
-
-    # ---- Schlieren (each component gets its own display) ----
-    for calc in schlieren_pipeline(sl):
-        disp = Show(calc, view)
-        name = calc.ResultArrayName
-        loc = array_location(calc, name)
-
-        ColorBy(disp, (loc, name))
-        lut = GetColorTransferFunction(name)
-        apply_lut_range(lut, name)
-        apply_lut_preset(lut, name)
-
-        # NEW BAR HIDING #
-        bar = GetScalarBar(lut, view)
-        # bar.Visibility = 1
-        bar.Visibility = 1
-        ##################
-        apply_camera_and_colorbar(lut, preset, name)
-        Render(view)
-
-        SaveScreenshot(os.path.join(OUTPUT_DIR, f"{fname}_{name}_Volcano.png"),
-                       view, ImageResolution=IMG_RES, TransparentBackground=1)
-        Hide(calc, view)
-
-    Hide(sl, view)
-
-def make_3D_slice_view(slices, preset, fname, scalar):
-    """
-    slices : list of slice proxies (VolcanoSlice outputs)
-    scalar : name of the scalar field that is present on these slices
-    """
-    lut = GetColorTransferFunction(scalar)
-
-    for sl in slices:
-        SetActiveSource(sl)
-        disp = Show(sl, view)
-        loc = array_location(sl, scalar)
-        ColorBy(disp, (loc, scalar))
-
-    # Configure shared LUT once
-    apply_lut_range(lut, scalar)
-    apply_lut_preset(lut, scalar)
-
-    apply_camera_and_colorbar(lut, preset, scalar)
-    Render(view)
-
-    SaveScreenshot(os.path.join(OUTPUT_DIR, f"{fname}_{scalar}_Volcano.png"),
-                   view, ImageResolution=IMG_RES, TransparentBackground=1)
-
-    # Optionally hide
-    for sl in slices:
+        SaveScreenshot(
+            os.path.join(OUTPUT_DIRS[i], f"{fname}_{scalar}_Volcano.png"),
+            view, ImageResolution=IMG_RES, TransparentBackground=1
+        )
         Hide(sl, view)
 
-def make_slice_group(xySlices, xzSlices, yzSlices, scalar):
-    group = []
 
-    # XY planes
-    if xySlices:
-        for z in xySlices:
-            fname = f"XY_near_z{z:+0.5f}_3D_{scalar}"
-            sl = make_slice([0, 0, z], [0, 0, 1], fname, scalar, schlieren=False)
-            group.append(sl)
+    # ============================================================
+    # ===================== 3D COMPOSITE VIEW ====================
+    # ============================================================
 
-    # XZ planes
-    if xzSlices:
-        for y in xzSlices:
-            fname = f"XZ_y{y:+0.5f}_3D_{scalar}"
-            sl = make_slice([0, y, 0], [0, 1, 0], fname, scalar, schlieren=False)
-            group.append(sl)
+    def make_3D_composite_view(yz_x_positions, xy_z_positions, scalar, output_fname="3D_composite"):
+        """
+        Build a 3-D scene that matches the trace:
+        - Multiple YZ slices shown simultaneously with DisableLighting=1
+        - A semi-transparent VolcanoSurface (opacity 0.15) as domain boundary
+        - Shared LUT with manual / data range applied once
+        - Camera and colourbar from the "3D" preset
+        Saves one PNG then hides everything.
+        """
 
-    # YZ planes
-    if yzSlices:
-        for x in yzSlices:
+        # ---- 1. Create and store YZ slice proxies ----
+        slices = []
+        for x in yz_x_positions:
             fname = f"YZ_x{x:+0.5f}_3D_{scalar}"
-            sl = make_slice([x, 0, 0], [1, 0, 0], fname, scalar, schlieren=False)
-            group.append(sl)
+            sl    = make_slice([x, 0, 0], [1, 0, 0], fname, scalar)
+            slices.append(sl)
 
-    print(f"Grouped 3D slice proxies for {scalar}: {group}")
-    return group
+        # ---- 1. Create and store XY slice proxies ----
+        for z in xy_z_positions:
+            fname = f"XY_z{z:+0.5f}_3D_{scalar}"
+            sl    = make_slice([0, 0, z], [0, 0, 1], fname, scalar)
+            # disp = Show(sl, view)
+            # disp.Opacity = 0.7
+            slices.append(sl)
+
+        # ---- 2. Create domain surface ----
+        surface = VolcanoSurface(registrationName="DomainSurface_3D", Input=src)
+        surface.Clip       = 0          # no clip — show full domain boundary
+        surface.UpdatePipeline()
+
+        # ---- 3. Show surface (semi-transparent, uncoloured) ----
+        surfDisp = Show(surface, view)
+        surfDisp.ColorArrayName = ['POINTS', '']
+        ColorBy(surfDisp, value=None)         # solid color / no scalar mapping
+        surfDisp.Opacity = 0.15
+        lut = GetColorTransferFunction(scalar)
+
+        for sl in slices:
+            SetActiveSource(sl)
+            active_proxy = GetActiveSource()
+            disp = Show(sl, view)
+            active_name = [name for (name, proxy) in GetSources().items() if proxy == active_proxy]
+            print(f"Active Name: {active_name[0][0]}")
+            if "XY" in active_name[0][0]:
+                disp.Opacity = 0.7 # sets opacity of the axial plane for display
+                print("Opacity set successfully")
+            SetActiveSource(sl)
+            loc  = array_location(sl, scalar)
+            ColorBy(disp, (loc, scalar))
+            disp.DisableLighting = 1
+            disp.SetScalarBarVisibility(view, True)
+
+        # ---- 4. Show all slices, disable lighting, apply shared LUT ----
+        apply_lut_range(lut, scalar)
+        apply_lut_preset(lut, scalar)
+
+        # ---- 5. Camera, colourbar, render, save ----
+        apply_camera_and_colorbar(lut, "3D", scalar)
+        print("Camera applied")
+        Render(view)
+
+        SaveScreenshot(
+            os.path.join(OUTPUT_DIRS[i], f"{output_fname}_{scalar}_Volcano.png"),
+            view, ImageResolution=IMG_RES, TransparentBackground=1
+        )
+
+        # ---- 6. Clean up ----
+        for sl in slices:
+            Hide(sl, view)
+        Hide(surface, view)
+
+        print(f"3D composite saved: {output_fname}_{scalar}_Volcano.png")
+
+    def delete_downstream_pipeline(source_proxy):
+        # Retrieve all pipeline objects and their inputs
+        sources = GetSources()
+        
+        # Track items to delete so we don't modify the dict while iterating
+        to_delete = []
+        
+        for name, obj in sources.items():
+            proxy_instance = obj[0]
+            # Check if the current proxy depends on our target source
+            if hasattr(proxy_instance, 'Input') and proxy_instance.Input == source_proxy:
+                to_delete.append(proxy_instance)
+                
+        # Recursively delete children and disconnect them
+        for child in to_delete:
+            delete_downstream_pipeline(child)
+            Delete(child)
 
 
-# ============================================================
-# ===================== EXECUTION ============================
-# ============================================================
+    # ============================================================
+    # ===================== EXECUTION ============================
+    # ============================================================
 
-for s in SCALARS:
-    for x in YZ_SLICE_X:
-        create_slice([x,0,0], [1,0,0], "YZ", f"YZ_x{x:+0.5f}", s)
-    
-    for y in XZ_SLICE_Y:
-        create_slice([0,y,0], [0,1,0], "XZ", f"XZ_y{y:+0.5f}", s)
+    for s in SCALARS:
 
-    for z in XY_SLICE_Z:
-        create_slice([0,0,z], [0,0,1], "XY_NEAR", f"XY_near_z{z:+0.5f}", s)
-        # create_slice([0,0,z], [0,0,1], "XY_FAR",  f"XY_far_z{z:+0.5f}",  s)
+        # ---- 2-D slices (YZ, XZ, XY) ----
+        for x in YZ_SLICE_X:
+            create_slice([x, 0, 0], [1, 0, 0], "YZ", f"YZ_x{x:+0.5f}", s)
 
-    # 3D figs - Near 3D (for this scalar s)
-    # sliceGroup = make_slice_group(XY_SLICE_Z_3D, XZ_SLICE_Y_3D, YZ_SLICE_X_3D, s)
-    # outputFileName = "3D_Near_Group"
-    # make_3D_slice_view(sliceGroup, "3D_Near", outputFileName, s)
-    
+        for y in XZ_SLICE_Y:
+            create_slice([0, y, 0], [0, 1, 0], "XZ", f"XZ_y{y:+0.5f}", s)
 
-if ENABLE_SCHLIEREN:
-    for z in XY_SLICE_Z:
+        for z in XY_SLICE_Z:
+            create_slice([0, 0, z], [0, 0, 1], "XY_NEAR", f"XY_near_z{z:+0.5f}", s)
+            # create_slice([0, 0, z], [0, 0, 1], "XY_FAR", f"XY_far_z{z:+0.5f}", s)
 
-        create_slice([0,0,z], [0,0,1], "XY_NEAR",
-                     f"XY_near_z{z:+0.5f}", DENSITY_NAME, True)
-        create_slice([0,0,z], [0,0,1], "XY_FAR",
-                     f"XY_far_z{z:+0.5f}",  DENSITY_NAME, True)
+        # ---- 3-D composite view ----
+        make_3D_composite_view(YZ_SLICE_X_3D, XY_SLICE_Z_3D, s, output_fname="3D_composite")
 
-print("\nAll slices rendered correctly.")
+
+    print(f"\nAll slices rendered correctly for {INPUT_FILES[i]}.")
+
+    # Cleans up the pipeline 
+    delete_downstream_pipeline(src)
+    Delete(src)

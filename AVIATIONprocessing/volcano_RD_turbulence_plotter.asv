@@ -101,7 +101,7 @@ end
 
 % Quantities and fields
 qtyNames  = {'TKE','AvgVorticityMag', 'AvgP', 'AvgV', 'Rxx','Ryy','Rzz'};
-qtyFields = {'tke','vorticitymagavg', 'pressureavg', 'velocitymagavg', 'reynoldsstressxx','reynoldsstressyy','reynoldsstresszz'};
+qtyFields = {'tke','vorticitymagavg', 'pressure'reynoldsstressxx','reynoldsstressyy','reynoldsstresszz'};
 
 %% ------------------------------------------------------------------------
 % 5) READ AND ORGANIZE DATA FROM EACH WORKBOOK
@@ -208,12 +208,6 @@ for iP = 1:numel(planeNames)
                 case 'AvgVorticityMag'
                     % Bold LaTeX for x-label
                     xLabelStr = '$\mathbf{|\bar{\omega}| (1/s)}$';
-                case 'AvgP'
-                    % Bold LaTeX for x-label
-                    xLabelStr = '$\mathbf{Avg.\ Pressure} (Pa)}$';
-                case 'AvgV'
-                    % Bold LaTeX for x-label
-                    xLabelStr = '$\mathbf{|\bar{V}| (m/s)}$';
                 case 'Rxx'
                     xLabelStr = '$\mathbf{R_{xx}\ (Pa)}$';
                 case 'Ryy'
@@ -286,8 +280,7 @@ function geomData = readWorkbookForPlanes(excelFile, axialLocs)
         return;
     end
 
-    neededCols = {'Y_norm','reynoldsstressxx','reynoldsstressyy','reynoldsstresszz','tke', ...
-        'vorticitymagavg', 'pressureavg', 'velocitymagavg'};
+    neededCols = {'Y_norm','reynoldsstressxx','reynoldsstressyy','reynoldsstresszz','tke','vorticitymagavg'};
 
     for iS = 1:numel(sheetNames)
         sName = sheetNames{iS};
