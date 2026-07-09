@@ -5,6 +5,7 @@
 %      spanwise plane (MP, z25, z75), extract:
 %          - Y_norm
 %          - tke
+%          - avg. vorticity magnitude
 %          - reynoldsstressxx
 %          - reynoldsstressyy
 %          - reynoldsstresszz
@@ -94,8 +95,8 @@ for iP = 1:numel(planeNames)
 end
 
 % Quantities and fields
-qtyNames  = {'TKE','Rxx','Ryy','Rzz'};
-qtyFields = {'tke','reynoldsstressxx','reynoldsstressyy','reynoldsstresszz'};
+qtyNames  = {'TKE','AvgVorticityMag','Rxx','Ryy','Rzz'};
+qtyFields = {'tke','vorticitymagavg','reynoldsstressxx','reynoldsstressyy','reynoldsstresszz'};
 
 %% ------------------------------------------------------------------------
 % 5) READ AND ORGANIZE DATA FROM EACH WORKBOOK
@@ -199,6 +200,9 @@ for iP = 1:numel(planeNames)
                 case 'TKE'
                     % Bold LaTeX for x-label
                     xLabelStr = '$\mathbf{TKE\ (J/kg)}$';
+                case 'AvgVorticityMag'
+                    % Bold LaTeX for x-label
+                    xLabelStr = '$\mathbf{|\bar{\omega}| (1/s)}$';
                 case 'Rxx'
                     xLabelStr = '$\mathbf{R_{xx}\ (Pa)}$';
                 case 'Ryy'
@@ -271,7 +275,7 @@ function geomData = readWorkbookForPlanes(excelFile, axialLocs)
         return;
     end
 
-    neededCols = {'Y_norm','reynoldsstressxx','reynoldsstressyy','reynoldsstresszz','tke'};
+    neededCols = {'Y_norm','reynoldsstressxx','reynoldsstressyy','reynoldsstresszz','tke','vorticitymagavg'};
 
     for iS = 1:numel(sheetNames)
         sName = sheetNames{iS};

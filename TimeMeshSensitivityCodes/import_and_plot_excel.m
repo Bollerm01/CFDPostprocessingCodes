@@ -6,7 +6,7 @@ function import_and_plot_excel()
 
     %% --- Select MAIN folder containing 6 subfolders ---
     mainFolder = uigetdir('E:\Boller CFD',...
-                          'Select the MAIN folder with 6 subfolders');
+                          'Select the MAIN folder with location subfolders');
     if isequal(mainFolder,0)
         disp('No folder selected.');
         return;
@@ -119,7 +119,7 @@ function import_and_plot_excel()
 
         for i = 1:nFiles
             T = readtable(fullfile(path, files{i}));
-            Y{i}  = T.Y;
+            Y{i}  = T.y;
             M{i}  = T.machnumberavg;
             P{i}  = T.pressureavg;
             Vx{i} = T.velocityxavg;

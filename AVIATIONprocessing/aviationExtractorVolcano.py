@@ -8,6 +8,12 @@ import os
 # --- Input volcano file (Edit prior to executing) ---
 CASE = "RD52"
 VOLCANO_FILE = r"/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD52/RD52_057/latest.volcano"
+# INPUT_FILES= [
+#     "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD00/RD00_004/latest.volcano",  # RD00 Path
+#     "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD09/RD09_001/latest.volcano", # RD09 Path
+#     "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD17/RD17_022/latest.volcano", # RD17 Path
+#     "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD52/RD52_057/latest.volcano" # RD52 Path
+# ]
 
 # --- Output directory (Edit prior to executing) ---
 OUTPUT_DIR = rf"/home/bollerma/LESdata/SSWT/fullCav/RDsteps/testOutput/{CASE}probeData"
@@ -30,14 +36,14 @@ POINT_ARRAYS = [
     "reynoldsstressyz",
     "reynoldsstresszz",
     "tke",
-    "vorticityX",
-    "vorticityY", 
-    "vorticityZ",
-    "vorticityXavg", 
-    "vorticityYavg", 
-    "vorticityZavg", 
-    "vorticityMagavg",
-    "vorticityMag"
+    "vorticityx",
+    "vorticityy", 
+    "vorticityz",
+    "vorticityxavg", 
+    "vorticityyavg", 
+    "vorticityzavg", 
+    "vorticitymagavg",
+    "vorticitymag"
 
 ]
 
