@@ -105,7 +105,7 @@ for i in range(len(INPUT_FILES)):
     # YZ slices shown in the 3D composite view (subset of YZ_SLICE_X).
     # Corresponds to the slices named qPlane / 3qPlane / xL0p3 / 0p86 / xL1p2 / farwall
     # in the trace.  Adjust to match whatever YZ planes you want visible in the 3D render.
-    YZ_SLICE_X_3D = [2.155, 2.194, 2.23]  # x/L ≈ 0.03, 0.45, 1
+    YZ_SLICE_X_3D = [2.15, 2.17, 2.19, 2.21, 2.23]  # x/L ≈ 0.03, 0.45, 1
     XY_SLICE_Z_3D = [-0.012] 
 
     IMG_RES = [1920, 1080]
@@ -165,9 +165,9 @@ for i in range(len(INPUT_FILES)):
         },
         # ---- 3D view — camera taken from the final settled position in the trace ----
         "3D": {
-            "CameraPosition":   [2.10516, 0.0323428, 0.268345],
-            "CameraFocalPoint": [2.18446, 0.0224981, 0.0136783],
-            "CameraViewUp":     [0.0228055, 0.999243, -0.0315268],
+            "CameraPosition":   [2.06451, 0.0175185, 0.0908117],
+            "CameraFocalPoint": [2.18426, 0.0125338, 0.0139986],
+            "CameraViewUp":     [0.0228175, 0.99974, 0.0],
             "ParallelScale":    0.1, #was 1.2967534046463778
             "InteractionMode":  "3D",
             # Colorbar layout matches the trace: horizontal, centred near the bottom
