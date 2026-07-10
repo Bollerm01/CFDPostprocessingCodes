@@ -10,34 +10,34 @@ import os
 # ============================================================
 
 # Full Inputs
-# INPUT_FILES= [
-#     "/home/bollerma/LESdata/SSWT/sliceCav/RD00s/SSWTM2Test2s_SurfKulite_003/latest.volcano",  # RD00 Slice path
-#     "/home/bollerma/LESdata/SSWT/sliceCav/RD17s/SSWTM2TestRD17s_SurfKulite_001/latest.volcano", # RD17 Path
-#     "/home/bollerma/LESdata/SSWT/sliceCav/RD52s/SSWTM2TestRD52s_SurfKulite_004/latest.volcano" # RD52 Path
-# ]
 INPUT_FILES= [
-    "/home/bollerma/LESdata/SSWT/sliceCav/RD00s/SSWTM2Test2s_SurfKulite_003/latest.volcano" # RD00 Slice path
+    "/home/bollerma/LESdata/SSWT/sliceCav/RD00s/SSWTM2Test2s_SurfKulite_003/latest.volcano",  # RD00 Slice path
+    "/home/bollerma/LESdata/SSWT/sliceCav/RD17s/SSWTM2TestRD17s_SurfKulite_001/latest.volcano", # RD17 Path
+    "/home/bollerma/LESdata/SSWT/sliceCav/RD52s/SSWTM2TestRD52s_SurfKulite_004/latest.volcano" # RD52 Path
 ]
-
-# OUTPUT_DIRS = [
-#     "/home/bollerma/LESdata/SSWT/sliceCav/3DfigOutput/RD00", # RD00 Output
-#     "/home/bollerma/LESdata/SSWT/sliceCav/3DfigOutput/RD17", # RD17 Output
-#     "/home/bollerma/LESdata/SSWT/sliceCav/3DfigOutput/RD52" # RD52 Output
+# INPUT_FILES= [
+#     "/home/bollerma/LESdata/SSWT/sliceCav/RD00s/SSWTM2Test2s_SurfKulite_003/latest.volcano" # RD00 Slice path
 # ]
+
 OUTPUT_DIRS = [
-    "/home/bollerma/LESdata/SSWT/sliceCav/3DfigOutput/RD00debug" # RD00 Output
+    "/home/bollerma/LESdata/SSWT/sliceCav/3DfigOutput/RD00", # RD00 Output
+    "/home/bollerma/LESdata/SSWT/sliceCav/3DfigOutput/RD17", # RD17 Output
+    "/home/bollerma/LESdata/SSWT/sliceCav/3DfigOutput/RD52" # RD52 Output
 ]
+# OUTPUT_DIRS = [
+#     "/home/bollerma/LESdata/SSWT/sliceCav/3DfigOutput/RD00debug" # RD00 Output
+# ]
 
 for i in range(len(INPUT_FILES)):
     folder_path = os.path.dirname(INPUT_FILES[i])
     file_name   = os.path.basename(folder_path)
 
     # Scalars to render
-    SCALARS = ["pressure"]
-    # SCALARS = [
-    #     "velocityx", "velocityxavg", "tke", "pressure", "pressureavg",
-    #     "vorticitymag", "vorticitymagavg"
-    # ]
+    # SCALARS = ["pressure"]
+    SCALARS = [
+        "velocityx", "velocityxavg", "tke", "pressure", "pressureavg",
+        "vorticitymag", "vorticitymagavg"
+    ]
 
     # User-defined scalar ranges (min, max) per array name.
     # If a scalar is not listed the script falls back to the data range.
@@ -92,14 +92,14 @@ for i in range(len(INPUT_FILES)):
     # ============================================================
 
     # Full Loop
-    # YZ_SLICE_X = [2.1508, 2.1691, 2.1793151, 2.19847, 2.216945]  # x/L = 0.03, 0.3, 0.45, 0.73, 1
-    # XY_SLICE_Z  = [0.0]
-    # XZ_SLICE_Y  = [0.0093, 0.001]
+    YZ_SLICE_X = [2.1508, 2.1691, 2.1793151, 2.19847, 2.216945]  # x/L = 0.03, 0.3, 0.45, 0.73, 1
+    XY_SLICE_Z  = [0.0]
+    XZ_SLICE_Y  = [0.0093, 0.001]
 
     # Debug Loop
-    YZ_SLICE_X = [2.1793151]  # x/L = 0.03, 0.3, 0.73, 1
-    XY_SLICE_Z  = [0.0]
-    XZ_SLICE_Y  = [0.0093]
+    # YZ_SLICE_X = [2.1793151]  # x/L = 0.03, 0.3, 0.73, 1
+    # XY_SLICE_Z  = [0.0]
+    # XZ_SLICE_Y  = [0.0093]
 
 
     # YZ slices shown in the 3D composite view (subset of YZ_SLICE_X).
