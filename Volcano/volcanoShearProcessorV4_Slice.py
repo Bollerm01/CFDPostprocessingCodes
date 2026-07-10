@@ -168,7 +168,7 @@ for i in range(len(INPUT_FILES)):
             "CameraPosition":   [2.06451, 0.0175185, 0.0908117],
             "CameraFocalPoint": [2.18426, 0.0125338, 0.0139986],
             "CameraViewUp":     [0.0228175, 0.99974, 0.0],
-            "ParallelScale":    0.05, #was 1.2967534046463778
+            "ParallelScale":    0.04, #was 1.2967534046463778
             "InteractionMode":  "3D",
             # Colorbar layout matches the trace: horizontal, centred near the bottom
             "Colorbar": {
