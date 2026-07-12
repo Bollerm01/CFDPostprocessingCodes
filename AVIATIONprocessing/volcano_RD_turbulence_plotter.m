@@ -210,7 +210,7 @@ for iP = 1:numel(planeNames)
                     xLabelStr = '$\mathbf{|\bar{\omega}| (1/s)}$';
                 case 'AvgP'
                     % Bold LaTeX for x-label
-                    xLabelStr = '$\mathbf{Avg.\ Pressure} (Pa)}$';
+                    xLabelStr = '$\textbf{Avg. Pressure (Pa)}$';
                 case 'AvgV'
                     % Bold LaTeX for x-label
                     xLabelStr = '$\mathbf{|\bar{V}| (m/s)}$';

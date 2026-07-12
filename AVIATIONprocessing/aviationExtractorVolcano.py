@@ -1,22 +1,26 @@
 from paraview.simple import *
 import os
+# 7/12: Adapted for slice plane extractions
 
 # ============================================================
 # ====================== USER SETTINGS =======================
 # ============================================================
 
 # --- Input volcano file (Edit prior to executing) ---
-CASE = "RD00"
-VOLCANO_FILE = r"/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD00/RD00_004/latest.volcano"
+CASE = "RD00s"
+VOLCANO_FILE = r"/home/bollerma/LESdata/SSWT/sliceCav/RD00s/SSWTM2Test2s_SurfKulite_003/latest.volcano"
 # INPUT_FILES= [
-#     "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD00/RD00_004/latest.volcano",  # RD00 Path
-#     "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD09/RD09_001/latest.volcano", # RD09 Path
-#     "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD17/RD17_022/latest.volcano", # RD17 Path
-#     "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD52/RD52_057/latest.volcano" # RD52 Path
+#     "/home/bollerma/LESdata/SSWT/sliceCav/RD00s/SSWTM2Test2s_SurfKulite_003/latest.volcano",  # RD00s Path
+#     "/home/bollerma/LESdata/SSWT/sliceCav/RD17s/SSWTM2TestRD17s_SurfKulite_001/latest.volcano", # RD17s Path
+#     "/home/bollerma/LESdata/SSWT/sliceCav/RD52s/SSWTM2TestRD52s_SurfKulite_004/latest.volcano", # RD52s Path
+#     "/home/bollerma/LESdata/SSWT/sliceCav/J35/RD00si/SSWTM2TestInjectSlice_airOnly_001/latest.volcano" # J35/RD00s Path
+#     "/home/bollerma/LESdata/SSWT/sliceCav/J35/RD52si/SSWTM2RD52InjectSlice_airOnly_000/latest.volcano" # J35/RD52s Path
+#     "/home/bollerma/LESdata/SSWT/sliceCav/J140/RD00si/SSWTM2RD00si_airOnly_001/latest.volcano" # J140/RD00s Path
+#     "/home/bollerma/LESdata/SSWT/sliceCav/J140/RD52si/SSWTM2RD52si_airOnly_002/latest.volcano" # J140/RD52s Path
 # ]
 
 # --- Output directory (Edit prior to executing) ---
-OUTPUT_DIR = rf"/home/bollerma/LESdata/SSWT/fullCav/RDsteps/testOutput/{CASE}probeData"
+OUTPUT_DIR = rf"/home/bollerma/LESdata/SSWT/sliceCav/probeOutput/{CASE}probeData"
 
 # ============================================================
 # ============================================================
@@ -49,8 +53,8 @@ POINT_ARRAYS = [
 
 # --- Z-plane slice location ---
 SLICE_Z0 = 0.0
-SLICE_Z25 = 0.0381
-SLICE_Z75 = -0.0381
+# SLICE_Z25 = 0.0381
+# SLICE_Z75 = -0.0381
 
 # --- Line resolution ---
 LINE_RESOLUTION = 499
@@ -119,22 +123,22 @@ slice_z0.SliceNormal = [0.0, 0.0, 1.0]
 
 # ====================== Z/w = 0.25 SLICE ====================
 
-slice_z25 = VolcanoSlice(registrationName="Z25_Slice", Input=volcano)
-slice_z25.SlicePoint = [0.0, 0.0, SLICE_Z25]
-slice_z25.SliceNormal = [0.0, 0.0, 1.0]
+# slice_z25 = VolcanoSlice(registrationName="Z25_Slice", Input=volcano)
+# slice_z25.SlicePoint = [0.0, 0.0, SLICE_Z25]
+# slice_z25.SliceNormal = [0.0, 0.0, 1.0]
 
 
 # ====================== Z/w = 0.75 SLICE ====================
 
-slice_z75 = VolcanoSlice(registrationName="Z75_Slice", Input=volcano)
-slice_z75.SlicePoint = [0.0, 0.0, SLICE_Z75]
-slice_z75.SliceNormal = [0.0, 0.0, 1.0]
+# slice_z75 = VolcanoSlice(registrationName="Z75_Slice", Input=volcano)
+# slice_z75.SlicePoint = [0.0, 0.0, SLICE_Z75]
+# slice_z75.SliceNormal = [0.0, 0.0, 1.0]
 
 # collects slices to loop
 SLICES = [
-    ("MP", slice_z0, SLICE_Z0),
-    ("z25", slice_z25, SLICE_Z25),
-    ("z75", slice_z75, SLICE_Z75),
+    ("MP", slice_z0, SLICE_Z0)
+    # ("z25", slice_z25, SLICE_Z25),
+    # ("z75", slice_z75, SLICE_Z75),
 ]
 # ============================================================
 # =================== PROBE EXTRACTION =======================

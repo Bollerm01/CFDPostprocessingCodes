@@ -2,10 +2,12 @@
 % Purpose: Plot 4 overlayed y/d vs U/Uinf graphs (one per sheet)
 % Author: Matt Boller
 % Date: 11/5/2025
+% Updated Date: 7/10/26
+% Updated to include slice domain data
 % -------------------------------------------------------------------------
 clear all; close all; clc;
 % === USER SETTINGS ===
-filename = 'SSWT_UxValidation_FigureData.xlsx';  % Excel file name
+filename = 'SSWT_UxValidation_FigureData_.xlsx';  % Excel file name
 mainTitle = 'Normalized Cavity Depth vs. Normalized X-Velocity';        % <-- Change this title
 
 % Define legend entries for the overlaid curves (edit as needed)
