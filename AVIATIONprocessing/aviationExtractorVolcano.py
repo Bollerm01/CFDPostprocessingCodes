@@ -7,8 +7,8 @@ import os
 # ============================================================
 
 # --- Input volcano file (Edit prior to executing) ---
-CASE = "J140/RD00si"
-VOLCANO_FILE = r"/home/bollerma/LESdata/SSWT/sliceCav/J140/RD00si/SSWTM2RD00si_airOnly_001/latest.volcano"
+CASE = "J140/RD52si"
+VOLCANO_FILE = r"/home/bollerma/LESdata/SSWT/sliceCav/J140/RD52si/SSWTM2RD52si_airOnly_002/latest.volcano"
 # INPUT_FILES= [
 #     "/home/bollerma/LESdata/SSWT/sliceCav/RD00s/SSWTM2Test2s_SurfKulite_003/latest.volcano",  # RD00s Path
 #     "/home/bollerma/LESdata/SSWT/sliceCav/RD17s/SSWTM2TestRD17s_SurfKulite_001/latest.volcano", # RD17s Path
