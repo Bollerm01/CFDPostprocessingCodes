@@ -27,6 +27,9 @@ OUTPUT_DIR = rf"/home/bollerma/LESdata/SSWT/sliceCav/probeOutput/{CASE}probeData
 # ============================================================
 # ============================================================
 
+# Console output to check file
+print(f"Processing file: {VOLCANO_FILE}\n\n")
+
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 # --- Variables to load from the volcano file ---
 POINT_ARRAYS = [
