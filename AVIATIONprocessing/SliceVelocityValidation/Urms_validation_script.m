@@ -1,33 +1,32 @@
-% MATLAB Script: velocity_validation_script.m
-% Purpose: Plot 4 overlayed y/d vs U/Uinf graphs (one per sheet)
-% Author: Matt Boller
-% Date: 11/5/2025
-% Updated Date: 7/13/26
-% Updated to include slice domain data
+% MATLAB Script: Urms_validation_script.m
+% Purpose: Plot 4 overlayed y/d vs Urms/Uinf graphs (one per sheet)
+% Author: Matt Boller (adapted)
+% Date: 4/14/26
 % -------------------------------------------------------------------------
 clear all; close all; clc;
-% === USER SETTINGS ===
-filename = 'SSWT_UxValidation_FigureData_.xlsx';  % Excel file name
-mainTitle = 'Normalized Cavity Depth vs. Normalized X-Velocity';        % <-- Change this title
 
-% Define legend entries for the overlaid curves (edit as needed)
-legendEntries = { ...
-    'Volcano', ...
-    'Fureby et. al.', ...
-    'VULCAN', ...
-    'Tuttle et. al.' ...
+% === USER SETTINGS ===
+filename  = 'SSWT_SliceUrmsValidation_FigureData.xlsx';  % <-- New Excel file
+mainTitle = 'Normalized Cavity Depth vs. Normalized X-Velocity RMS';
+
+% Legend entries for the 4 overlaid curves
+legendEntries = {...
+    'Volcano Slice',...
+    'Fureby et. al.',...
+    'VULCAN',...
+    'Tuttle et. al.'...
 };
 
 % Output image filename (change as desired)
-outputFile = 'SSWT_UXValidation_Figure';  % <-- Change output name here
-outputDPI  = 300;                             % Resolution in DPI
+outputFile = 'SSWT_SliceUrms_Validation';  % <-- New output name
+outputDPI  = 300;                                      % Resolution in DPI
 
 % === READ SHEETS ===
 [~, sheetNames] = xlsfinfo(filename);
 numSheets = numel(sheetNames);
 
 % Create figure and tiled layout (1x4)
-fig = figure('Name', 'Overlayed y/d vs U/Uinf', 'NumberTitle', 'off');
+fig = figure('Name', 'Overlayed y/d vs Vx/Vxinf', 'NumberTitle', 'off');
 tiledlayout(fig, 1, numSheets, 'TileSpacing', 'compact', 'Padding', 'compact');
 
 allLineHandles = []; % For shared legend
@@ -43,6 +42,9 @@ for i = 1:numSheets
     numCols = width(data);
     numPairs = floor(numCols / 2);
 
+    % Safety: if the sheet has more than 4 pairs, only use the first 4
+    numPairs = min(numPairs, 4);
+
     % Select next tile
     nexttile;
     hold on; grid on; box on;
@@ -51,11 +53,12 @@ for i = 1:numSheets
     localLineHandles = gobjects(1, numPairs);
     for j = 1:numPairs
         UOverUinf = data{:, 2*j - 1};
-        yOverd = data{:, 2*j};
+        yOverd    = data{:, 2*j};
 
         % Use circles for 4th dataset, lines otherwise
         if j == 4
-            localLineHandles(j) = plot(UOverUinf, yOverd, 'o', 'LineWidth', 1.2, 'MarkerSize', 6);
+            localLineHandles(j) = plot(UOverUinf, yOverd, 'o',...
+                                       'LineWidth', 1.2, 'MarkerSize', 6);
         else
             localLineHandles(j) = plot(UOverUinf, yOverd, 'LineWidth', 1.5);
         end
@@ -67,10 +70,10 @@ for i = 1:numSheets
     end
 
     % Axis and labels
-    xlim([-0.2, 1.1]);   % Extended x-bounds
+    xlim([-0.1, 0.3]);   % Extended x-bounds
     ylim([-1, 1]);
-    xlabel('$$\mathbf{\bar{V_x}/V_{x,\infty}}$$', 'Interpreter', 'latex');
-    ylabel('y/D');
+    h = xlabel('V_{x,rms} / V_{x,\infty}');
+    set(h, 'FontWeight', 'bold');
     
     % Labels the first y-axis only
     if i == 1
@@ -91,23 +94,21 @@ end
 if ~isempty(allLineHandles)
     numPairs = length(allLineHandles);
     if length(legendEntries) >= numPairs
-        lg = legend(allLineHandles, legendEntries(1:numPairs), ...
+        lg = legend(allLineHandles, legendEntries(1:numPairs),...
                     'Orientation', 'horizontal', 'Box', 'off');
     else
-        lg = legend(allLineHandles, ...
-                    arrayfun(@(x) sprintf('Dataset %d', x), 1:numPairs, 'UniformOutput', false), ...
+        lg = legend(allLineHandles,...
+                    arrayfun(@(x) sprintf('Dataset %d', x), 1:numPairs, 'UniformOutput', false),...
                     'Orientation', 'horizontal', 'Box', 'off');
     end
 
     % Position legend below all subplots
     lg.Layout.Tile = 'south';
-    lg.FontSize = 12;  % <-- Enlarged legend font
+    lg.FontSize = 12;
 end
 
 % Add shared main title
 % sgtitle(mainTitle, 'FontSize', 14, 'FontWeight', 'bold');
-% set(mainTitle, 'Visible', 'off');   % hides the title
-
 
 % === SAVE HIGH-RES JPG ===
 set(fig, 'PaperPositionMode', 'auto');  % Ensure proper sizing
