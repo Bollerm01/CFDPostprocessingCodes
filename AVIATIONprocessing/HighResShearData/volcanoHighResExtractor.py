@@ -55,7 +55,7 @@ PLANES = [
 # ========== BASELINE LINES TO INTERPOLATE BETWEEN ===========
 # ============================================================
 
-# Base definition at z = 0; we'll adjust z per plane later.
+# Base definition at z = 0
 # xL_0p03
 start_0 = [2.15058, 0.0,     0.0]
 end_0   = [2.15058, 0.03719, 0.0]
