@@ -34,6 +34,9 @@ OUTPUT_DIR = r"/home/bollerma/LESdata/SSWT/sliceCav/highResShearOutput/RD00s"  #
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
+# Console output to check file
+print(f"Processing file: {VOLCANO_FILE}\n\n")
+
 # --- Variables to load from the volcano file ---
 POINT_ARRAYS = [
     "velocitymag",
