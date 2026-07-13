@@ -56,14 +56,15 @@ fprintf('\n');
 % 2) GEOMETRY LABELS (BASE) AND LEGEND LABELS
 % -------------------------------------------------------------------------
 % Base geometry labels (edit as needed)
-geomLabels = {'RD00', 'RD09','RD17','RD52'};
+geomLabels = {'J35RD00si', 'J35RD52si','J140RD00si','J140RD52si'};
 
 if numel(geomLabels) ~= numel(excelFiles)
     error('geomLabels must have the same length as the number of selected files (4).');
 end
 
 % Legend labels: plain text (no LaTeX, no bold)
-legendLabels = {'R/D = 0.0','R/D = 0.09', 'R/D = 0.17','R/D = 0.52'};
+% legendLabels = {'R/D = 0.0','R/D = 0.09', 'R/D = 0.17','R/D = 0.52'};
+legendLabels = {'R/D = 0.0, J = 0.35','R/D = 0.52, J = 0.35', 'R/D = 0.0, J = 1.4','R/D = 0.52, J = 1.4'};
 
 %% ------------------------------------------------------------------------
 % 3) Axial locations of interest
@@ -142,7 +143,7 @@ for iP = 1:numel(planeNames)
             ax.FontSize = 14;              % Axes tick label font size
             labelFontSize = 18;            % Axis label font size
             titleFontSize = 20;            % Title font size
-            legendFontSize = 14;           % Legend font size
+            legendFontSize = 12;           % Legend font size
 
             legendEntries = {};
 
