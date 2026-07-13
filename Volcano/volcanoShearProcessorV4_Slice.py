@@ -26,8 +26,6 @@ INPUT_FILES= [
 #     "/home/bollerma/LESdata/SSWT/sliceCav/J140/RD52si/SSWTM2RD52si_airOnly_002/latest.volcano" # J140/RD52si Path 6
 # ]
 
-# --- Input volcano file (Edit prior to executing) ---
-VOLCANO_FILE = INPUT_FILES[6]
 
 # OUTPUT_DIRS = [
 #     "/home/bollerma/LESdata/SSWT/sliceCav/3DfigOutput/RD00", # RD00 Output
