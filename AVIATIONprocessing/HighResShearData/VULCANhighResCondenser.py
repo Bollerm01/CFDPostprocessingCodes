@@ -6,7 +6,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, simpledialog
 
 # ========= File Header (Update Prior to Running) ============
-FILE_IDENTIFIER = "RD52"
+# FILE_IDENTIFIER = "RD52"
 
 # ============================================================
 # ================= COLUMN DEFINITIONS =======================
@@ -78,6 +78,9 @@ def run_conversion():
             "Y_DEPTH cannot be zero."
         )
         return
+    
+    # pulls just the root directory folder name for the identifier
+    FILE_IDENTIFIER = os.path.basename(csv_folder) 
 
     output_name = f"VULCANCondensedProbeData_{FILE_IDENTIFIER}.xlsx"
     output_excel = os.path.join(csv_folder, output_name)
