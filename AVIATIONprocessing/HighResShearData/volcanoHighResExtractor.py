@@ -4,7 +4,7 @@ import os
 # ============================================================
 # ====================== USER SETTINGS =======================
 # ============================================================
-
+CASE = "RD52s"
 INPUT_FILES= [
     "/home/bollerma/LESdata/SSWT/sliceCav/RD00s/SSWTM2Test2s_SurfKulite_003/latest.volcano",  # RD00s Path
     "/home/bollerma/LESdata/SSWT/sliceCav/RD17s/SSWTM2TestRD17s_SurfKulite_001/latest.volcano", # RD17s Path
@@ -16,8 +16,8 @@ INPUT_FILES= [
 ]
 
 # --- Input volcano file (Edit prior to executing) ---
-VOLCANO_FILE = INPUT_FILES[0]
-OUTPUT_DIR = r"/home/bollerma/LESdata/SSWT/sliceCav/highResShearOutput/RD00s"  # Change tailing folder
+VOLCANO_FILE = INPUT_FILES[2]
+OUTPUT_DIR = f"/home/bollerma/LESdata/SSWT/sliceCav/highResShearOutput/{CASE}"  # Change tailing folder
 
 # Slice Inputs
 # VOLCANO_FILE = "/home/bollerma/LESdata/SSWT/sliceCav/RD00s/SSWTM2Test2s_000/latest.volcano" # RD00 Slice
