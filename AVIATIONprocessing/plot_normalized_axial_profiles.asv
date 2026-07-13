@@ -23,11 +23,10 @@ variableName = 'Velocity_X';  % VULCAN
 
 % Data files (geometries)
 % VULCAN PATHS
-path  = "E:\Boller CFD\CFD Bulk Slice Data\Shear Thickness Data\All Thickness Data\";
-files = {'VULCANCondensedProbeData_J35_RD00.xlsx',...
-         'VULCANCondensedProbeData_J35_RD52.xlsx',...
-         'VULCANCondensedProbeData_J140_RD00.xlsx',...
-         'VULCANCondensedProbeData_J140_RD52.xlsx'};
+path  = "E:\Boller CFD\CFD Bulk Slice Data\Shear Thickness Data\All Thickness Data\";;
+files = {'VULCANCondensedProbeData_RD00.xlsx',...
+         'VULCANCondensedProbeData_RD17.xlsx',...
+         'VULCANCondensedProbeData_RD52.xlsx'};
 
 % Volcano paths (injecting slice cases)
 % path  = "E:\Boller CFD\CFD Bulk Slice Data\Shear Thickness Data\All Thickness Data\";
@@ -40,17 +39,17 @@ filePaths = fullfile(path, files);
 
 % Axial location sheet names (edit if your sheet names differ)
 % Volcano
-% axialSheets = {'xL_0p03_MP', 'xL_0p31_MP', 'xL_0p72_MP', 'xL1_MP'};
+axialSheets = {'xL_0p03_MP', 'xL_0p31_MP', 'xL_0p72_MP', 'xL1_MP'};
 % VULCAN
-axialSheets = {'xL_0p03', 'xL_0p31', 'xL_0p72', 'xL1'};
+% axialSheets = {'xL_0p03', 'xL_0p31', 'xL_0p72', 'xL1'};
 
 % Sheet name for normalization reference
-% normSheetName = 'US_MP'; % Volcano
-normSheetName = 'xL1'; % VULCAN
+normSheetName = 'US_MP'; % Volcano
+% normSheetName = 'xL1'; % VULCAN
 
 % ---- Figure / export settings (style section) --------------
-mainTitle  = '\textbf{VULCAN y/D vs Normalized $$\bar{V_x}$$}';   % <-- MAIN TITLE (sgtitle)
-outputFile = 'InjectionAxialProfiles_VxNorm_VULCAN.jpg';       % <-- OUTPUT FILENAME
+mainTitle  = '\textbf{Volcano y/D vs Normalized $$\bar{V_x}$$}';   % <-- MAIN TITLE (sgtitle)
+outputFile = 'InjectionAxialProfiles_VxNorm_Volcano.jpg';       % <-- OUTPUT FILENAME
 outputDPI  = 600;                                      % <-- EXPORT RESOLUTION (dpi)
 
 %% ------------- PLOT APPEARANCE SETTINGS -------------------
@@ -290,7 +289,7 @@ set(fig, 'PaperPositionMode', 'auto');  % Ensure proper sizing
 exportgraphics(fig, outputFile, 'Resolution', outputDPI);
 
 % Vector PDF export
-outputFile = 'InjectionAxialProfiles_VxNorm_VULCAN.pdf';  % <-- vector PDF
+outputFile = 'InjectionAxialProfiles_VxNorm_Volcano.pdf';  % <-- vector PDF
 exportgraphics(fig, outputFile, 'ContentType', 'vector');  % forces vector output
 
 %% ----------------- END OF SCRIPT ---------------------------

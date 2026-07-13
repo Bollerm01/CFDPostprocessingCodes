@@ -11,10 +11,7 @@ import os
 
 # Full Inputs
 INPUT_FILES= [
-    "/home/bollerma/LESdata/SSWT/sliceCav/J35/RD00si/SSWTM2TestInjectSlice_airOnly_001/latest.volcano", # J35/RD00si Path 3
-    "/home/bollerma/LESdata/SSWT/sliceCav/J35/RD52si/SSWTM2RD52InjectSlice_airOnly_000/latest.volcano", # J35/RD52si Path 4
-    "/home/bollerma/LESdata/SSWT/sliceCav/J140/RD00si/SSWTM2RD00si_airOnly_001/latest.volcano", # J140/RD00si Path 5 
-    "/home/bollerma/LESdata/SSWT/sliceCav/J140/RD52si/SSWTM2RD52si_airOnly_002/latest.volcano" # J140/RD52si Path 6
+    "/home/bollerma/LESdata/SSWT/sliceCav/J35/RD00si/SSWTM2TestInjectSlice_airOnly_001/latest.volcano" # RD09 Path
 ]
 # INPUT_FILES= [
 #     "/home/bollerma/LESdata/SSWT/sliceCav/RD00s/SSWTM2Test2s_SurfKulite_003/latest.volcano",  # RD00s Path 0
@@ -32,12 +29,12 @@ INPUT_FILES= [
 #     "/home/bollerma/LESdata/SSWT/sliceCav/3DfigOutput/RD17", # RD17 Output
 #     "/home/bollerma/LESdata/SSWT/sliceCav/3DfigOutput/RD52" # RD52 Output
 # ]
-OUTPUT_DIRS = [
-    "/home/bollerma/LESdata/SSWT/sliceCav/3DfigOutput/J35/RD00si", # J35/RD00si Path 
-    "/home/bollerma/LESdata/SSWT/sliceCav/3DfigOutput/J35/RD52si", # J35/RD52si Path 
-    "/home/bollerma/LESdata/SSWT/sliceCav/3DfigOutput/J140/RD00si", # J140/RD00si Path 
-    "/home/bollerma/LESdata/SSWT/sliceCav/3DfigOutput/J140/RD52si" # J140/RD52si Path 
-]
+# OUTPUT_DIRS = [
+#     "/home/bollerma/LESdata/SSWT/sliceCav/3DfigOutput/J35/RD00si", # J35/RD00si Path 
+#     "/home/bollerma/LESdata/SSWT/sliceCav/3DfigOutput/J35/RD52si", # J35/RD52si Path 
+#     "/home/bollerma/LESdata/SSWT/sliceCav/3DfigOutput/J140/RD00si", # J140/RD00si Path 
+#     "/home/bollerma/LESdata/SSWT/sliceCav/3DfigOutput/J140/RD52si" # J140/RD52si Path 
+# ]
 
 for i in range(len(INPUT_FILES)):
     folder_path = os.path.dirname(INPUT_FILES[i])

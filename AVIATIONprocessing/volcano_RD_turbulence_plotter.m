@@ -56,6 +56,7 @@ fprintf('\n');
 % 2) GEOMETRY LABELS (BASE) AND LEGEND LABELS
 % -------------------------------------------------------------------------
 % Base geometry labels (edit as needed)
+% geomLabels = {'RD00', 'RD09','RD17','RD52'};
 geomLabels = {'J35RD00si', 'J35RD52si','J140RD00si','J140RD52si'};
 
 if numel(geomLabels) ~= numel(excelFiles)
@@ -70,7 +71,7 @@ legendLabels = {'R/D = 0.0, J = 0.35','R/D = 0.52, J = 0.35', 'R/D = 0.0, J = 1.
 % 3) Axial locations of interest
 %    Must match the axial ID portion in the sheet names
 % -------------------------------------------------------------------------
-axialLocs = {'xL0p03', 'xL0p17', 'xL0p3', 'xL0p45', 'xL0p59', 'xL0p86,' ...
+axialLocs = {'xL0p03', 'xL0p17', 'xL0p3', 'xL0p45', 'xL0p59', 'xL0p86' ...
     'xL1'};
 
 fprintf('Using axial locations:\n  %s\n\n', strjoin(axialLocs, ', '));
@@ -91,7 +92,8 @@ if ~exist(rootOutDir,'dir')
 end
 
 % Subdirectories for each plane
-planeNames  = {'MP','z25','z75'};
+% planeNames  = {'MP','z25','z75'};
+planeNames  = {'MP'}; % slice planes
 planeDirs   = struct();
 for iP = 1:numel(planeNames)
     pName = planeNames{iP};
