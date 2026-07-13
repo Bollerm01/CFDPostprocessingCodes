@@ -17,10 +17,10 @@ INPUT_FILES = [
 
 
 CASES = [
-    "J140_RD52" # J140/RD52si Path 
+    "J140_RD52", # J140/RD52si Path 
     "J35_RD52", # J35/RD52si Path 
-    "J140_RD00" # J140/RD00si Path 
-    "J35_RD00", # J35/RD00si Path 
+    "J140_RD00", # J140/RD00si Path 
+    "J35_RD00" # J35/RD00si Path 
 ]
 
 OUTPUT_ROOT = r"E:\Boller CFD\CFD Bulk Slice Data\VULCANinjectingComparisonData\Shear Thickness Data"
