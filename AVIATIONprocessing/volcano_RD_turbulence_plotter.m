@@ -83,7 +83,7 @@ if isempty(firstDir)
 end
 
 outputRoot = uigetdir("E:\Boller CFD", "Select the output directory");
-rootOutDir = fullfile(outputRoot, 'TurbulenceFigures_full_RD');
+rootOutDir = fullfile(outputRoot, 'TurbulenceFigures_injection_RD');
 
 if ~exist(rootOutDir,'dir')
     mkdir(rootOutDir);
