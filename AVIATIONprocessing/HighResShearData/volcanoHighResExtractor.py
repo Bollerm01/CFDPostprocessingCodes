@@ -5,9 +5,23 @@ import os
 # ====================== USER SETTINGS =======================
 # ============================================================
 
+INPUT_FILES= [
+    "/home/bollerma/LESdata/SSWT/sliceCav/RD00s/SSWTM2Test2s_SurfKulite_003/latest.volcano",  # RD00s Path
+    "/home/bollerma/LESdata/SSWT/sliceCav/RD17s/SSWTM2TestRD17s_SurfKulite_001/latest.volcano", # RD17s Path
+    "/home/bollerma/LESdata/SSWT/sliceCav/RD52s/SSWTM2TestRD52s_SurfKulite_004/latest.volcano", # RD52s Path
+    "/home/bollerma/LESdata/SSWT/sliceCav/J35/RD00si/SSWTM2TestInjectSlice_airOnly_001/latest.volcano", # J35/RD00s Path
+    "/home/bollerma/LESdata/SSWT/sliceCav/J35/RD52si/SSWTM2RD52InjectSlice_airOnly_000/latest.volcano", # J35/RD52s Path
+    "/home/bollerma/LESdata/SSWT/sliceCav/J140/RD00si/SSWTM2RD00si_airOnly_001/latest.volcano", # J140/RD00s Path
+    "/home/bollerma/LESdata/SSWT/sliceCav/J140/RD52si/SSWTM2RD52si_airOnly_002/latest.volcano" # J140/RD52s Path
+]
+
+# --- Input volcano file (Edit prior to executing) ---
+VOLCANO_FILE = INPUT_FILES[0]
+OUTPUT_DIR = r"/home/bollerma/LESdata/SSWT/sliceCav/highResShearOutput/RD00s"  # Change tailing folder
+
 # Slice Inputs
 # VOLCANO_FILE = "/home/bollerma/LESdata/SSWT/sliceCav/RD00s/SSWTM2Test2s_000/latest.volcano" # RD00 Slice
-VOLCANO_FILE = "/home/bollerma/LESdata/SSWT/sliceCav/RD52s/SSWTM2TestRD52s_000/latest.volcano" # RD52 Slice
+# VOLCANO_FILE = "/home/bollerma/LESdata/SSWT/sliceCav/RD52s/SSWTM2TestRD52s_000/latest.volcano" # RD52 Slice
 
 # Full Inputs
 # VOLCANO_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD00/RD00_004/latest.volcano"
@@ -16,7 +30,8 @@ VOLCANO_FILE = "/home/bollerma/LESdata/SSWT/sliceCav/RD52s/SSWTM2TestRD52s_000/l
 
 # --- Output directory ---
 # OUTPUT_DIR = r"/home/bollerma/LESdata/SSWT/fullCav/RDsteps/highResShearOutput/RD52"  # Change tailing folder
-OUTPUT_DIR = r"/home/bollerma/LESdata/SSWT/sliceCav/highResShearOutput/RD52"  # Change tailing folder
+# OUTPUT_DIR = r"/home/bollerma/LESdata/SSWT/sliceCav/highResShearOutput/RD52"  # Change tailing folder
+
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # --- Variables to load from the volcano file ---
