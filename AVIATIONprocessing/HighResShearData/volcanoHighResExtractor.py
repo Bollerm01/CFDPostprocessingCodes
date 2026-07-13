@@ -4,19 +4,19 @@ import os
 # ============================================================
 # ====================== USER SETTINGS =======================
 # ============================================================
-CASE = "RD52s"
+CASE = "J35/RD00si"
 INPUT_FILES= [
     "/home/bollerma/LESdata/SSWT/sliceCav/RD00s/SSWTM2Test2s_SurfKulite_003/latest.volcano",  # RD00s Path
     "/home/bollerma/LESdata/SSWT/sliceCav/RD17s/SSWTM2TestRD17s_SurfKulite_001/latest.volcano", # RD17s Path
     "/home/bollerma/LESdata/SSWT/sliceCav/RD52s/SSWTM2TestRD52s_SurfKulite_004/latest.volcano", # RD52s Path
-    "/home/bollerma/LESdata/SSWT/sliceCav/J35/RD00si/SSWTM2TestInjectSlice_airOnly_001/latest.volcano", # J35/RD00s Path
-    "/home/bollerma/LESdata/SSWT/sliceCav/J35/RD52si/SSWTM2RD52InjectSlice_airOnly_000/latest.volcano", # J35/RD52s Path
-    "/home/bollerma/LESdata/SSWT/sliceCav/J140/RD00si/SSWTM2RD00si_airOnly_001/latest.volcano", # J140/RD00s Path
-    "/home/bollerma/LESdata/SSWT/sliceCav/J140/RD52si/SSWTM2RD52si_airOnly_002/latest.volcano" # J140/RD52s Path
+    "/home/bollerma/LESdata/SSWT/sliceCav/J35/RD00si/SSWTM2TestInjectSlice_airOnly_001/latest.volcano", # J35/RD00si Path
+    "/home/bollerma/LESdata/SSWT/sliceCav/J35/RD52si/SSWTM2RD52InjectSlice_airOnly_000/latest.volcano", # J35/RD52si Path
+    "/home/bollerma/LESdata/SSWT/sliceCav/J140/RD00si/SSWTM2RD00si_airOnly_001/latest.volcano", # J140/RD00si Path
+    "/home/bollerma/LESdata/SSWT/sliceCav/J140/RD52si/SSWTM2RD52si_airOnly_002/latest.volcano" # J140/RD52si Path
 ]
 
 # --- Input volcano file (Edit prior to executing) ---
-VOLCANO_FILE = INPUT_FILES[2]
+VOLCANO_FILE = INPUT_FILES[3]
 OUTPUT_DIR = f"/home/bollerma/LESdata/SSWT/sliceCav/highResShearOutput/{CASE}"  # Change tailing folder
 
 # Slice Inputs
