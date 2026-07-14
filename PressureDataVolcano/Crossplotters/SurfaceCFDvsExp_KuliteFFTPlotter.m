@@ -2,6 +2,8 @@
 % CFD vs Experimental Kulite Cross Plotter - Surface Data
 %
 % Features:
+%   - Dual CSV experimental input (K1-3 and K4-6), matching the
+%     multi-edge experimental plotter's import/calibration scheme
 %   - Multi-Kulite selection
 %   - Multi-CFD file selection (surface CSV data)
 %   - Time window filtering
@@ -14,32 +16,49 @@
 clear; clc; close all;
 
 %% ============================================================
-% CONSTANTS with calibration
+% CONSTANTS
 %% ============================================================
 
-PREF = 20e-6;
+PREF      = 20e-6;
 PSI_TO_PA = 6894.757;
 
-sensor_sens = 0.03;   % V/psi
+%% ============================================================
+% SENSOR CONFIGURATION (dual CSV: K1-3 and K4-6)
+%% ============================================================
 
-gain = [ ...
-    65.3 ...
-    65.9 ...
-    65.1 ...
-    67.15 ...
-    65.2 ...
-    66.4 ];
+% --- K1-3 CSV: Voltage_0->K1, Voltage_1->K2, Voltage_2->K3 ---
+man_cal_sens_K13 = [ ...
+    30.104/1000 ...   % K1
+    30.024/1000 ...   % K2
+    29.976/1000];     % K3
 
-channelNames = { ...
-    'Voltage_5' ...
-    'Voltage_1' ...
-    'Voltage_2' ...
-    'Voltage_3' ...
-    'Voltage_4' ...
-    'Voltage_0' };
+gain_K13 = [64.0, 64.0, 64.0];
 
-legendNames = { ...
-    'K1','K2','K3','K4','K5','K6' };
+% --- K4-6 CSV: Voltage_0->K4, Voltage_1->K6, Voltage_2->K5 ---
+man_cal_sens_K46_raw = [ ...
+    29.972/1000 ...   % Voltage_0 -> K4
+    29.824/1000 ...   % Voltage_1 -> K6
+    30.178/1000];     % Voltage_2 -> K5
+
+gain_K46_raw = [64.0, 64.0, 64.0];
+
+% Reorder K4-6 to logical K4,K5,K6 order: col [1,3,2]
+reorder_46 = [1, 3, 2];
+man_cal_sens_K46 = man_cal_sens_K46_raw(reorder_46);
+gain_K46         = gain_K46_raw(reorder_46);
+
+% --- Unified arrays in K1..K6 order ---
+man_cal_sens_all = [man_cal_sens_K13, man_cal_sens_K46];
+gain_all         = [gain_K13,         gain_K46];
+
+legendNames = {'K1','K2','K3','K4','K5','K6'};
+
+% Raw CSV column names (same header in both CSVs)
+rawChannels = {'Voltage_0','Voltage_1','Voltage_2'};
+
+% For each K1..K6: which CSV group and which raw column index
+sourceGroup = {'K13','K13','K13','K46','K46','K46'};
+rawColIdx   = [1, 2, 3, reorder_46];   % [1,2,3,1,3,2]
 
 %% ============================================================
 % COLOR SYSTEM
@@ -54,21 +73,23 @@ baseLAB = rgb2lab(baseRGB);
 Lshift = [-15 +15];
 
 %% ============================================================
-% USER INPUT: EXPERIMENT FILE
+% USER INPUT: EXPERIMENT FILES (K1-3 and K4-6)
 %% ============================================================
 
-[expFile,expPath] = uigetfile('*.csv','Select Experimental CSV');
+[fK13, pK13] = uigetfile('*.csv', 'Select Experimental K1-3 CSV');
+if isequal(fK13, 0), return; end
 
-if isequal(expFile,0), return; end
+[fK46, pK46] = uigetfile('*.csv', 'Select Experimental K4-6 CSV');
+if isequal(fK46, 0), return; end
 
-T = readtable(fullfile(expPath,expFile),...
-    'VariableNamingRule','modify');
+T_K13 = readtable(fullfile(pK13, fK13), 'VariableNamingRule', 'modify');
+T_K46 = readtable(fullfile(pK46, fK46), 'VariableNamingRule', 'modify');
 
-timeExpFull = T.Voltage_0_Time_;
-% timeExpFull = T.Time_;
+% Time vector from K1-3 CSV (both CSVs share the same time base)
+timeExpFull = T_K13.Time_;
 
 %% ============================================================
-% USER INPUT: CFD FILES (MULTI)
+% USER INPUT: CFD FILES (MULTI, SURFACE CSV DATA)
 %% ============================================================
 
 [cfdFiles,cfdPath] = uigetfile( ...
@@ -148,11 +169,18 @@ ylabel('Pressure [Pa]');
 for i = 1:length(chIdx)
 
     k = chIdx(i);
+    colName = rawChannels{rawColIdx(k)};
 
-    V = T.(channelNames{k});
+    % Route to correct table (K1-3 vs K4-6 CSV)
+    if strcmp(sourceGroup{k}, 'K13')
+        V = T_K13.(colName);
+    else
+        V = T_K46.(colName);
+    end
+
     V = V(timeMaskExp);
 
-    system_sens = sensor_sens * gain(k);
+    system_sens = man_cal_sens_all(k) * gain_all(k);
 
     p = (V ./ system_sens) * PSI_TO_PA;
 

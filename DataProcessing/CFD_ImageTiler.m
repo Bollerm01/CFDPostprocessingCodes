@@ -149,7 +149,7 @@ function params = getLayoutParams()
     y = y - eh - 2;
     % Create the edit field, then wire the checkbox callback so h.rowEdit exists
     h.rowEdit = uicontrol(dlg, 'Style', 'edit', ...
-        'String', 'Label1, Label2', 'FontSize', 9, ...
+        'String', 'R/D = 0.0, R/D = 0.09, R/D = 0.17, R/D = 0.52', 'FontSize', 9, ...
         'Position', [pad y 440 eh], 'Enable', 'off', ...
         'TooltipString', 'Comma-separated row labels (top to bottom)');
     h.useRowLabels.Callback = @(s,~) toggleField(s, h.rowEdit);
@@ -162,7 +162,7 @@ function params = getLayoutParams()
         'Position', [pad y 200 lh], 'BackgroundColor', [0.94 0.94 0.94]);
     y = y - eh - 2;
     h.colEdit = uicontrol(dlg, 'Style', 'edit', ...
-        'String', 'ColA, ColB', 'FontSize', 9, ...
+        'String', 'Avg. Axial Velocity, Avg. Vorticity', 'FontSize', 9, ...
         'Position', [pad y 440 eh], 'Enable', 'off', ...
         'TooltipString', 'Comma-separated column labels (left to right)');
     h.useColLabels.Callback = @(s,~) toggleField(s, h.colEdit);
@@ -177,7 +177,7 @@ function params = getLayoutParams()
 
     %% Output filename
     addLabel('Output filename (no extension):', y); y = y - eh - 2;
-    h.outName = uicontrol(dlg, 'Style', 'edit', 'String', 'CFD_Tiled_Output', ...
+    h.outName = uicontrol(dlg, 'Style', 'edit', 'String', 'RD_3Dfull_Vx_tiled', ...
         'FontSize', 10, 'Position', [pad y 440 eh]);
     y = y - gap*2 - lh;
 
@@ -426,7 +426,7 @@ function exportTiledFigure(images, cbImg, nRows, nCols, rowLabels, colLabels, ou
     canvasH = borderPad + colLabelH + nRows*cropH + (nRows-1)*cellPad + borderPad;
 
     % ── Scale and place colorbars ─────────────────────────────────────
-    cbScale = 0.5;
+    cbScale = 0.7;
     cbGap   = 18;   % gap between tile block and colorbar row
 
     if singleColorbar
