@@ -56,16 +56,16 @@ fprintf('\n');
 % 2) GEOMETRY LABELS (BASE) AND LEGEND LABELS
 % -------------------------------------------------------------------------
 % Base geometry labels (edit as needed)
-% geomLabels = {'RD00', 'RD09','RD17','RD52'};
-geomLabels = {'J35RD00si', 'J35RD52si','J140RD00si','J140RD52si'};
+geomLabels = {'RD00','RD17','RD52'}; % UPDATED FOR SLICE
+% geomLabels = {'J35RD00si', 'J35RD52si','J140RD00si','J140RD52si'};
 
 if numel(geomLabels) ~= numel(excelFiles)
     error('geomLabels must have the same length as the number of selected files (4).');
 end
 
 % Legend labels: plain text (no LaTeX, no bold)
-% legendLabels = {'R/D = 0.0','R/D = 0.09', 'R/D = 0.17','R/D = 0.52'};
-legendLabels = {'R/D = 0.0, J = 0.35','R/D = 0.52, J = 0.35', 'R/D = 0.0, J = 1.4','R/D = 0.52, J = 1.4'};
+legendLabels = {'R/D = 0.0', 'R/D = 0.17','R/D = 0.52'}; % UPDATED FOR SLICE
+% legendLabels = {'R/D = 0.0, J = 0.35','R/D = 0.52, J = 0.35', 'R/D = 0.0, J = 1.4','R/D = 0.52, J = 1.4'};
 
 %% ------------------------------------------------------------------------
 % 3) Axial locations of interest
@@ -85,7 +85,7 @@ if isempty(firstDir)
 end
 
 outputRoot = uigetdir("E:\Boller CFD", "Select the output directory");
-rootOutDir = fullfile(outputRoot, 'TurbulenceFigures_injection_RD');
+rootOutDir = fullfile(outputRoot, 'TurbulenceFigures_slice_RD'); % UPDATED FOR SLICE
 
 if ~exist(rootOutDir,'dir')
     mkdir(rootOutDir);
