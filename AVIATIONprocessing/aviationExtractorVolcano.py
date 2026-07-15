@@ -7,7 +7,7 @@ import os
 # ============================================================
 
 
-CASE = "J140/RD52si"
+CASE = "RD17s"
 INPUT_FILES= [
     "/home/bollerma/LESdata/SSWT/sliceCav/RD00s/SSWTM2Test2s_SurfKulite_003/latest.volcano",  # RD00s Path
     "/home/bollerma/LESdata/SSWT/sliceCav/RD17s/SSWTM2TestRD17s_SurfKulite_001/latest.volcano", # RD17s Path
@@ -19,7 +19,7 @@ INPUT_FILES= [
 ]
 
 # --- Input volcano file (Edit prior to executing) ---
-VOLCANO_FILE = INPUT_FILES[6]
+VOLCANO_FILE = INPUT_FILES[1]
 # --- Output directory (Edit prior to executing) ---
 OUTPUT_DIR = rf"/home/bollerma/LESdata/SSWT/sliceCav/probeOutput/{CASE}probeData"
 
