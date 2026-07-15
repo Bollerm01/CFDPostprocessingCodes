@@ -5,11 +5,11 @@ import shutil
 # USER INPUTS
 # ==========================
 
-root1 = Path("/data/bollerma/LES/SSWT/sliceCav/RD00s/surfaceData")
-root2 = Path("/data/bollerma/LES/SSWT/sliceCav/RD00s/surfaceData2")
-root3 = Path("/data/bollerma/LES/SSWT/sliceCav/RD00s/surfaceData3")
-root4 = Path("/data/bollerma/LES/SSWT/sliceCav/RD00s/surfaceData4")
-dest_root = Path("/data/bollerma/LES/SSWT/sliceCav/RD00s/surfaceDataCombined")
+root1 = Path("/data/bollerma/LES/SSWT/sliceCav/RD17s/surfaceData")
+root2 = Path("/data/bollerma/LES/SSWT/sliceCav/RD17s/surfaceData2")
+# root3 = Path("/data/bollerma/LES/SSWT/sliceCav/RD00s/surfaceData3")
+# root4 = Path("/data/bollerma/LES/SSWT/sliceCav/RD00s/surfaceData4")
+dest_root = Path("/data/bollerma/LES/SSWT/sliceCav/RD17s/surfaceDataCombined")
 
 # ==========================
 # COPY FUNCTION
@@ -41,10 +41,10 @@ copy_tree(root1, dest_root)
 print("Copying second dataset (overwriting duplicates)...")
 copy_tree(root2, dest_root)
 
-print("Copying third dataset (overwriting duplicates)...")
-copy_tree(root3, dest_root)
+# print("Copying third dataset (overwriting duplicates)...")
+# copy_tree(root3, dest_root)
 
-print("Copying fourth dataset (overwriting duplicates)...")
-copy_tree(root4, dest_root)
-
+# print("Copying fourth dataset (overwriting duplicates)...")
+# copy_tree(root4, dest_root)
+# 
 print("Done.")
