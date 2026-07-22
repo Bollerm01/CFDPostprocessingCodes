@@ -1,11 +1,25 @@
 %% ============================================================
 %  Volcano/VULCAN velocityxavg Shear Layer Thickness Script
 %  - ONLY velocityxavg_norm processed
-%  - Volcano + VULCAN comparison
-%  - Includes:
-%       * Individual plots
-%       * Global delta_SL overlays
-%       * Global normalized overlays
+%  - Up to 12 files:
+%       Injecting:      {Volcano, VULCAN} x {J=0.35, J=1.4} x {RD00, RD52}
+%           naming: [VULCAN/Volcano]CondensedProbeData_[Injection]_[Geometry].xlsx
+%       Non-injecting:  {Volcano, VULCAN} x {RD00, RD52}
+%           naming: [VULCAN/Volcano]CondensedProbeData_[RD00s/RD52s].xlsx
+%
+%  Style mapping (per user request):
+%       * Geometry (RD00 / RD52)                  -> COLOR   (blue / yellow)
+%       * Injection (J=0.35 / J=1.4 / none)        -> MARKER  (o / ^ / d)
+%       * Source (Volcano / VULCAN)                -> LINESTYLE ('-' / '--')
+%
+%  Figures generated:
+%       1. Per-file individual plots
+%       2. GlobalOverlay_deltaSL            - every case together
+%       3. GlobalOverlay_deltaSL_Normalized - normalized by matching RD00 case
+%       4. VolcanoOnly_AllInjections        - Volcano only, both geometries,
+%                                             all injection conditions
+%       5. InjectingOnly_VULCAN_vs_Volcano  - injecting cases only, comparing
+%                                             VULCAN vs Volcano
 % ============================================================
 
 clc;
@@ -24,7 +38,7 @@ THRESHOLD_LOWER = 0.20;
 % ============================================================
 
 [filenames, pathname] = uigetfile('*.xlsx', ...
-    'Select Volcano and VULCAN Excel files', ...
+    'Select Volcano and VULCAN Excel files (12 total)', ...
     'MultiSelect', 'on');
 
 if isequal(filenames,0)
@@ -36,6 +50,26 @@ if ischar(filenames)
 end
 
 %% ============================================================
+% STYLE MAPS
+% ============================================================
+
+% --- Geometry -> Color ---
+colorMap = containers.Map();
+colorMap('RD00') = [0.00 0.45 0.74];   % blue
+colorMap('RD52') = [0.93 0.69 0.13];   % yellow
+
+% --- Injection -> Marker ---
+markerMap = containers.Map();
+markerMap('035')  = 'o';   % J = 0.35
+markerMap('14')   = '^';   % J = 1.4
+markerMap('000') = 'd';   % No injection
+
+% --- Source -> LineStyle ---
+lineStyleMap = containers.Map();
+lineStyleMap('Volcano') = '-';
+lineStyleMap('VULCAN')  = '--';
+
+%% ============================================================
 % GLOBAL STORAGE
 % ============================================================
 
@@ -43,9 +77,11 @@ all_results = struct();
 
 all_geometryKeys = {};
 
-legendLabels = containers.Map();
-sourceOfKey = containers.Map();
-geometryBaseOfKey = containers.Map();
+legendLabels        = containers.Map();
+sourceOfKey          = containers.Map();
+geometryBaseOfKey    = containers.Map();
+injectionKeyOfKey    = containers.Map();
+injectionValueOfKey  = containers.Map();
 
 %% ============================================================
 % LOOP OVER FILES
@@ -64,69 +100,87 @@ for iFile = 1:numel(filenames)
     %% --------------------------------------------------------
 
     if contains(nameOnly,'VULCAN','IgnoreCase',true)
-
         sourceType = 'VULCAN';
-
     else
-
         sourceType = 'Volcano';
-
     end
 
     %% --------------------------------------------------------
-    % SLICE?
+    % GEOMETRY (RD00 or RD52), with optional trailing 's' marking
+    % the NON-INJECTING case, e.g. "RD00s" / "RD52s"
     %% --------------------------------------------------------
 
-    isSlice = contains(nameOnly,'Slice','IgnoreCase',true);
+    tokGeom = regexp(nameOnly,'(RD\d+)(s)?','tokens','once');
 
-    %% --------------------------------------------------------
-    % GEOMETRY
-    %% --------------------------------------------------------
-
-    tok = regexp(nameOnly,'(RD\d+)','tokens','once');
-
-    if isempty(tok)
+    if isempty(tokGeom)
         error('Could not determine geometry for %s', filename);
     end
 
-    geomToken = tok{1};
+    geomToken       = tokGeom{1};
+    % isNonInjecting  = ~isempty(tokGeom{2});   % true if trailing 's' present
+    isNonInjecting = false;
 
     if strcmpi(geomToken,'RD00') || strcmpi(geomToken,'RD0')
-
         geometryBase = 'RD00';
-
-    elseif strcmpi(geomToken,'RD17') || strcmpi(geomToken,'RD1')
-
-        geometryBase = 'RD17';
-
     elseif strcmpi(geomToken,'RD52') || strcmpi(geomToken,'RD5')
-
         geometryBase = 'RD52';
+    else
+        error('Unsupported geometry token "%s" in %s. Expected RD00 or RD52.', ...
+            geomToken, filename);
+    end
+
+    %% --------------------------------------------------------
+    % INJECTION (J = 0.35, J = 1.4, or non-injecting "s" case)
+    %% --------------------------------------------------------
+
+    if isNonInjecting
+
+        injectionKey   = '000';
+        injectionValue = 0.0;
 
     else
 
-        error('Unsupported geometry token.');
+        % Try "J0p35" / "J1p4" style first (underscore/decimal-as-p)
+        tokInj = regexp(nameOnly, 'J[_]?(\d+)p(\d+)', 'tokens','once');
+
+        if ~isempty(tokInj)
+            injectionValue = str2double([tokInj{1} '.' tokInj{2}]);
+        else
+            % Fall back to "J0.35" / "J1.4" style with literal decimal point
+            tokInj = regexp(nameOnly, 'J[_]?(\d+\.\d+)', 'tokens','once');
+
+            if ~isempty(tokInj)
+                injectionValue = str2double(tokInj{1});
+            else
+                injectionValue = 0.0;
+                % error('Could not parse injection ratio (J) from %s', filename);
+            end
+        end
+
+        if injectionValue == 0.0
+            injectionKey = '000';
+        elseif abs(injectionValue - 0.35) < 0.01
+            injectionKey = '035';
+        elseif abs(injectionValue - 1.4) < 0.01
+            injectionKey = '14';
+        else
+            error('Unsupported injection value %.4f in %s. Expected J=0.35 or J=1.4.', ...
+                injectionValue, filename);
+        end
 
     end
 
     %% --------------------------------------------------------
-    % GEOMETRY KEY
+    % GEOMETRY KEY (unique identifier per file)
     %% --------------------------------------------------------
 
-    if isSlice
+    geometryKey = sprintf('%s_%s_J%s', ...
+        geometryBase, sourceType, injectionKey);
 
-        geometryKey = sprintf('%s_%s_Slice', ...
-            geometryBase, sourceType);
-
-        legendLabel = sprintf('%s Slice', sourceType);
-
+    if isNonInjecting
+        legendLabel = sprintf('%s, No Injection', sourceType);
     else
-
-        geometryKey = sprintf('%s_%s', ...
-            geometryBase, sourceType);
-
-        legendLabel = sourceType;
-
+        legendLabel = sprintf('%s, J = %.2f', sourceType, injectionValue);
     end
 
     %% --------------------------------------------------------
@@ -135,16 +189,18 @@ for iFile = 1:numel(filenames)
 
     all_geometryKeys{end+1} = geometryKey;
 
-    legendLabels(geometryKey) = legendLabel;
-    sourceOfKey(geometryKey) = sourceType;
-    geometryBaseOfKey(geometryKey) = geometryBase;
+    legendLabels(geometryKey)       = legendLabel;
+    sourceOfKey(geometryKey)        = sourceType;
+    geometryBaseOfKey(geometryKey)  = geometryBase;
+    injectionKeyOfKey(geometryKey)  = injectionKey;
+    injectionValueOfKey(geometryKey)= injectionValue;
 
     %% --------------------------------------------------------
     % OUTPUT DIRECTORIES
     %% --------------------------------------------------------
 
     output_dir = fullfile(pathname, ...
-        ['UpdatedShearResults_' geometryKey]);
+        ['InjectionUpdatedShearResults_' geometryKey]);
 
     if ~exist(output_dir,'dir')
         mkdir(output_dir);
@@ -338,35 +394,19 @@ for iFile = 1:numel(filenames)
     hold on;
 
     %% --------------------------------------------------------
-    % STYLE MAPPING
+    % STYLE MAPPING (geometry=color, injection=marker, source=linestyle)
     %% --------------------------------------------------------
 
-    if contains(geometryKey,'Slice')
-
-        ls = ':';
-        mk = '^';
-
-    else
-
-        if strcmpi(sourceType,'Volcano')
-
-            ls = '--';
-            mk = 'o';
-
-        else
-
-            ls = '-';
-            mk = 's';
-
-        end
-
-    end
+    color = colorMap(geometryBase);
+    mk    = markerMap(injectionKey);
+    ls    = lineStyleMap(sourceType);
 
     %% --------------------------------------------------------
     % PLOT
     %% --------------------------------------------------------
 
     plot(results(:,1), results(:,2), ...
+        'Color', color, ...
         'LineStyle', ls, ...
         'Marker', mk, ...
         'LineWidth', 1.5);
@@ -404,21 +444,11 @@ end
 % GLOBAL OVERLAY : delta_SL/D
 % ============================================================
 
-plots_dir_global = fullfile(pathname,'Plots_Global');
+plots_dir_global = fullfile(pathname,'InjectionPlots_Global');
 
 if ~exist(plots_dir_global,'dir')
     mkdir(plots_dir_global);
 end
-
-colorOrder = [
-    0.00 0.45 0.74;  % blue-ish
-    0.85 0.33 0.10;  % red-ish
-    0.93 0.69 0.13;  % yellow-ish
-];
-colorMap = containers.Map();
-colorMap('RD00') = colorOrder(1, :);
-colorMap('RD17') = colorOrder(2, :);
-colorMap('RD52') = colorOrder(3, :);
 
 hfig = figure;
 
@@ -434,69 +464,25 @@ for iKey = 1:numel(all_geometryKeys)
         continue;
     end
 
-    baseGeom = geometryBaseOfKey(k);
-    
-    geomType = getGeometryType(k);
-    
-    
-    % color = colorMap(geomType);
+    baseGeom     = geometryBaseOfKey(k);
+    sourceType   = sourceOfKey(k);
+    injectionKey = injectionKeyOfKey(k);
 
     color = colorMap(baseGeom);
-    
-    % --------------------------------------------------------
-    % RD determines line style
-    % --------------------------------------------------------
-    
-    if strcmpi(baseGeom,'RD00')
-    
-        % ls = '-';
-        mk = 'sq';
-    
-    elseif strcmpi(baseGeom, 'RD17')
-
-        % ls = '-';
-        mk = '^';
-
-    else
-    
-        % ls = '-';
-        mk = 'o';
-    
-    end
-    
-    % optional markers by geometry type
-    ls = 'none';
-    switch geomType
-
-        case 'Volcano'
-            ls = '-';
-
-        case 'VULCAN'
-            ls = '--';
-
-        otherwise
-            ls = 'none';
-
-    end
+    mk    = markerMap(injectionKey);
+    ls    = lineStyleMap(sourceType);
 
     %% --------------------------------------------------------
     % LABELS
     %% --------------------------------------------------------
 
     switch baseGeom
-
         case 'RD00'
             geoLabel = 'R/D = 0.0';
-
-        case 'RD17'
-            geoLabel = 'R/D = 0.17';
-
         case 'RD52'
             geoLabel = 'R/D = 0.52';
-
         otherwise
             geoLabel = baseGeom;
-
     end
 
     label = sprintf('%s, %s', ...
@@ -541,13 +527,14 @@ savefig(hfig, ...
     'GlobalOverlay_deltaSL.fig'));
 
 %% ============================================================
-% GLOBAL OVERLAY : NORMALIZED BY RD00 MAX
+% GLOBAL OVERLAY : NORMALIZED BY MATCHING RD00 MAX
+%   (each Source/Injection combo normalized by its own RD00 case)
 % ============================================================
 
 deltaMaxRD00 = containers.Map();
 
 %% ------------------------------------------------------------
-% FIND RD00 MAX VALUES
+% FIND RD00 MAX VALUES (per source/injection combo)
 %% ------------------------------------------------------------
 
 for iKey = 1:numel(all_geometryKeys)
@@ -588,39 +575,15 @@ for iKey = 1:numel(all_geometryKeys)
         continue;
     end
 
-    sourceType = sourceOfKey(k);
-
-    baseGeom = geometryBaseOfKey(k);
+    sourceType   = sourceOfKey(k);
+    baseGeom     = geometryBaseOfKey(k);
+    injectionKey = injectionKeyOfKey(k);
 
     %% --------------------------------------------------------
-    % REFERENCE CASE
+    % REFERENCE CASE: same Source + Injection, RD00 geometry
     %% --------------------------------------------------------
 
-    if contains(k,'Slice')
-
-        if strcmpi(sourceType,'Volcano')
-
-            refKey = 'RD00_Volcano_Slice';
-
-        else
-
-            continue;
-
-        end
-
-    else
-
-        if strcmpi(sourceType,'Volcano')
-
-            refKey = 'RD00_Volcano';
-
-        else
-
-            refKey = 'RD00_VULCAN';
-
-        end
-
-    end
+    refKey = sprintf('RD00_%s_J%s', sourceType, injectionKey);
 
     if ~isKey(deltaMaxRD00, refKey)
         continue;
@@ -634,67 +597,21 @@ for iKey = 1:numel(all_geometryKeys)
     % STYLE
     %% --------------------------------------------------------
 
-    geomType = getGeometryType(k);
-
-    % color = colorMap(geomType);
-
     color = colorMap(baseGeom);
-    
-    % --------------------------------------------------------
-    % RD determines line style
-    % --------------------------------------------------------
-    
-    if strcmpi(baseGeom,'RD00')
-    
-        % ls = '-';
-        mk = 'sq';
-    
-    elseif strcmpi(baseGeom, 'RD17')
-
-        % ls = '-';
-        mk = '^';
-
-    else
-    
-        % ls = '-';
-        mk = 'o';
-    
-    end
-    
-    % optional markers by geometry type
-    ls = 'none';
-    switch geomType
-
-        case 'Volcano'
-            ls = '-';
-
-        case 'VULCAN'
-            ls = '--';
-
-        otherwise
-            ls = 'none';
-
-    end
-
+    mk    = markerMap(injectionKey);
+    ls    = lineStyleMap(sourceType);
 
     %% --------------------------------------------------------
     % LABELS
     %% --------------------------------------------------------
 
     switch baseGeom
-
         case 'RD00'
             geoLabel = 'R/D = 0.0';
-
-        case 'RD17'
-            geoLabel = 'R/D = 0.17';
-
         case 'RD52'
             geoLabel = 'R/D = 0.52';
-
         otherwise
             geoLabel = baseGeom;
-
     end
 
     label = sprintf('%s, %s', ...
@@ -747,19 +664,6 @@ fprintf('========================================\n');
 %% ============================================================
 % HELPER FUNCTIONS
 % ============================================================
-
-function geomType = getGeometryType(geometryKey)
-
-    parts = split(geometryKey,'_');
-
-    if numel(parts) < 2
-        geomType = geometryKey;
-        return;
-    end
-
-    geomType = strjoin(parts(2:end),'_');
-
-end
 
 function xL = parse_xL_MATLAB(sheet_name)
 

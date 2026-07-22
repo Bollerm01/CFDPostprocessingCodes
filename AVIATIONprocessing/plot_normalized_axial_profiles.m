@@ -18,58 +18,58 @@ clear; clc; close all;
 
 %% ---------------- USER INPUT SECTION -----------------------
 % Specify the variable/column name to plot (must match Excel header)
-% variableName = 'velocityxavg';  % Volcano
-variableName = 'Velocity_X';  % VULCAN
+variableName = 'velocityxavg';  % Volcano
+% variableName = 'Velocity_X';  % VULCAN
 
 % Data files (geometries)
 % VULCAN PATHS
-path  = "E:\Boller CFD\CFD Bulk Slice Data\Shear Thickness Data\All Thickness Data\";
-files = {'VULCANCondensedProbeData_J35_RD00.xlsx',...
-         'VULCANCondensedProbeData_J35_RD52.xlsx',...
-         'VULCANCondensedProbeData_J140_RD00.xlsx',...
-         'VULCANCondensedProbeData_J140_RD52.xlsx'};
+% path  = "E:\Boller CFD\CFD Bulk Slice Data\Shear Thickness Data\All Thickness Data\";
+% files = {'VULCANCondensedProbeData_J35_RD00.xlsx',...
+%          'VULCANCondensedProbeData_J35_RD52.xlsx',...
+%          'VULCANCondensedProbeData_J140_RD00.xlsx',...
+%          'VULCANCondensedProbeData_J140_RD52.xlsx'};
 
 % Volcano paths (injecting slice cases)
-% path  = "E:\Boller CFD\CFD Bulk Slice Data\Shear Thickness Data\All Thickness Data\";
-% files = {'VolcanoCondensedProbeData_J35_RD00si.xlsx',...
-%          'VolcanoCondensedProbeData_J35_RD52si.xlsx',...
-%          'VolcanoCondensedProbeData_J140_RD00si.xlsx',...
-%          'VolcanoCondensedProbeData_J140_RD52si.xlsx'};
+path  = "E:\Boller CFD\CFD Bulk Slice Data\Shear Thickness Data\All Thickness Data\";
+files = {'VolcanoCondensedProbeData_RD00s.xlsx',...
+         'VolcanoCondensedProbeData_RD17s.xlsx',...
+         'VolcanoCondensedProbeData_RD52s.xlsx'};
 
 filePaths = fullfile(path, files);
 
 % Axial location sheet names (edit if your sheet names differ)
 % Volcano
-% axialSheets = {'xL_0p03_MP', 'xL_0p31_MP', 'xL_0p72_MP', 'xL1_MP'};
+axialSheets = {'xL_0p03_MP', 'xL_0p31_MP', 'xL_0p72_MP', 'xL1_MP'};
 % VULCAN
-axialSheets = {'xL_0p03', 'xL_0p31', 'xL_0p72', 'xL1'};
+% axialSheets = {'xL_0p03', 'xL_0p31', 'xL_0p72', 'xL1'};
 
 % Sheet name for normalization reference
-% normSheetName = 'US_MP'; % Volcano
-normSheetName = 'xL1'; % VULCAN
+normSheetName = 'US_MP'; % Volcano
+% normSheetName = 'xL1'; % VULCAN
 
 % ---- Figure / export settings (style section) --------------
-mainTitle  = '\textbf{VULCAN y/D vs Normalized $$\bar{V_x}$$}';   % <-- MAIN TITLE (sgtitle)
-outputFile = 'InjectionAxialProfiles_VxNorm_VULCAN.jpg';       % <-- OUTPUT FILENAME
-outputDPI  = 600;                                      % <-- EXPORT RESOLUTION (dpi)
+mainTitle  = '\textbf{Volcano y/D vs Normalized $$\bar{V_x}$$}';   % <-- MAIN TITLE (sgtitle)
+outputFile = 'SliceAxialProfiles_VxNorm_Volcano.jpg';       % <-- OUTPUT FILENAME
+outputDPI  = 300;                                      % <-- EXPORT RESOLUTION (dpi)
 
 %% ------------- PLOT APPEARANCE SETTINGS -------------------
 % ------------ CHANGE COLOR / STYLE / LABELS HERE -----------
 
-% colorOrder = [
-%     0.00 0.45 0.74;  % blue-ish
-%     0.85 0.33 0.10;  % red-ish
-%     0.93 0.69 0.13;  % yellow-ish
-% ];
-
 colorOrder = [
     0.00 0.45 0.74;  % blue-ish
-    0.85 0.33 0.098;  % orange-ish
-    0.92 0.69 0.13;  % yellow-ish
-    0.49 0.18 0.56;  % purple-ish
+    0.85 0.33 0.10;  % red-ish
+    0.93 0.69 0.13;  % yellow-ish
 ];
 
-lineStyles = {'-', '--', '-', '--'};
+% colorOrder = [
+%     0.00 0.45 0.74;  % blue-ish
+%     0.85 0.33 0.098;  % orange-ish
+%     0.92 0.69 0.13;  % yellow-ish
+%     0.49 0.18 0.56;  % purple-ish
+% ];
+
+% lineStyles = {'-', '--', '-', '--'};
+lineStyles = {'-', '-', '-'};
 
 % Axis labels (LaTeX interpreter in the plots)
 xLabelStr = '$$\mathbf{\bar{V_x}/V_{x,\infty}}$$';   % <-- CHANGE X label text
@@ -109,7 +109,8 @@ numSheets = nAxial;     % for clarity with your example notation
 %         geomLabels{i} = fname;
 %     end
 % end
-geomLabels = {'R/D = 0.0, J = 0.35','R/D = 0.52, J = 0.35', 'R/D = 0.0, J = 1.4','R/D = 0.52, J = 1.4'};
+% geomLabels = {'R/D = 0.0, J = 0.35','R/D = 0.52, J = 0.35', 'R/D = 0.0, J = 1.4','R/D = 0.52, J = 1.4'};
+geomLabels = {'R/D = 0.0', 'R/D = 0.17', 'R/D = 0.52'};
 legendEntries = geomLabels;  % <-- Legend entries per geometry
 
 %% -------------- COMPUTE NORMALIZATION FACTORS -------------

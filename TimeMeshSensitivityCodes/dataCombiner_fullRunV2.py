@@ -113,7 +113,7 @@ for prefix in coords_groups.keys():
         df.columns = header_cols
 
         # -------------------------------------------------------
-        # LAST TIMESTEP VALUES 
+        # LAST TIMESTEP VALUES
         # -------------------------------------------------------
         last_row = df.iloc[-1,1:]
 
@@ -135,11 +135,15 @@ for prefix in coords_groups.keys():
             # Remove time column
             probe_data = df.iloc[:, 1:]
 
-            # Mean velocity
+            # Mean velocity (time-average at each probe)
             velocity_avg = probe_data.mean(axis=0)
 
-            # RMS velocity
-            velocity_rms = (probe_data**2).mean(axis=0)**0.5
+            # Fluctuating velocity: v' = v - v_avg (row-wise subtraction
+            # broadcasts the per-probe mean across every timestep)
+            velocity_fluct = probe_data.sub(velocity_avg, axis=1)
+
+            # RMS of the fluctuating velocity: sqrt(mean(v'^2))
+            velocity_rms = (velocity_fluct**2).mean(axis=0)**0.5
 
             probe_nums = [
                 extract_probe_number(col)

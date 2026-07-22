@@ -55,6 +55,7 @@ disp('K4-6 Columns:'); disp(T46.Properties.VariableNames)
 %% ---------------- REORDER K4-6 COLUMNS ----------------
 % Raw:      Voltage_0=K4, Voltage_1=K6, Voltage_2=K5
 % Reorder to logical K4, K5, K6 sequence: [col1, col3, col2]
+% DOES NOT NEEDD REORDERING DUE TO CAL. BEING CORRECT
 
 reorder_46 = [1, 2, 3];   % K4=col1, K5=col3, K6=col2
 
@@ -123,7 +124,7 @@ Wn  = [100 20000] / nyq;
 
 %% ---------------- LOOP THROUGH ALL 6 CHANNELS ----------------
 
-for ch = 4:6
+for ch = 1:6
 
     %% ----- SELECT SOURCE TABLE & RAW COLUMN -----
 

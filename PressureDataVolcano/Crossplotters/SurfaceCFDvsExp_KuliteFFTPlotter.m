@@ -43,7 +43,7 @@ man_cal_sens_K46_raw = [ ...
 gain_K46_raw = [64.0, 64.0, 64.0];
 
 % Reorder K4-6 to logical K4,K5,K6 order: col [1,3,2]
-reorder_46 = [1, 3, 2];
+reorder_46 = [1, 2, 3];
 man_cal_sens_K46 = man_cal_sens_K46_raw(reorder_46);
 gain_K46         = gain_K46_raw(reorder_46);
 
@@ -58,7 +58,7 @@ rawChannels = {'Voltage_0','Voltage_1','Voltage_2'};
 
 % For each K1..K6: which CSV group and which raw column index
 sourceGroup = {'K13','K13','K13','K46','K46','K46'};
-rawColIdx   = [1, 2, 3, reorder_46];   % [1,2,3,1,3,2]
+rawColIdx   = [1, 2, 3, reorder_46];   % [1,2,3,1,2,3]
 
 %% ============================================================
 % COLOR SYSTEM

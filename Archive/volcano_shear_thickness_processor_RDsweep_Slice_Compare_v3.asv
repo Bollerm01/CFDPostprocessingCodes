@@ -87,6 +87,8 @@ for iFile = 1:numel(filenames)
 
     if strcmpi(geomToken,'RD00') || strcmpi(geomToken,'RD0')
         geometryBase = 'RD00';
+    elseif strcmpi(geomToken,'RD17') || strcmpi(geomToken,'RD1')
+        geometryBase = 'RD17';
     elseif strcmpi(geomToken,'RD52') || strcmpi(geomToken,'RD5')
         geometryBase = 'RD52';
     else
@@ -114,7 +116,7 @@ for iFile = 1:numel(filenames)
     % OUTPUT DIRECTORIES
     %% --------------------------------------------------------
 
-    output_dir = fullfile(pathname,['ShearResults_' geometryKey]);
+    output_dir = fullfile(pathname,['UpdatedShearResults_' geometryKey]);
     plots_dir = fullfile(output_dir,'Plots');
 
     if ~exist(plots_dir,'dir')
@@ -255,9 +257,14 @@ end
 %% ============================================================
 % COLOR MAP
 % ============================================================
-
+colorOrder = [
+    0.00 0.45 0.74;  % blue-ish
+    0.85 0.33 0.10;  % red-ish
+    0.93 0.69 0.13;  % yellow-ish
+];
 colorMap = containers.Map();
-colorMap('RD00') = [0 0.45 0.74];
+colorMap('RD00') = colorOrder(1);
+colorMap('RD17') = [0 0.45 0.74];
 colorMap('RD52') = [0.85 0.33 0.10];
 
 %% ============================================================

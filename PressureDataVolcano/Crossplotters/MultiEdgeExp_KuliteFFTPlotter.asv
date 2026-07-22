@@ -66,7 +66,7 @@ Lshift = [-36 -18 0 +18 +36];
 % SELECT EXPERIMENT FILE PAIRS (UP TO 5)
 %% ============================================================
 
-nExpMax = 5;
+nExpMax = 1;
 
 expNames_K13 = {};
 expPaths_K13 = {};
@@ -98,10 +98,9 @@ for e = 1:nExpMax
     expPaths_K46{end+1} = pK46;   %#ok<SAGROW>
 
     % Derive a short label from the K1-3 filename
-    identifier = input(sprintf("Enter an identifier for set %.0f: ", e),"s");
-    % parts = split(fK13, {'.', '_'});
-    % expLabels{end+1} = parts{1};  %#ok<SAGROW>
-    expLabels{end+1} = identifier;  %#ok<SAGROW>
+    identifier = input(sprintf("Enter an identifier for set %s: ", e))
+    parts = split(fK13, {'.', '_'});
+    expLabels{end+1} = parts{1};  %#ok<SAGROW>
 end
 
 nExp = length(expLabels);
@@ -248,7 +247,7 @@ for e = 1:nExp
         %     'DisplayName', ['Exp ' expLabels{e} ' ' legendNames{k}]);
         plot(expTime{e}, p, 'LineWidth', 1.2, ...
             'Color', plotColor, ...
-            'DisplayName', ['' expLabels{e} ' ' legendNames{k}]);
+            'DisplayName', ['Exp ' expLabels{e} ' ' legendNames{k}]);
     end
 end
 
@@ -285,9 +284,9 @@ for e = 1:nExp
         plotColor = max(min(lab2rgb(lab), 1), 0);
 
         semilogx(f, NB, 'LineWidth', 2, 'Color', plotColor, ...
-            'DisplayName', ['' expLabels{e} ' ' legendNames{k}]);
+            'DisplayName', ['Exp ' expLabels{e} ' ' legendNames{k}]);
 
-        oaspl_labels{end+1,1} = ['' expLabels{e} ' ' legendNames{k}]; %#ok<SAGROW>
+        oaspl_labels{end+1,1} = ['Exp ' expLabels{e} ' ' legendNames{k}]; %#ok<SAGROW>
         oaspl_td(end+1,1)     = computeOASPL_TD(expSignals{e}{i}, fsExp, fmin, fmax, PREF); %#ok<SAGROW>
         oaspl_color(end+1,:)  = plotColor; %#ok<SAGROW>
     end
@@ -321,7 +320,7 @@ for e = 1:nExp
         plotColor = max(min(lab2rgb(lab), 1), 0);
 
         semilogx(f, 10*log10(P/PREF^2), 'LineWidth', 2, 'Color', plotColor, ...
-            'DisplayName', ['' expLabels{e} ' ' legendNames{k}]);
+            'DisplayName', ['Exp ' expLabels{e} ' ' legendNames{k}]);
 
         oaspl_counter = oaspl_counter + 1;
         oaspl_psd(oaspl_counter,1) = computeOASPL_PSD(f, P, fmin, fmax, PREF); %#ok<SAGROW>
@@ -380,7 +379,7 @@ for e = 1:nExp
         plotColor = max(min(lab2rgb(lab), 1), 0);
 
         semilogx(f5, NB5, 'LineWidth', 2, 'Color', plotColor, ...
-            'DisplayName', ['' expLabels{e} ' ' legendNames{k}]);
+            'DisplayName', ['Exp ' expLabels{e} ' ' legendNames{k}]);
     end
 end
 
