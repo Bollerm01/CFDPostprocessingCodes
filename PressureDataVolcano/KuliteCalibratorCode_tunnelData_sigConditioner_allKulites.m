@@ -208,7 +208,7 @@ for ch = 1:6
         'DisplayName', sensorLabels{ch}, 'LineWidth', 1.5);
 
     figure(3)
-    semilogx(f(1:Nfft/2), 10*log10(PSD), ...
+    semilogx(f(1:Nfft/2), 10*log10(PSD/PREF^2), ...
         'DisplayName', sensorLabels{ch}, 'LineWidth', 1.5);
 
 end
