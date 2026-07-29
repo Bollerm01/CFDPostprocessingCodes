@@ -170,12 +170,14 @@ if __name__ == "__main__":
     Ra = 287.0            # [J/(kg·K)]
 
     # Jet (ethylene) properties (approximate ideal-gas values; update as needed)
-    gamma_j = 1.24         # example value for ethylene; check your data
-    Rj = 296.4            # [J/(kg·K)] approximate; adjust from real-gas data
+    # gamma_j = 1.24         # example value for ethylene; check your data
+    # Rj = 296.4            # [J/(kg·K)] approximate; adjust from real-gas data
+    gamma_j = 1.4
+    Rj = Ra
     T0j = 300.0           # plenum stagnation temperature [K]
 
     # Target momentum flux ratio (per injector)
-    J_target = 1.4    # example value
+    J_target = 1.5    # example value
     
 
     # Injector configuration

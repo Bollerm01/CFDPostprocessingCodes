@@ -86,7 +86,7 @@ for i = 1:numSheets
     % xlim([-0.1, 0.3]);
     xlim([-0.3, 1.1]);   % Extended x-bounds
     ylim([-1, 1]);
-    h = xlabel('V_{x,rms} / V_{x,\infty}');
+    h = xlabel('$$\mathbf{\bar{V_x}/V_{x,\infty}}$$', 'Interpreter', 'latex');
     set(h, 'FontWeight', 'bold');
 
     % Label the first y-axis only
