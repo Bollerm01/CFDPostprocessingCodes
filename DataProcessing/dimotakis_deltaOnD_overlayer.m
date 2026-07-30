@@ -58,8 +58,7 @@ colors = lines(1);
 s = 0.16 / 0.23 ; 
 r = 0.3 / 2;
 
-ratio = 0.085 * (1 - r) / (1 + r*sqrt(s)) * ...
-    (1 + sqrt(s) - (1 - sqrt(s)) / (1 + 2.9*(1 + r)/(1 - r)));
+ratio = 0.085 * ((1 - r) / (1 + r*sqrt(s))) * (1 + sqrt(s) - ((1 - sqrt(s)) / (1 + 2.9*(1 + r)/(1 - r))));
 
 delta_vals = ratio .* x_vals;     % delta = (delta/x) * x
 delta_D    = delta_vals / D_norm; % normalized y (delta/D)
