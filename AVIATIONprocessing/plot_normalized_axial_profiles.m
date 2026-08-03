@@ -18,38 +18,48 @@ clear; clc; close all;
 
 %% ---------------- USER INPUT SECTION -----------------------
 % Specify the variable/column name to plot (must match Excel header)
-% variableName = 'velocityxavg';  % Volcano
-variableName = 'Velocity_X';  % VULCAN
+variableName = 'velocityxavg';  % Volcano
+% variableName = 'Velocity_X';  % VULCAN
 
 % Data files (geometries)
 % VULCAN PATHS
-path  = "E:\Boller CFD\CFD Bulk Slice Data\Shear Thickness Data\All Thickness Data\";
-files = {'VULCANCondensedProbeData_J0p35_RD00.xlsx',...
-         'VULCANCondensedProbeData_J0p35_RD52.xlsx',...
-         'VULCANCondensedProbeData_J1p40_RD00.xlsx',...
-         'VULCANCondensedProbeData_J1p40_RD52.xlsx'};
+% path  = "E:\Boller CFD\CFD Bulk Slice Data\Shear Thickness Data\All Thickness Data\";
+% files = {'VULCANCondensedProbeData_RD00.xlsx',...
+%          'VULCANCondensedProbeData_RD52.xlsx',...'
+%          'VULCANCondensedProbeData_J0p35_RD00.xlsx',...
+%          'VULCANCondensedProbeData_J0p35_RD52.xlsx',...
+%          'VULCANCondensedProbeData_J1p40_RD00.xlsx',...
+%          'VULCANCondensedProbeData_J1p40_RD52.xlsx'};
 
-% Volcano paths (injecting slice cases)
+% Volcano paths (non-injecting slice cases)
 % path  = "E:\Boller CFD\CFD Bulk Slice Data\Shear Thickness Data\All Thickness Data\";
 % files = {'VolcanoCondensedProbeData_RD00s.xlsx',...
 %          'VolcanoCondensedProbeData_RD17s.xlsx',...
 %          'VolcanoCondensedProbeData_RD52s.xlsx'};
 
+
+% Volcano paths (injecting slice cases)
+path  = "E:\Boller CFD\CFD Bulk Slice Data\Shear Thickness Data\All Thickness Data\";
+files = {'VolcanoCondensedProbeData_RD00s.xlsx',...
+         'VolcanoCondensedProbeData_RD52s.xlsx',...
+         'VolcanoCondensedProbeData_J0p35_RD00si.xlsx',...
+         'VolcanoCondensedProbeData_J0p35_RD52si.xlsx',...
+         'VolcanoCondensedProbeData_J1p40_RD00si.xlsx',...
+         'VolcanoCondensedProbeData_J1p40_RD52si.xlsx'};
+
 filePaths = fullfile(path, files);
 
-% Axial location sheet names (edit if your sheet names differ)
-% Volcano
-% axialSheets = {'xL_0p03_MP', 'xL_0p31_MP', 'xL_0p72_MP', 'xL1_MP'};
-% VULCAN
-axialSheets = {'xL_0p03', 'xL_0p31', 'xL_0p72', 'xL1'};
+% Axial location sheet names
+axialSheets = {'xL_0p03_MP', 'xL_0p31_MP', 'xL_0p72_MP', 'xL1_MP'}; % Volcano
+% axialSheets = {'xL_0p03', 'xL_0p31', 'xL_0p72', 'xL1'}; % VULCAN
 
 % Sheet name for normalization reference
-% normSheetName = 'US_MP'; % Volcano
-normSheetName = 'xL1'; % VULCAN
+normSheetName = 'US_MP'; % Volcano
+% normSheetName = 'xL1'; % VULCAN
 
 % ---- Figure / export settings (style section) --------------
-mainTitle  = '\textbf{VULCAN y/D vs Normalized $$\bar{V_x}$$}';   % <-- MAIN TITLE (sgtitle)
-outputFile = 'InjectionAxialProfiles_VxNorm_VULCAN.jpg';       % <-- OUTPUT FILENAME
+mainTitle  = '\textbf{Volcano WMLES}';   % <-- MAIN TITLE (sgtitle)
+outputFile = 'InjectionAxialProfiles_VxNorm_Volcano.jpg';       % <-- OUTPUT FILENAME
 outputDPI  = 300;                                      % <-- EXPORT RESOLUTION (dpi)
 
 %% ------------- PLOT APPEARANCE SETTINGS -------------------
@@ -61,14 +71,24 @@ outputDPI  = 300;                                      % <-- EXPORT RESOLUTION (
 %     0.93 0.69 0.13;  % yellow-ish
 % ];
 
+% colorOrder = [
+%     0.00 0.45 0.74;  % blue-ish
+%     0.85 0.33 0.098;  % orange-ish
+%     0.92 0.69 0.13;  % yellow-ish
+%     0.49 0.18 0.56;  % purple-ish
+% ];
+
+% Colored by injection value
 colorOrder = [
-    0.00 0.45 0.74;  % blue-ish
-    0.85 0.33 0.098;  % orange-ish
-    0.92 0.69 0.13;  % yellow-ish
-    0.49 0.18 0.56;  % purple-ish
+    0.0 0.4470 0.7410;  % blue
+    0.0 0.4470 0.7410;  % blue
+    0.8500 0.3250 0.0980;  % orange
+    0.8500 0.3250 0.0980;  % orange
+    0.9 0.8 0.05; % gem yellow
+    0.9 0.8 0.05; % gem yellow
 ];
 
-lineStyles = {'-', '--', '-', '--'};
+lineStyles = {'-', ':', '-', ':','-', ':'};
 % lineStyles = {'-', '-', '-'};
 
 % Axis labels (LaTeX interpreter in the plots)
@@ -109,7 +129,7 @@ numSheets = nAxial;     % for clarity with your example notation
 %         geomLabels{i} = fname;
 %     end
 % end
-geomLabels = {'R/D = 0.0, J = 0.35','R/D = 0.52, J = 0.35', 'R/D = 0.0, J = 1.4','R/D = 0.52, J = 1.4'};
+geomLabels = {'R/D = 0.0, J = 0.0','R/D = 0.52, J = 0.0','R/D = 0.0, J = 0.35','R/D = 0.52, J = 0.35', 'R/D = 0.0, J = 1.4','R/D = 0.52, J = 1.4'};
 % geomLabels = {'R/D = 0.0', 'R/D = 0.17', 'R/D = 0.52'};
 legendEntries = geomLabels;  % <-- Legend entries per geometry
 
@@ -254,7 +274,7 @@ end
 if ~isempty(allLineHandles) && ~isempty(ax(1)) && isvalid(ax(1))
     % 1. Attach the legend natively below the entire grid layout
     lg = legend(ax(1), allLineHandles, legendEntries, ...
-                'Box', 'on', 'NumColumns', 4);            
+                'Box', 'on', 'NumColumns', 3);            
     lg.Layout.Tile = 'south'; % Natively centers perfectly below all 4 plots
     lg.FontSize = legendFontSize;
 end
@@ -282,7 +302,7 @@ ylabel(axShared, yLabelStr, 'FontSize', labelFontSize+1,...
 uistack(axShared, 'bottom');  % keep plots and legend on top
 
 %% ----------------- SHARED MAIN TITLE -----------------------
-% sgtitle(tl, mainTitle, 'FontSize', 20, 'FontWeight', 'bold', 'Interpreter','latex');
+sgtitle(tl, mainTitle, 'FontSize', 20, 'FontWeight', 'bold', 'Interpreter','latex');
 
 %% ----------------- SAVE HIGH-RES FIGURE --------------------
 set(fig, 'PaperPositionMode', 'auto');  % Ensure proper sizing
@@ -291,7 +311,7 @@ set(fig, 'PaperPositionMode', 'auto');  % Ensure proper sizing
 exportgraphics(fig, outputFile, 'Resolution', outputDPI);
 
 % Vector PDF export
-outputFile = 'InjectionAxialProfiles_VxNorm_VULCAN.pdf';  % <-- vector PDF
+outputFile = 'InjectionAxialProfiles_VxNorm_Volcano.pdf';  % <-- vector PDF
 exportgraphics(fig, outputFile, 'ContentType', 'vector');  % forces vector output
 
 %% ----------------- END OF SCRIPT ---------------------------
