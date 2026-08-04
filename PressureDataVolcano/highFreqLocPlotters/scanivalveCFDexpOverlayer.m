@@ -294,13 +294,13 @@ legend('Location', 'northeast', 'FontSize', 10);
 xlabel('Axial X Location (m)');
 ylabel('Spanwise Z (m)');
 zlabel('Normalized Pressure  P / P_{ref}');
-title('Overlaid Normalized Pressure — CFD Surface vs Experimental Surface');
+% title('Overlaid Normalized Pressure — CFD Surface vs Experimental Surface');
 
 colormap(turbo);
 cb = colorbar;
 cb.Label.String = 'P / P_{ref}';
 % clim([0.116 0.1412]);
-clim([0.13 0.145]);
+% clim([0.13 0.145]);
 
 shading interp;
 grid on; box on;
@@ -331,7 +331,7 @@ colormap(turbo);
 cb = colorbar; %clim([0.1 0.2]);
 cb.Label.String = 'P / P_{ref}';
 % clim([0.116 0.1412]);
-clim([0.13 0.145]);
+% clim([0.13 0.145]);
 set(gca,'FontSize',11,'YDir','reverse');
 % axis tight;
 
@@ -351,13 +351,13 @@ colormap(turbo);
 cb = colorbar; %clim([0.1 0.2]);
 cb.Label.String = 'P / P_{ref}';
 % clim([0.116 0.1412]);
-clim([0.13 0.145]);
+% clim([0.13 0.145]);
 set(gca,'FontSize',11,'YDir','reverse');
 % axis equal;
 xlim([xmin_exp xmax_exp]);
 ylim([zmin_exp zmax_exp]);
 
-sgtitle('CFD vs Experimental Surface Pressure Comparison', 'FontSize',14,'FontWeight','bold');
+%sgtitle('CFD vs Experimental Surface Pressure Comparison', 'FontSize',14,'FontWeight','bold');
 
 %% ============================================================
 % SUMMARY TABLE

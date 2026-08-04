@@ -1,0 +1,509 @@
+%% ============================================================
+% Multi-Edge Experimental Kulite Plotter
+% with Heller & Bliss Cavity Resonance Mode Overlay
+% Dual CSV Input: K1-3 and K4-6 per experiment
+%
+% MULTI-PASS VERSION:
+%   Files are loaded ONCE. After each round of plotting, the user
+%   is asked whether they want to plot again with a DIFFERENT
+%   channel selection (and optionally different settings/H&B
+%   parameters) using the SAME loaded data. Each pass gets its own
+%   set of figures so nothing is overwritten.
+%% ============================================================
+
+clear; clc; close all;
+
+%% ============================================================
+% CONSTANTS
+%% ============================================================
+
+PREF      = 20e-6;
+PSI_TO_PA = 6894.757;
+
+%% ============================================================
+% SENSOR CONFIGURATION
+%% ============================================================
+
+% --- K1-3 CSV: Voltage_0->K1, Voltage_1->K2, Voltage_2->K3 ---
+man_cal_sens_K13 = [ ...
+    30.104/1000 ...   % K1
+    30.024/1000 ...   % K2
+    29.976/1000];     % K3
+
+gain_K13 = [64.0, 64.0, 64.0];
+
+% --- K4-6 CSV: Voltage_0->K4, Voltage_1->K6, Voltage_2->K5 ---
+man_cal_sens_K46_raw = [ ...
+    29.972/1000 ...   % Voltage_0 -> K4
+    29.824/1000 ...   % Voltage_1 -> K6
+    30.178/1000];     % Voltage_2 -> K5
+
+gain_K46_raw = [64.0, 64.0, 64.0];
+
+% Reorder K4-6 to logical K4,K5,K6 order: col [1,3,2]
+reorder_46 = [1, 2, 3];
+man_cal_sens_K46 = man_cal_sens_K46_raw(reorder_46);
+gain_K46         = gain_K46_raw(reorder_46);
+
+% --- Unified arrays in K1..K6 order ---
+man_cal_sens_all = [man_cal_sens_K13, man_cal_sens_K46];
+gain_all         = [gain_K13,         gain_K46];
+
+legendNames = {'K1','K2','K3','K4','K5','K6'};
+
+% Raw CSV column names (same header in both CSVs)
+rawChannels = {'Voltage_0','Voltage_1','Voltage_2'};
+
+% For each K1..K6: which CSV group and which raw column index
+sourceGroup = {'K13','K13','K13','K46','K46','K46'};
+rawColIdx   = [1, 2, 3, reorder_46];   % [1,2,3,1,3,2]
+
+%% ============================================================
+% PERCEPTUALLY UNIFORM COLOR SYSTEM (CIE LAB)
+%% ============================================================
+
+nSensors = length(legendNames);
+baseRGB  = lines(nSensors);
+baseLAB  = rgb2lab(baseRGB);
+
+% Dataset brightness shifts (Exp 1 = darkest ... Exp 5 = brightest)
+Lshift = [-36 -18 0 +18 +36];
+
+%% ============================================================
+% SELECT EXPERIMENT FILE PAIRS (UP TO 5) -- LOADED ONCE
+%% ============================================================
+
+nExpMax = 5;
+
+expNames_K13 = {};
+expPaths_K13 = {};
+expNames_K46 = {};
+expPaths_K46 = {};
+expLabels    = {};
+
+for e = 1:nExpMax
+
+    % --- K1-3 CSV ---
+    [fK13, pK13] = uigetfile('*.csv', ...
+        sprintf('Exp %d — Select K1-3 CSV (Cancel to stop)', e));
+
+    if isequal(fK13, 0)
+        break;
+    end
+
+    % --- K4-6 CSV ---
+    [fK46, pK46] = uigetfile('*.csv', ...
+        sprintf('Exp %d — Select K4-6 CSV', e));
+
+    if isequal(fK46, 0)
+        error('K4-6 CSV required for Exp %d after K1-3 was selected.', e);
+    end
+
+    expNames_K13{end+1} = fK13;   %#ok<SAGROW>
+    expPaths_K13{end+1} = pK13;   %#ok<SAGROW>
+    expNames_K46{end+1} = fK46;   %#ok<SAGROW>
+    expPaths_K46{end+1} = pK46;   %#ok<SAGROW>
+
+    % Derive a short label from the K1-3 filename
+    identifier = input(sprintf("Enter an identifier for set %.0f: ", e),"s");
+    expLabels{end+1} = identifier;  %#ok<SAGROW>
+end
+
+nExp = length(expLabels);
+
+if nExp == 0
+    error('No experiment files selected.');
+end
+
+% Load all tables ONCE — reused across every plotting pass
+Texp_K13    = cell(nExp, 1);
+Texp_K46    = cell(nExp, 1);
+timeExpFull = cell(nExp, 1);
+
+for e = 1:nExp
+    Texp_K13{e} = readtable(fullfile(expPaths_K13{e}, expNames_K13{e}), ...
+        'VariableNamingRule','modify');
+    Texp_K46{e} = readtable(fullfile(expPaths_K46{e}, expNames_K46{e}), ...
+        'VariableNamingRule','modify');
+
+    % Time vector from K1-3 CSV (both CSVs share the same time base)
+    timeExpFull{e} = Texp_K13{e}.Time_;
+end
+
+%% ============================================================
+% MULTI-PASS PLOTTING LOOP
+%   Each iteration: pick channels -> pick settings -> pick H&B
+%   params -> generate figures 1-5 for that pass -> ask to repeat
+%% ============================================================
+
+passNum = 0;
+runAgain = true;
+
+% Remember previous answers so re-prompts can default to them
+prevChIdx     = [];
+prevSettings  = {'Experimental Kulite R/D Comparison','0','10','100','100','20000'};
+prevHB        = {'0.068','0.0186','694','2.0','1.4','0.57','0.25','6'};
+
+while runAgain
+
+    passNum = passNum + 1;
+
+    %% --------------------------------------------------------
+    % CHANNEL SELECTION (per pass)
+    %% --------------------------------------------------------
+    [chIdx, tf] = listdlg( ...
+        'PromptString', sprintf('Pass %d — Select Kulite Channels', passNum), ...
+        'SelectionMode','multiple', ...
+        'ListString', legendNames, ...
+        'InitialValue', prevChIdx);
+
+    if ~tf
+        if passNum == 1
+            return;  % nothing selected on first pass at all
+        else
+            break;   % user cancelled a repeat pass; stop looping
+        end
+    end
+    prevChIdx = chIdx;
+
+    %% --------------------------------------------------------
+    % USER SETTINGS (per pass, defaults to previous answers)
+    %% --------------------------------------------------------
+    answer = inputdlg( ...
+        {'Plot Title','Start Time [s]','End Time [s]', ...
+         'FFT df [Hz]','Min Frequency [Hz]','Max Frequency [Hz]'}, ...
+        sprintf('Settings — Pass %d', passNum), [1 50], ...
+        prevSettings);
+
+    if isempty(answer)
+        break;
+    end
+    prevSettings = answer;
+
+    plotTitle  = answer{1};
+    tStart     = str2double(answer{2});
+    tEnd       = str2double(answer{3});
+    df_desired = str2double(answer{4});
+    fmin       = str2double(answer{5});
+    fmax       = str2double(answer{6});
+
+    %% --------------------------------------------------------
+    % HELLER & BLISS CAVITY RESONANCE PARAMETERS (per pass)
+    %% --------------------------------------------------------
+    hbAnswer = inputdlg( ...
+        {'Cavity Length L [m]', ...
+         'Cavity Depth D [m]', ...
+         'Freestream Velocity U_inf [m/s]', ...
+         'Freestream Mach Number M_inf', ...
+         'Ratio of Specific Heats gamma', ...
+         'Vortex Convection Ratio kappa', ...
+         'Phase Delay alpha', ...
+         'Number of Modes to Display'}, ...
+        sprintf('Heller & Bliss Cavity Resonance Parameters — Pass %d', passNum), [1 60], ...
+        prevHB);
+
+    if isempty(hbAnswer)
+        break;
+    end
+    prevHB = hbAnswer;
+
+    HB.L      = str2double(hbAnswer{1});
+    HB.D      = str2double(hbAnswer{2});
+    HB.Uinf   = str2double(hbAnswer{3});
+    HB.Minf   = str2double(hbAnswer{4});
+    HB.gamma  = str2double(hbAnswer{5});
+    HB.kappa  = str2double(hbAnswer{6});
+    HB.alpha  = str2double(hbAnswer{7});
+    HB.Nmodes = round(str2double(hbAnswer{8}));
+
+    HB.denom = HB.Minf * sqrt(1 + (HB.gamma-1)/2 * HB.Minf^2) + (1/HB.kappa);
+    HB.modes = (1:HB.Nmodes)';
+    HB.freq  = (HB.Uinf / HB.L) * (HB.modes - HB.alpha) / HB.denom;
+    HB.inRange = HB.freq >= fmin & HB.freq <= fmax;
+
+    fprintf('\n=== Pass %d — Heller & Bliss Cavity Resonance Modes ===\n', passNum);
+    fprintf('  L = %.4f m,  D = %.4f m,  L/D = %.2f\n', HB.L, HB.D, HB.L/HB.D);
+    fprintf('  U_inf = %.2f m/s,  M_inf = %.4f\n', HB.Uinf, HB.Minf);
+    fprintf('  gamma = %.3f,  kappa = %.4f,  alpha = %.4f\n', HB.gamma, HB.kappa, HB.alpha);
+    fprintf('  Denominator: %.4f\n\n', HB.denom);
+    fprintf('  %-8s %-16s %-12s\n','Mode n','Frequency [Hz]','In Range?');
+    for n = 1:HB.Nmodes
+        inStr = ''; if HB.inRange(n), inStr = '<--'; end
+        fprintf('  %-8d %-16.2f %s\n', HB.modes(n), HB.freq(n), inStr);
+    end
+    fprintf('\n');
+
+    %% --------------------------------------------------------
+    % PROCESS EXPERIMENTS — LOAD & CONVERT SIGNALS (this pass)
+    %% --------------------------------------------------------
+    expSignals = cell(nExp, 1);
+    expTime    = cell(nExp, 1);
+
+    figBase = (passNum - 1) * 5;   % keep each pass's figures separate
+
+    figure(figBase + 1); hold on; grid on;
+    title(sprintf('%s - Time History [Pass %d]', plotTitle, passNum));
+    xlabel('Time [s]'); ylabel('Pressure [Pa]');
+
+    for e = 1:nExp
+
+        time = timeExpFull{e};
+        mask = time >= tStart & time <= tEnd;
+        expTime{e} = time(mask);
+
+        expSignals{e} = cell(length(chIdx), 1);
+
+        for i = 1:length(chIdx)
+
+            k        = chIdx(i);
+            colName  = rawChannels{rawColIdx(k)};
+
+            % Route to correct table
+            if strcmp(sourceGroup{k}, 'K13')
+                V = Texp_K13{e}.(colName);
+            else
+                V = Texp_K46{e}.(colName);
+            end
+
+            V = V(mask);
+
+            system_sens = man_cal_sens_all(k) * gain_all(k);
+            p = (V ./ system_sens) * PSI_TO_PA;
+            p = p - mean(p);
+
+            expSignals{e}{i} = p;
+
+            % Color
+            lab = baseLAB(k,:);
+            lab(1) = lab(1) + Lshift(min(e, length(Lshift)));
+            plotColor = max(min(lab2rgb(lab), 1), 0);
+
+            plot(expTime{e}, p, 'LineWidth', 1.2, ...
+                'Color', plotColor, ...
+                'DisplayName', ['' expLabels{e} ' ' legendNames{k}]);
+        end
+    end
+
+    legend('show','Location','southoutside','NumColumns',3);
+
+    %% --------------------------------------------------------
+    % FFT FUNCTION HANDLE
+    %% --------------------------------------------------------
+    computeNBFFT = @(sig,fs) localFFT(sig, fs, df_desired, PREF);
+
+    %% --------------------------------------------------------
+    % NARROWBAND SPL
+    %% --------------------------------------------------------
+    figure(figBase + 2); hold on; grid on;
+    title(sprintf('%s - Narrowband SPL [Pass %d]', plotTitle, passNum));
+    xlabel('Frequency [Hz]'); ylabel('SPL [dB re 20 \muPa]');
+    set(gca,'XScale','log');
+
+    oaspl_labels = {};
+    oaspl_td     = [];
+    oaspl_psd    = [];
+    oaspl_color  = [];
+
+    for e = 1:nExp
+        fsExp = 1/mean(diff(expTime{e}));
+        for i = 1:length(expSignals{e})
+            k = chIdx(i);
+            [f, NB] = computeNBFFT(expSignals{e}{i}, fsExp);
+
+            lab = baseLAB(k,:);
+            lab(1) = lab(1) + Lshift(min(e, length(Lshift)));
+            plotColor = max(min(lab2rgb(lab), 1), 0);
+
+            semilogx(f, NB, 'LineWidth', 2, 'Color', plotColor, ...
+                'DisplayName', ['' expLabels{e} ' ' legendNames{k}]);
+
+            oaspl_labels{end+1,1} = ['' expLabels{e} ' ' legendNames{k}]; %#ok<SAGROW>
+            oaspl_td(end+1,1)     = computeOASPL_TD(expSignals{e}{i}, fsExp, fmin, fmax, PREF); %#ok<SAGROW>
+            oaspl_color(end+1,:)  = plotColor; %#ok<SAGROW>
+        end
+    end
+
+    xlim([fmin fmax]);
+    legend('show','Location','southoutside','NumColumns',3);
+
+    %% --------------------------------------------------------
+    % PSD
+    %% --------------------------------------------------------
+    figure(figBase + 3); hold on; grid on;
+    title(sprintf('%s - PSD [Pass %d]', plotTitle, passNum));
+    xlabel('Frequency [Hz]'); ylabel('PSD [dB/Hz]');
+    set(gca,'XScale','log');
+
+    oaspl_counter = 0;
+
+    for e = 1:nExp
+        fsExp = 1/mean(diff(expTime{e}));
+        for i = 1:length(expSignals{e})
+            sig = expSignals{e}{i};
+            seg = floor(length(sig)/8);
+            w   = hann(seg);
+            [P, f] = pwelch(sig, w, round(seg/2), [], fsExp);
+
+            k = chIdx(i);
+            lab = baseLAB(k,:);
+            lab(1) = lab(1) + Lshift(min(e, length(Lshift)));
+            plotColor = max(min(lab2rgb(lab), 1), 0);
+
+            semilogx(f, 10*log10(P/PREF^2), 'LineWidth', 2, 'Color', plotColor, ...
+                'DisplayName', ['' expLabels{e} ' ' legendNames{k}]);
+
+            oaspl_counter = oaspl_counter + 1;
+            oaspl_psd(oaspl_counter,1) = computeOASPL_PSD(f, P, fmin, fmax, PREF); %#ok<SAGROW>
+        end
+    end
+
+    xlim([fmin fmax]);
+    legend('show','Location','southoutside','NumColumns',3);
+
+    %% --------------------------------------------------------
+    % OASPL SUMMARY
+    %% --------------------------------------------------------
+    figure(figBase + 4); hold on; grid on;
+    title(sprintf('%s - OASPL (%s-%s Hz) [Pass %d]', plotTitle, num2str(fmin), num2str(fmax), passNum));
+    ylabel('OASPL [dB re 20 \muPa]');
+
+    b = bar(categorical(oaspl_labels, oaspl_labels), oaspl_psd, 'FaceColor','flat');
+    b.CData = oaspl_color;
+
+    for i = 1:length(oaspl_labels)
+        text(i, oaspl_psd(i)/2, sprintf('%.1f dB', oaspl_psd(i)), ...
+            'HorizontalAlignment','center','VerticalAlignment','middle', ...
+            'Rotation',90,'FontSize',9,'Color','w','FontWeight','bold');
+    end
+
+    ylim([0, max(oaspl_psd)*1.15]);
+    xtickangle(45);
+
+    fprintf('\n=== Pass %d — OASPL Summary (%.0f-%.0f Hz band) ===\n', passNum, fmin, fmax);
+    fprintf('%-30s %15s %15s %15s\n','Label','OASPL_TD [dB]','OASPL_PSD [dB]','Diff [dB]');
+    for i = 1:length(oaspl_labels)
+        fprintf('%-30s %15.2f %15.2f %15.2f\n', ...
+            oaspl_labels{i}, oaspl_td(i), oaspl_psd(i), oaspl_td(i)-oaspl_psd(i));
+    end
+    fprintf('\n');
+
+    %% --------------------------------------------------------
+    % NARROWBAND SPL WITH HELLER & BLISS MODE OVERLAY
+    %% --------------------------------------------------------
+    figure(figBase + 5); hold on; grid on;
+    title(sprintf('%s - Narrowband SPL + H&B Modes [Pass %d]\n(L/D = %.2f,  M_{\\infty} = %.3f,  U_{\\infty} = %.1f m/s,  \\kappa = %.3f,  \\alpha = %.3f)', ...
+        plotTitle, passNum, HB.L/HB.D, HB.Minf, HB.Uinf, HB.kappa, HB.alpha));
+    xlabel('Frequency [Hz]'); ylabel('SPL [dB re 20 \muPa]');
+    set(gca,'XScale','log');
+
+    for e = 1:nExp
+        fsExp = 1/mean(diff(expTime{e}));
+        for i = 1:length(expSignals{e})
+            k = chIdx(i);
+            [f5, NB5] = computeNBFFT(expSignals{e}{i}, fsExp);
+
+            lab = baseLAB(k,:);
+            lab(1) = lab(1) + Lshift(min(e, length(Lshift)));
+            plotColor = max(min(lab2rgb(lab), 1), 0);
+
+            semilogx(f5, NB5, 'LineWidth', 2, 'Color', plotColor, ...
+                'DisplayName', ['' expLabels{e} ' ' legendNames{k}]);
+        end
+    end
+
+    xlim([fmin fmax]);
+    overlayHBmodesOffsetLabels(HB, fmin, fmax);
+    legend('show','Location','southoutside','NumColumns',3);
+
+    %% --------------------------------------------------------
+    % ASK WHETHER TO REPEAT WITH A DIFFERENT CHANNEL SELECTION
+    %% --------------------------------------------------------
+    choice = questdlg( ...
+        sprintf('Pass %d complete. Plot a different Kulite channel selection using the same loaded files?', passNum), ...
+        'Repeat Plotting', ...
+        'Yes','No','No');
+
+    if ~strcmp(choice, 'Yes')
+        runAgain = false;
+    end
+
+end
+
+%% ============================================================
+% LOCAL FUNCTIONS
+%% ============================================================
+
+function [f,NB] = localFFT(signal, fs, df_desired, PREF)
+signal  = signal(:);
+Nfft    = round(fs/df_desired);
+if mod(Nfft,2)~=0, Nfft = Nfft+1; end
+window  = hann(Nfft);
+nBlocks = floor(length(signal)/Nfft);
+if nBlocks < 2, error('Signal too short for FFT resolution.'); end
+spec = zeros(Nfft, nBlocks);
+for k = 1:nBlocks
+    x = signal((k-1)*Nfft+1 : k*Nfft);
+    X = fft(x .* window);
+    spec(:,k) = 2*abs(X)/Nfft;
+end
+Xavg = mean(spec, 2);
+f  = (0:Nfft/2)' * (fs/Nfft);
+NB = 20*log10(Xavg(1:Nfft/2+1) / PREF);
+end
+
+function OASPL = computeOASPL_TD(signal, fs, fmin, fmax, PREF)
+signal = signal(:) - mean(signal);
+nyq    = fs/2;
+loCut  = max(fmin, 1e-3);
+hiCut  = min(fmax, nyq*0.999);
+if hiCut <= loCut
+    warning('computeOASPL_TD:bandInvalid', ...
+        'Band [%.1f %.1f] Hz invalid for fs=%.1f Hz. Using full BW.', fmin, fmax, fs);
+    OASPL = 20*log10(rms(signal)/PREF);
+else
+    [b,a]  = butter(4, [loCut hiCut]/nyq, 'bandpass');
+    p_filt = filtfilt(b, a, signal);
+    OASPL  = 20*log10(rms(p_filt)/PREF);
+end
+end
+
+function OASPL = computeOASPL_PSD(f, P, fmin, fmax, PREF)
+mask = f >= fmin & f <= fmax;
+if nnz(mask) < 2, OASPL = NaN; return; end
+OASPL = 10*log10(trapz(f(mask), P(mask)) / PREF^2);
+end
+
+function overlayHBmodesOffsetLabels(HB, fmin, fmax)
+ax       = gca;
+hbColor  = [0.80 0.40 0.00];
+logNudge = 0.009 * (log10(fmax) - log10(fmin));
+
+inRangeModes = HB.modes(HB.inRange);
+inRangeFreqs = HB.freq(HB.inRange);
+firstLine    = true;
+
+for idx = 1:length(inRangeModes)
+    n     = inRangeModes(idx);
+    fMode = inRangeFreqs(idx);
+
+    if firstLine
+        dispName  = 'H&B Modes';
+        hVis      = 'on';
+        firstLine = false;
+    else
+        dispName = '';
+        hVis     = 'off';
+    end
+
+    xline(fMode, '--', 'Color', hbColor, 'LineWidth', 1.4, 'Alpha', 0.85, ...
+        'DisplayName', dispName, 'HandleVisibility', hVis);
+
+    fLabel = 10^(log10(fMode) - logNudge);
+    yLims  = ylim(ax);
+    yLabel = yLims(1) + 0.99*(yLims(2) - yLims(1));
+
+    text(fLabel, yLabel, sprintf('%d', n), ...
+        'Color', hbColor, 'FontSize', 8, 'FontWeight', 'bold', ...
+        'HorizontalAlignment','right', 'VerticalAlignment','top', 'Clipping','on');
+end
+end

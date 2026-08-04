@@ -459,7 +459,8 @@ for idx = 1:length(inRangeModes)
 
     fLabel = 10^(log10(fMode) - logNudge);
     yLims  = ylim(ax);
-    yLabel = yLims(1) + 0.99*(yLims(2) - yLims(1));
+    % yLabel = yLims(1) + 0.99*(yLims(2) - yLims(1));
+    yLabel = 116.8;
 
     text(fLabel, yLabel, sprintf('%d', n), ...
         'Color', hbColor, 'FontSize', 8, 'FontWeight', 'bold', ...

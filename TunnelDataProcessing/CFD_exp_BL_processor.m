@@ -281,6 +281,12 @@ colorVolcano = [0.0000 0.4470 0.7410]; % MATLAB default blue
 colorVULCAN  = [0.9290 0.6940 0.1250]; % MATLAB default yellow
 color95           = [1 0 0];            % red
 
+colors = [
+    0.0000 0.4470 0.7410   % blue
+    0.8500 0.3250 0.0980   % orange
+    0.4660 0.6740 0.1880   % green
+];
+
 %% ---- Plot 1: Dimensional Mach vs Y/D ----
 fig_dim = figure;
 hold on; grid on; box on;

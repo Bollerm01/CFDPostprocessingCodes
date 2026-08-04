@@ -20,8 +20,8 @@ clear; clc; close all;
 %% ============================================================
 
 PREF    = 20e-6;
-% NDOM    = 3;
-NDOM = 2;             % number of domains
+NDOM    = 3;
+% NDOM = 2;             % number of domains
 MAXFILE = 3;          % max CSVs per domain
 
 %% ============================================================
