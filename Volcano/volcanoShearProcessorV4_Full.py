@@ -13,17 +13,17 @@ import os
 
 # Full Inputs
 INPUT_FILES= [
-    "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD00/RD00_004/latest.volcano",  # RD00 Path
-    "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD09/RD09_001/latest.volcano", # RD09 Path
-    "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD17/RD17_022/latest.volcano", # RD17 Path
+    # "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD00/RD00_004/latest.volcano",  # RD00 Path
+    # "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD09/RD09_001/latest.volcano", # RD09 Path
+    # "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD17/RD17_022/latest.volcano", # RD17 Path
     "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD52/RD52_057/latest.volcano" # RD52 Path
 ]
 
 OUTPUT_DIRS = [
-    "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/3DfigOutput/RD00", #RD00 Output
-    "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/3DfigOutput/RD09", # RD09 Output
-    "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/3DfigOutput/RD17", # RD17 Output
-    "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/3DfigOutput/RD52", # RD52 Output
+    # "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/3DfigOutput/RD00", #RD00 Output
+    # "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/3DfigOutput/RD09", # RD09 Output
+    # "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/3DfigOutput/RD17", # RD17 Output
+    "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/thesisReprobe/RD52", # RD52 Output
 
 ]
 
@@ -32,11 +32,11 @@ for i in range(len(INPUT_FILES)):
     file_name   = os.path.basename(folder_path)
 
     # Scalars to render
-    # SCALARS = ["pressure"]
-    SCALARS = [
-        "velocityx", "velocityxavg", "tke", "pressure", "pressureavg",
-        "vorticitymag", "vorticitymagavg"
-    ]
+    SCALARS = ["reynoldsstressyz"]
+    # SCALARS = [
+    #     "velocityx", "velocityxavg", "tke", "pressure", "pressureavg",
+    #     "vorticitymag", "vorticitymagavg"
+    # ]
 
     # User-defined scalar ranges (min, max) per array name.
     # If a scalar is not listed the script falls back to the data range.
@@ -53,6 +53,9 @@ for i in range(len(INPUT_FILES)):
         # Vorticity
         "vorticitymag":    (0.0, 5.0e5),
         "vorticitymagavg": (0.0, 5.0e5),
+
+        # Reynolds Stress
+        "reynoldsstressyz": (-400.0, 250.0),
     }
 
     # ============================================================
@@ -70,6 +73,9 @@ for i in range(len(INPUT_FILES)):
 
         "vorticitymag":    "Vorticity Magnitude (1/s)",
         "vorticitymagavg": "Avg. Vorticity Magnitude (1/s)",
+
+        # Reynolds Stress
+        "reynoldsstressyz": "reynoldsstressyz",
     }
 
     DEFAULT_COLORMAP_PRESET = "Cool to Warm (Extended)"
@@ -84,6 +90,9 @@ for i in range(len(INPUT_FILES)):
 
         "vorticitymag":    "Inferno (matplotlib)",
         "vorticitymagavg": "Inferno (matplotlib)",
+
+        # Reynolds Stress
+        "reynoldsstressyz": "Turbo",
     }
 
     # ============================================================

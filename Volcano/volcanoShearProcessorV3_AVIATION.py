@@ -13,11 +13,11 @@ import os
 # Full Inputs
 # INPUT_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD00/RD00_004/latest.volcano"
 # INPUT_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD17/RD17_022/latest.volcano" # RD17 Path
-# INPUT_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD52/RD52_057/latest.volcano" # RD52 Path
+INPUT_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD52/RD52_057/latest.volcano" # RD52 Path
 
-INPUT_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD00/RD00_reprobing_002/latest.volcano" # RD00 Slice from Kulite probing
+# INPUT_FILE = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD00/RD00_reprobing_002/latest.volcano" # RD00 Slice from Kulite probing
 
-OUTPUT_DIR = "/home/bollerma/LESdata/SSWT/sliceCav/contourOutput/RD00" # CHANGE PER RUN
+# OUTPUT_DIR = "/home/bollerma/LESdata/SSWT/sliceCav/contourOutput/RD00" # CHANGE PER RUN
 OUTPUT_DIR = "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD00/RD00_reprobing_002/contourOutput"
 
 folder_path = os.path.dirname(INPUT_FILE) # /home/user/project

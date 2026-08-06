@@ -1,8 +1,10 @@
 %% highFreqAxialPlotter.m
 %
-% Loads 3-5 high-frequency CFD line-probe CSV files.  For each file the
-% MIDDLE probe point (median index of sorted numeric column prefixes) is
-% extracted and its pressure signal is analysed.
+% Loads CFD line-probe CSV files organized as N_AXIAL axial locations x
+% N_SPAN spanwise locations at each axial station (default 3x3 = 9
+% files). For each file the MIDDLE probe point (median index of sorted
+% numeric column prefixes) is extracted and its pressure signal is
+% analysed.
 %
 % Outputs
 %   Figure 1  –  Time History (all locations overlaid)
@@ -17,31 +19,38 @@
 %   Pressure is in Pascals (absolute); DC is removed before analysis.
 %
 % Usage
-%   Run the script directly.  A dialog box collects all parameters.
-%   Then use the file browser to select 3-5 CSV files in order.
-%   A second dialog collects legend labels for those files.
+%   Run the script directly.  A dialog box collects all parameters,
+%   including the number of axial locations and spanwise locations per
+%   axial station.  Then use the file browser to select the CSV files
+%   (N_AXIAL * N_SPAN of them).  A second dialog lets you confirm/adjust
+%   which axial station and spanwise position each file belongs to, plus
+%   the legend label. Colors are then assigned so that:
+%       - each AXIAL location gets its own distinct HUE
+%       - each SPANWISE location within that axial station gets its own
+%         SHADE (lightness) of that hue
 %
 % Requires: Signal Processing Toolbox  (pwelch, butter, filtfilt, hann)
 %
 % CHANGES vs. original
-%   [COLOR]  Replaced the single-axis lightness ramp with a full CIE-LCH
-%            spiral: L* is ramped 40→78, C* is fixed at 55 (vivid but
-%            printable), and h° is distributed evenly around the hue
-%            wheel.  Colours are converted LCH→LAB→RGB and clamped to
-%            [0,1] so MATLAB never silently clips them to an unintended
-%            shade.  With ≤5 traces the minimum angular separation is 72°,
-%            which keeps every line perceptually distinct even in
-%            grey-scale print.
+%   [GROUPING] Files are now organized by (axial, spanwise) index pairs
+%              instead of an arbitrary flat list. This makes the color
+%              logic map directly onto the physical geometry.
 %
-%   [OASPL]  computeOASPL_PSD now divides by the window power-correction
-%            factor (mean(w.^2)) before integration.  The raw pwelch
-%            output is a two-sided PSD scaled by the window; multiplying
-%            by 2 and dividing by the one-sided correction recovers the
-%            true one-sided PSD.  Without this step the Hann window
-%            suppresses the PSD by ~1.76 dB, which carries directly into
-%            the OASPL.  The correction is applied inside
-%            computeOASPL_PSD so the plotted PSD curves (Figure 3) are
-%            also corrected identically.
+%   [COLOR]    Replaced the single-axis lightness ramp with a
+%              hue-per-axial-location / shade-per-spanwise-location
+%              scheme in CIE LCH space. All spanwise traces belonging to
+%              the same axial station share a hue (e.g. all "blue"), and
+%              are distinguished from each other only by lightness
+%              (light/medium/dark). Axial stations are separated by hue
+%              (evenly spaced around the hue wheel, so 3 axial stations
+%              are maximally distinct, e.g. red / green / blue-ish).
+%              Colours are converted LCH→LAB→RGB and clamped to [0,1] so
+%              MATLAB never silently clips them to an unintended shade.
+%
+%   [OASPL]    computeOASPL_PSD integrates the one-sided PSD directly
+%              (pwelch already applies the correct window power
+%              normalisation), matching the corrected version from the
+%              prior revision.
 % -------------------------------------------------------------------------
 
 clear; clc; close all;
@@ -59,7 +68,9 @@ answer = inputdlg( ...
     'End Time [s]  (leave 0 for full signal)', ...
     'FFT df [Hz]   (frequency resolution)', ...
     'Min Frequency [Hz]', ...
-    'Max Frequency [Hz]'}, ...
+    'Max Frequency [Hz]', ...
+    'Number of Axial Locations', ...
+    'Number of Spanwise Locations per Axial Station'}, ...
     'Analysis Settings', ...
     [1 68], ...
     { ...
@@ -68,7 +79,9 @@ answer = inputdlg( ...
     '0', ...
     '75', ...
     '100', ...
-    '20000'});
+    '20000', ...
+    '3', ...
+    '3'});
 
 if isempty(answer), return; end
 
@@ -78,14 +91,27 @@ tEnd         = str2double(answer{3});   % 0 → use full signal
 df_desired   = str2double(answer{4});
 fmin         = str2double(answer{5});
 fmax         = str2double(answer{6});
+nAxial       = round(str2double(answer{7}));
+nSpan        = round(str2double(answer{8}));
+
+if nAxial < 1 || nSpan < 1 || isnan(nAxial) || isnan(nSpan)
+    errordlg('Number of axial and spanwise locations must be positive integers.', ...
+        'Input Error');
+    return
+end
+
+nExpected = nAxial * nSpan;
 
 %% ============================================================
-%  STEP 2 – SELECT CSV FILES  (3-5)
+%  STEP 2 – SELECT CSV FILES  (N_AXIAL x N_SPAN)
 %% ============================================================
 
 [fileNames, filePath] = uigetfile( ...
     '*.csv', ...
-    'Select 3-5 line-probe CSV files of varying axial locations or edge types', ...
+    sprintf(['Select %d CSV files (%d axial locations x %d spanwise ' ...
+             'locations). Selection order does not matter -- you will ' ...
+             'assign axial/spanwise indices next.'], ...
+             nExpected, nAxial, nSpan), ...
     'MultiSelect','on');
 
 if isequal(fileNames,0), return; end
@@ -93,55 +119,110 @@ if ischar(fileNames), fileNames = {fileNames}; end
 
 nFiles = numel(fileNames);
 
-% if nFiles < 3 || nFiles > 5
-%     errordlg( ...
-%         sprintf('Please select 3-5 files of varying axial locations or edge types. You selected %d.', nFiles), ...
-%         'File Count Error');
-%     return
-% end
+if nFiles ~= nExpected
+    warndlg( ...
+        sprintf(['You selected %d file(s) but %d axial x %d spanwise = %d ' ...
+                 'were expected. Proceeding anyway -- you will assign ' ...
+                 'axial/spanwise indices to each file manually next.'], ...
+                 nFiles, nAxial, nSpan, nExpected), ...
+        'File Count Notice');
+end
 
 %% ============================================================
-%  STEP 3 – LEGEND LABEL DIALOG
-%% ============================================================
-
-defaultLabels = cellfun(@(f) strrep(f,'.csv',''), fileNames, ...
-    'UniformOutput',false);
-
-legendAnswer = inputdlg( ...
-    arrayfun(@(k) sprintf('Label for file %d:  %s', k, fileNames{k}), ...
-             1:nFiles, 'UniformOutput',false), ...
-    'Legend Labels', ...
-    [1 72], ...
-    defaultLabels);
-
-if isempty(legendAnswer), return; end
-
-legendLabels = legendAnswer;
-
-%% ============================================================
-%  PERCEPTUALLY-UNIFORM COLOR SYSTEM (CIE LAB)
+%  STEP 3 – AXIAL / SPANWISE GROUP ASSIGNMENT + LEGEND LABELS
 %% ============================================================
 %
-%  Hue seeds come from lines(max(nFiles,7)), which gives maximally
-%  distinct colours and never repeats within 7 entries.  The seed
-%  palette is converted to LAB; each file then receives a unique
-%  lightness shift drawn from Lshift so that files are separated in
-%  both hue AND brightness.  A_star and B_star are preserved from the
-%  seed, keeping chromaticity intact.
+%  Default assignment walks files in selection order, filling all
+%  spanwise positions for axial station 1, then axial station 2, etc.
+%  Edit the "axialIdx,spanIdx" field for any file that doesn't match
+%  that assumption. The legend label defaults to "Axial <a> - Span <s>"
+%  but can be freely edited (e.g. to real x/y coordinates).
+
+groupPrompts  = cell(nFiles,1);
+groupDefaults = cell(nFiles,1);
+for fi = 1:nFiles
+    defAxial = min(nAxial, ceil(fi / nSpan));
+    defSpan  = mod(fi-1, nSpan) + 1;
+    groupPrompts{fi} = sprintf( ...
+        'File %d: %s\n(format:  axialIdx,spanIdx,label)', ...
+        fi, fileNames{fi});
+    groupDefaults{fi} = sprintf('%d,%d,Axial %d - Span %d', ...
+        defAxial, defSpan, defAxial, defSpan);
+end
+
+groupAnswer = inputdlg(groupPrompts, 'Axial / Spanwise Assignment', ...
+    [1 72], groupDefaults);
+
+if isempty(groupAnswer), return; end
+
+axialIdx     = zeros(nFiles,1);
+spanIdx      = zeros(nFiles,1);
+legendLabels = cell(nFiles,1);
+
+for fi = 1:nFiles
+    tokens = strsplit(groupAnswer{fi}, ',');
+    if numel(tokens) < 3
+        error('File %d: expected format "axialIdx,spanIdx,label"', fi);
+    end
+    axialIdx(fi) = round(str2double(tokens{1}));
+    spanIdx(fi)  = round(str2double(tokens{2}));
+    legendLabels{fi} = strtrim(strjoin(tokens(3:end), ','));
+end
+
+if any(isnan(axialIdx)) || any(isnan(spanIdx)) || ...
+   any(axialIdx < 1) || any(spanIdx < 1)
+    errordlg('Axial/spanwise indices must be positive integers.', ...
+        'Input Error');
+    return
+end
+
+nAxial = max(nAxial, max(axialIdx));   % expand if user typed a larger index
+nSpan  = max(nSpan,  max(spanIdx));
+
+%% ============================================================
+%  PERCEPTUALLY-UNIFORM COLOR SYSTEM (CIE LCH -> LAB -> RGB)
+%% ============================================================
 %
-%  Lshift has three levels: dark (−18), neutral (0), bright (+18).
-%  With up to 5 files the index wraps with mod so every file gets a
-%  well-defined shift.  After shifting, L* is clamped to [5, 95] to
-%  avoid pure black or blown-out white, and the resulting LAB triplet
-%  is converted back to sRGB with explicit [0,1] clamping.
+%  HUE encodes AXIAL LOCATION:
+%    nAxial hues are spread evenly around the LCH hue wheel (360/nAxial
+%    degree spacing), starting at 0 deg (red) so distinct axial stations
+%    are maximally separated in hue -- e.g. with 3 axial stations you
+%    get roughly red / green / blue.
+%
+%  SHADE (lightness) encodes SPANWISE LOCATION:
+%    For a given axial station's hue, nSpan lightness levels are spread
+%    across L* = [40, 80] (dark -> light), so spanwise positions within
+%    the same axial station are clearly distinguishable shades of the
+%    same color family while remaining visually grouped.
+%
+%  Chroma C* is held fixed (55) for all traces -- vivid but printable.
 
-baseRGB    = lines(max(nFiles, 7));       % maximally distinct hue seeds
-baseLAB    = rgb2lab(baseRGB);           % raw LAB seeds – shifted at plot time
+hueDeg   = mod( (0:nAxial-1) * (360 / nAxial), 360 );   % one hue per axial stn
+Cstar    = 55;                                          % fixed chroma
+Lrange   = [40 80];                                     % dark -> light
+if nSpan > 1
+    Lshades = linspace(Lrange(1), Lrange(2), nSpan);
+else
+    Lshades = mean(Lrange);
+end
 
-Lshift     = [-18, 0, +18];             % brightness levels (dark/neutral/bright)
-                                         % index wraps with mod for > 3 files
+traceColor = zeros(nFiles,3);
+for fi = 1:nFiles
+    H = hueDeg(axialIdx(fi));
+    L = Lshades(spanIdx(fi));
+    a = Cstar * cosd(H);
+    b = Cstar * sind(H);
+    rgb = lab2rgb([L a b]);
+    traceColor(fi,:) = max(0, min(1, rgb));
+end
 
-lineStyles = {'-', '--', ':', '-.', '--'};  % one distinct style per file
+% Line style differentiates spanwise position as a secondary (redundant)
+% visual cue, useful for grey-scale printing.
+styleList  = {'-', '-', '-', '-'};
+traceStyle = cell(nFiles,1);
+for fi = 1:nFiles
+    traceStyle{fi} = styleList{ mod(spanIdx(fi)-1, numel(styleList)) + 1 };
+end
 
 %% ============================================================
 %  LOAD DATA & EXTRACT MIDDLE-POINT PRESSURE
@@ -215,12 +296,9 @@ xlabel('Time [s]',    'FontSize',12)
 ylabel('Pressure [Pa]','FontSize',12)
 
 for fi = 1:nFiles
-    lab_i = baseLAB(fi,:);
-    lab_i(1) = lab_i(1) + Lshift(min(fi, numel(Lshift)));
-    plotColor = max(0, min(1, lab2rgb(lab_i)));
     plot(timeVecs{fi}, signals{fi}, ...
-        'Color',      plotColor, ...
-        'LineStyle',  lineStyles{min(fi, numel(lineStyles))}, ...
+        'Color',      traceColor(fi,:), ...
+        'LineStyle',  traceStyle{fi}, ...
         'LineWidth',  1.2, ...
         'DisplayName', legendLabels{fi});
 end
@@ -241,7 +319,7 @@ set(gca,'XScale','log')
 
 oaspl_labels = cell(nFiles,1);
 oaspl_psd    = nan(nFiles,1);
-oaspl_color  = zeros(nFiles,3);
+oaspl_color  = traceColor;
 
 for fi = 1:nFiles
 
@@ -251,18 +329,13 @@ for fi = 1:nFiles
 
     [f_nb, NB] = localFFT(sig, fs, df_desired, PREF);
 
-    lab_i = baseLAB(fi,:);
-    lab_i(1) = lab_i(1) + Lshift(min(fi, numel(Lshift)));
-    plotColor = max(0, min(1, lab2rgb(lab_i)));
-
     semilogx(f_nb, NB, ...
-        'Color',     plotColor, ...
-        'LineStyle', '-', ...
+        'Color',     traceColor(fi,:), ...
+        'LineStyle', traceStyle{fi}, ...
         'LineWidth',  2, ...
         'DisplayName', legendLabels{fi});
 
     oaspl_labels{fi}  = legendLabels{fi};
-    oaspl_color(fi,:) = plotColor;
 
 end
 
@@ -304,23 +377,11 @@ for fi = 1:nFiles
         [], ...
         fs);
 
-    lab_i    = baseLAB(fi,:);
-    lab_i(1) = lab_i(1) + Lshift(min(fi, numel(Lshift)));
-    plotColor = max(min(lab2rgb(lab_i), 1), 0);
-
-    % semilogx( ...
-    %     f, ...
-    %     10*log10(P / PREF^2), ...
-    %     'Color',       plotColor, ...
-    %     'LineStyle',   lineStyles{min(fi, numel(lineStyles))}, ...
-    %     'LineWidth',   2, ...
-    %     'DisplayName', legendLabels{fi});
-
     semilogx( ...
         f, ...
         10*log10(P / PREF^2), ...
-        'Color',       plotColor, ...
-        'LineStyle',   '-', ...
+        'Color',       traceColor(fi,:), ...
+        'LineStyle',   traceStyle{fi}, ...
         'LineWidth',   2, ...
         'DisplayName', legendLabels{fi});
 
@@ -370,18 +431,18 @@ xtickangle(45);
 %% ============================================================
 
 fprintf('\n=== OASPL Summary (%.0f–%.0f Hz band) ===\n', fmin, fmax);
-fprintf('%-40s  %14s\n', ...
-    'Label','OASPL_PSD [dB]');
-fprintf('%s\n', repmat('-',1,58));
+fprintf('%-40s  %8s  %8s  %14s\n', ...
+    'Label','Axial','Span','OASPL_PSD [dB]');
+fprintf('%s\n', repmat('-',1,76));
 
 for fi = 1:nFiles
 
     if isnan(oaspl_psd(fi))
-        fprintf('%-40s  %14s\n', ...
-            oaspl_labels{fi}, 'N/A');
+        fprintf('%-40s  %8d  %8d  %14s\n', ...
+            oaspl_labels{fi}, axialIdx(fi), spanIdx(fi), 'N/A');
     else
-        fprintf('%-40s  %14.2f\n', ...
-            oaspl_labels{fi}, ...
+        fprintf('%-40s  %8d  %8d  %14.2f\n', ...
+            oaspl_labels{fi}, axialIdx(fi), spanIdx(fi), ...
             oaspl_psd(fi));
     end
 
@@ -389,7 +450,8 @@ end
 
 fprintf('\nMiddle probe point IDs used:\n');
 for fi = 1:nFiles
-    fprintf('  %s  →  point %s\n', fileNames{fi}, midIDs{fi});
+    fprintf('  %s  (Axial %d, Span %d)  →  point %s\n', ...
+        fileNames{fi}, axialIdx(fi), spanIdx(fi), midIDs{fi});
 end
 fprintf('\n');
 
@@ -459,11 +521,10 @@ function OASPL = computeOASPL_PSD(f, P, fmin, fmax, PREF)
 % Therefore no additional window-correction factor is needed here; a
 % straightforward trapz integration over the band of interest is correct.
 %
-% The original code was also correct in this respect — pwelch handles the
-% window normalisation internally.  The key requirement (satisfied below)
-% is that f(1) == 0 (DC bin present) so that trapz weights are right.
-% If pwelch was called with an explicit frequency vector that omits DC,
-% the bin spacing is still uniform and trapz remains exact.
+% The key requirement (satisfied below) is that f(1) == 0 (DC bin
+% present) so that trapz weights are right. If pwelch was called with an
+% explicit frequency vector that omits DC, the bin spacing is still
+% uniform and trapz remains exact.
 
     mask = f >= fmin & f <= fmax;
 

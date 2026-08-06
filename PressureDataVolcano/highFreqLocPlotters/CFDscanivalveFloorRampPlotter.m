@@ -111,7 +111,7 @@ grid on; box on;
 colormap(turbo);
 cb = colorbar;
 cb.Label.String = 'P/P_{ref}';
-cb.Label.Rotation = 0.0;
+% cb.Label.Rotation = 0.0;
 
 set(gca, 'FontSize', 12);
 set(gca, 'YDir', 'reverse');
@@ -137,7 +137,7 @@ grid on; box on;
 colormap(turbo);
 cb = colorbar;
 cb.Label.String = 'P/P_{ref}';
-cb.Label.Rotation = 0.0;
+% cb.Label.Rotation = 0.0;
 
 set(gca, 'FontSize', 12);
 set(gca, 'YDir', 'reverse');
@@ -183,7 +183,7 @@ lighting none;
 colormap(turbo);
 cb = colorbar;
 cb.Label.String = 'P/P_{ref}';
-cb.Label.Rotation = 0.0;
+% cb.Label.Rotation = 0.0;
 
 set(gca, 'FontSize', 12);
 axis tight; axis equal;
