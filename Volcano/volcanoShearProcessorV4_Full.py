@@ -344,7 +344,7 @@ for i in range(len(INPUT_FILES)):
 
         # ---- 2. Create domain surface ----
         surface = VolcanoSurface(registrationName="DomainSurface_3D", Input=src)
-        surface.Clip       = 0          # no clip — show full domain boundary
+        #surface.Clip       = 0          # no clip — show full domain boundary
         surface.UpdatePipeline()
 
         # ---- 3. Show surface (semi-transparent, uncoloured) ----
