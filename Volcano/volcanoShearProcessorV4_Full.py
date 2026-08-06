@@ -32,7 +32,7 @@ for i in range(len(INPUT_FILES)):
     file_name   = os.path.basename(folder_path)
 
     # Scalars to render
-    SCALARS = ["reynoldsstressyz"]
+    SCALARS = ["reynoldsstressyz", "vorticitymag", "vorticitymagavg"]
     # SCALARS = [
     #     "velocityx", "velocityxavg", "tke", "pressure", "pressureavg",
     #     "vorticitymag", "vorticitymagavg"
@@ -100,7 +100,7 @@ for i in range(len(INPUT_FILES)):
     # ============================================================
 
     # Full Loop
-    YZ_SLICE_X = [2.1508, 2.1691, 2.1793151, 2.19847, 2.216945]  # x/L = 0.03, 0.3, 0.45, 0.73, 1
+    YZ_SLICE_X = [2.1508, 2.1691, 2.1793151, 2.19847, 2.20737, 2.216945]  # x/L = 0.03, 0.3, 0.45, 0.73, 0.86, 1
     XY_SLICE_Z  = [-0.0381, 0, 0.0381]
     XZ_SLICE_Y  = [0.0093, 0.001]
 
