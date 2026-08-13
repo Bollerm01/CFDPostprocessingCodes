@@ -71,7 +71,7 @@ legendLabels = {'R/D = 0.0', 'R/D = 0.17','R/D = 0.52'}; % UPDATED FOR SLICE
 % 3) Axial locations of interest
 %    Must match the axial ID portion in the sheet names
 % -------------------------------------------------------------------------
-axialLocs = {'xL0p03', 'xL0p17', 'xL0p3', 'xL0p45', 'xL0p59', 'xL0p86' ...
+axialLocs = {'xL0p03', 'xL0p17', 'xL0p3', 'xL0p45', 'xL0p59', 'xL0p86', 'xL0p73', ...
     'xL1'};
 
 fprintf('Using axial locations:\n  %s\n\n', strjoin(axialLocs, ', '));

@@ -3,13 +3,9 @@
 %
 % CHAN1 -> S1 ... CHAN9 -> S9
 % Gauge Pressure (psig) + barometric correction
-% Includes user-defined normalization pressure
+% Now includes user-defined normalization pressure
 %
-% CHANGE: Interpolation is now performed on the HALF domain
-% (Z <= 0), using only the real (non-mirrored) sensor data.
-% The resulting interpolated GRID is then mirrored about
-% Z = 0 to build the full field, instead of mirroring the
-% raw sensor point cloud before interpolating.
+% Generates mirrored cavity pressure field about Z = 0
 %
 %% ============================================================
 
@@ -50,7 +46,7 @@ if isnan(baro_inHg)
 end
 
 %% ============================================================
-% NORMALIZATION PRESSURE INPUT
+% NEW: NORMALIZATION PRESSURE INPUT
 %% ============================================================
 
 normAns = inputdlg( ...
@@ -82,7 +78,7 @@ INHG_TO_PA = 3386.389;
 baroPa = baro_inHg * INHG_TO_PA;
 
 %% ============================================================
-% SENSOR LOCATIONS (real, physical locations only — Z <= 0)
+% SENSOR LOCATIONS
 %% ============================================================
 
 sensorNames = { ...
@@ -148,101 +144,97 @@ for k = 1:9
 end
 
 %% ============================================================
-% DOMAIN BOUNDS (full, symmetric domain)
+% MIRROR ABOUT Z = 0
+%% ============================================================
+
+sensorXZ_mirror = sensorXZ;
+sensorXZ_mirror(:,2) = -sensorXZ_mirror(:,2);
+
+interpX = [sensorXZ(:,1); sensorXZ_mirror(:,1)];
+interpZ = [sensorXZ(:,2); sensorXZ_mirror(:,2)];
+interpP = [sensorPressurePa; sensorPressurePa];
+
+%% ============================================================
+% BOUNDARY EXTENSION
 %% ============================================================
 
 xmin = 2.1485;
 xmax = 2.19475;
 
 zmin = -0.0765;
-zmax =  0.0765;   % must equal -zmin for the mirror step to be valid
+zmax = 0.0765;
 
-%% ============================================================
-% HALF-DOMAIN DATA (Z <= 0 ONLY) — real sensors, no mirroring
-%% ============================================================
-
-interpX = sensorXZ(:,1);
-interpZ = sensorXZ(:,2);
-interpP = sensorPressurePa;
-
-%% ============================================================
-% BOUNDARY EXTENSION (half domain only, Z <= 0)
-%% ============================================================
-
-% Left edge (x = xmin), z from zmin up to 0 (no positive-Z points)
-leftX = xmin * ones(3,1);
-leftZ = [-0.0635; -0.0381; 0.0];
+leftX = xmin * ones(6,1);
+leftZ = [-0.0635; -0.0381; 0.0; 0.0381; 0.0635; 0.0];
 leftP = [
     sensorPressurePa(1);
     sensorPressurePa(2);
+    sensorPressurePa(3);
+    sensorPressurePa(2);
+    sensorPressurePa(1);
     sensorPressurePa(3)];
 
-% Right edge (x = xmax), z from zmin up to 0
-rightX = xmax * ones(3,1);
-rightZ = [-0.0635; -0.0381; 0.0];
+rightX = xmax * ones(6,1);
+rightZ = [-0.0635; -0.0381; 0.0; 0.0381; 0.0635; 0.0];
 rightP = [
     sensorPressurePa(7);
     sensorPressurePa(8);
+    sensorPressurePa(9);
+    sensorPressurePa(8);
+    sensorPressurePa(7);
     sensorPressurePa(9)];
 
-% Bottom edge (z = zmin), spans x
 bottomX = [2.16000; 2.17143; 2.18286];
 bottomZ = zmin * ones(3,1);
 bottomP = [sensorPressurePa(1); sensorPressurePa(4); sensorPressurePa(7)];
 
-% NOTE: no "top" boundary needed here — the top of the half
-% domain is Z = 0, which is already populated by the real
-% sensors S3, S6, S9.
+topX = [2.16000; 2.17143; 2.18286];
+topZ = zmax * ones(3,1);
+topP = [sensorPressurePa(1); sensorPressurePa(4); sensorPressurePa(7)];
 
-interpX = [interpX; leftX; rightX; bottomX];
-interpZ = [interpZ; leftZ; rightZ; bottomZ];
-interpP = [interpP; leftP; rightP; bottomP];
+interpX = [interpX; leftX; rightX; bottomX; topX];
+interpZ = [interpZ; leftZ; rightZ; bottomZ; topZ];
+interpP = [interpP; leftP; rightP; bottomP; topP];
 
 %% ============================================================
-% NORMALIZATION
+% NORMALIZATION (NEW)
 %% ============================================================
 
 interpP = interpP ./ Pnorm;
 sensorP_norm = sensorPressurePa ./ Pnorm;
 
 %% ============================================================
-% GRID INTERPOLATION — HALF DOMAIN ONLY (Z <= 0)
+% GRID INTERPOLATION
 %% ============================================================
 
-nx      = 350;
-nz_half = 176;   % zmin ... 0 inclusive
+nx = 350;
+nz = 350;
 
-xg      = linspace(xmin, xmax, nx);
-zg_half = linspace(zmin, 0, nz_half);
+xg = linspace(min(interpX), max(interpX), nx);
+zg = linspace(min(interpZ), max(interpZ), nz);
 
-[XG_half, ZG_half] = meshgrid(xg, zg_half);
+[XG,ZG] = meshgrid(xg,zg);
 
-F = scatteredInterpolant(interpX, interpZ, interpP, 'linear','nearest');
-PG_half = F(XG_half, ZG_half);
-
-%% ============================================================
-% MIRROR THE INTERPOLATED GRID ABOUT Z = 0
-%% ============================================================
-
-% Reflect all rows except the Z = 0 row (avoid duplicating it)
-zg_mirror = -fliplr(zg_half(1:end-1));      % ascending, (0, zmax]
-PG_mirror = flipud(PG_half(1:end-1,:));     % matching reflected rows
-
-zg = [zg_half, zg_mirror];                  % full Z vector, zmin..zmax
-PG = [PG_half; PG_mirror];                  % full interpolated field
-
-[XG,ZG] = meshgrid(xg, zg);
+F = scatteredInterpolant(interpX, interpZ, interpP, 'nearest','linear');
+PG = F(XG,ZG);
 
 %% ============================================================
 % 3D SURFACE (NORMALIZED)
 %% ============================================================
 
-figure('Color','w','Position',[930 381 768 500]);
+figure('Color','w','Position',[100 100 1200 700]);
 
 surf(XG,ZG,PG,'EdgeColor','none');
 hold on;
 
+scatter3(sensorXZ(:,1), sensorXZ(:,2), sensorP_norm, ...
+    100,'k','filled');
 
+for k = 1:length(sensorNames)
+    text(sensorXZ(k,1),sensorXZ(k,2),sensorP_norm(k), ...
+        ['        ' sensorNames{k}], ...
+        'FontWeight','bold');
+end
 
 xlabel('X Location (m)')
 ylabel('Spanwise Z (m)')
@@ -255,15 +247,6 @@ colormap(turbo)
 cb = colorbar;
 cb.Label.String = 'P / P_{ref}';
 clim([0.1380 0.1412]);
-
-scatter3(sensorXZ(:,1), sensorXZ(:,2), sensorP_norm, ...
-    100,'k','filled');
-
-% for k = 1:length(sensorNames)
-%     text(sensorXZ(k,1),sensorXZ(k,2),sensorP_norm(k), ...
-%         ['        ' sensorNames{k}], ...
-%         'FontWeight','bold');
-% end
 
 shading interp
 grid on

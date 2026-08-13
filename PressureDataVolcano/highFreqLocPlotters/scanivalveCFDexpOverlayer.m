@@ -5,6 +5,12 @@
 %   - CFD data       (ParaView CSV, pressureavg column)
 %   - Experimental   (Scanivalve CSV, CHAN1-CHAN9, gauge psi)
 %
+% CHANGE: The experimental surface is now built by interpolating
+% ONLY the real (non-mirrored) sensor data over the half domain
+% (Z <= 0), then mirroring the resulting INTERPOLATED GRID about
+% Z = 0 to produce the full field — instead of mirroring the raw
+% sensor point cloud before interpolating.
+%
 % Outputs:
 %   1) Overlaid 3D scatter/surface plot (CFD surface + Exp markers)
 %   2) Overlaid 2D contour map
@@ -84,7 +90,7 @@ INHG_TO_PA = 3386.389;
 baroPa = baro_inHg * INHG_TO_PA;
 
 %% ============================================================
-% SENSOR LOCATIONS (shared by both datasets)
+% SENSOR LOCATIONS (shared by both datasets, real locations only)
 %% ============================================================
 
 sensorNames = {'S1','S2','S3','S4','S5','S6','S7','S8','S9'};
@@ -181,63 +187,68 @@ zg = linspace(min(z_cfd), max(z_cfd), 300);
 PG_cfd = F_cfd(XG, ZG);
 
 %% ============================================================
-% BUILD EXPERIMENTAL INTERPOLATED SURFACE (mirrored, extended)
-%   NOTE: Interpolation strategy matched to ExpScanivalvePlotter.m
-%   ('natural','nearest' scatteredInterpolant, 350x350 grid spanning
-%   the full min/max of the extended point cloud) so the experimental
-%   surface renders identically across both scripts.
+% BUILD EXPERIMENTAL INTERPOLATED SURFACE
+%   NOTE: Interpolation strategy matched to the updated
+%   ExpScanivalvePlotter.m — interpolate over the HALF domain
+%   (Z <= 0) using only real sensor + boundary data, then mirror
+%   the resulting GRID about Z = 0 to build the full field. This
+%   replaces the previous approach of mirroring the raw sensor
+%   points before interpolating.
 %% ============================================================
 
-sensorXZ_mirror = sensorXZ;
-sensorXZ_mirror(:,2) = -sensorXZ_mirror(:,2);
-
-interpX = [sensorXZ(:,1);        sensorXZ_mirror(:,1)];
-interpZ = [sensorXZ(:,2);        sensorXZ_mirror(:,2)];
-interpP = [sensorPressurePa;     sensorPressurePa];
-
-% Boundary extension
 xmin_exp = 2.1485;   xmax_exp = 2.19475;
-zmin_exp = -0.0765;  zmax_exp =  0.0765;
+zmin_exp = -0.0765;  zmax_exp =  0.0765;   % zmax_exp must equal -zmin_exp
 
-leftX = xmin_exp * ones(6,1);
-leftZ = [-0.0635; -0.0381; 0.0; 0.0381; 0.0635; 0.0];
-leftP = [sensorPressurePa(1); sensorPressurePa(2); sensorPressurePa(3); ...
-         sensorPressurePa(2); sensorPressurePa(1); sensorPressurePa(3)];
+% --- Half-domain data (Z <= 0 only) — real sensors, no mirroring ---
+interpX = sensorXZ(:,1);
+interpZ = sensorXZ(:,2);
+interpP = sensorPressurePa;
 
-rightX = xmax_exp * ones(6,1);
-rightZ = leftZ;
-rightP = [sensorPressurePa(7); sensorPressurePa(8); sensorPressurePa(9); ...
-          sensorPressurePa(8); sensorPressurePa(7); sensorPressurePa(9)];
+% Left edge (x = xmin_exp), z from zmin_exp up to 0
+leftX = xmin_exp * ones(3,1);
+leftZ = [-0.0635; -0.0381; 0.0];
+leftP = [sensorPressurePa(1); sensorPressurePa(2); sensorPressurePa(3)];
 
+% Right edge (x = xmax_exp), z from zmin_exp up to 0
+rightX = xmax_exp * ones(3,1);
+rightZ = [-0.0635; -0.0381; 0.0];
+rightP = [sensorPressurePa(7); sensorPressurePa(8); sensorPressurePa(9)];
+
+% Bottom edge (z = zmin_exp), spans x
 bottomX = [2.16000; 2.17143; 2.18286];
 bottomZ = zmin_exp * ones(3,1);
 bottomP = [sensorPressurePa(1); sensorPressurePa(4); sensorPressurePa(7)];
 
-topX = bottomX;
-topZ = zmax_exp * ones(3,1);
-topP = bottomP;
+% NOTE: no "top" boundary needed — the top of the half domain is
+% Z = 0, already populated by real sensors S3, S6, S9.
 
-interpX = [interpX; leftX; rightX; bottomX; topX];
-interpZ = [interpZ; leftZ; rightZ; bottomZ; topZ];
-interpP = [interpP; leftP; rightP; bottomP; topP];
+interpX = [interpX; leftX; rightX; bottomX];
+interpZ = [interpZ; leftZ; rightZ; bottomZ];
+interpP = [interpP; leftP; rightP; bottomP];
 
-% Normalize (matches ExpScanivalvePlotter.m: interpP normalized in place,
-% sensorP_norm computed separately from sensorPressurePa)
+% Normalize
 interpP_norm = interpP ./ Pnorm_Exp;
 
-% Match ExpScanivalvePlotter.m exactly: 'natural' interpolation with
-% 'nearest' extrapolation (instead of 'linear'/'none'), and grid spans
-% the full min/max of the (now un-cornered) point cloud rather than a
-% fixed xmin_exp/xmax_exp/zmin_exp/zmax_exp box.
-F_exp = scatteredInterpolant(interpX, interpZ, interpP_norm, 'natural', 'nearest');
+% Interpolate over the half domain only
+F_exp = scatteredInterpolant(interpX, interpZ, interpP_norm, 'linear', 'nearest');
 
-nx_exp = 350;
-nz_exp = 350;
+nx_exp      = 350;
+nz_exp_half = 176;   % zmin_exp ... 0 inclusive
 
-xg_exp = linspace(min(interpX), max(interpX), nx_exp);
-zg_exp = linspace(min(interpZ), max(interpZ), nz_exp);
+xg_exp      = linspace(xmin_exp, xmax_exp, nx_exp);
+zg_exp_half = linspace(zmin_exp, 0, nz_exp_half);
+
+[XG_exp_half, ZG_exp_half] = meshgrid(xg_exp, zg_exp_half);
+PG_exp_half = F_exp(XG_exp_half, ZG_exp_half);
+
+% --- Mirror the interpolated grid about Z = 0 ---
+zg_exp_mirror = -fliplr(zg_exp_half(1:end-1));      % ascending, (0, zmax_exp]
+PG_exp_mirror = flipud(PG_exp_half(1:end-1,:));     % matching reflected rows
+
+zg_exp = [zg_exp_half, zg_exp_mirror];              % full Z vector
+PG_exp = [PG_exp_half; PG_exp_mirror];              % full interpolated field
+
 [XG_exp, ZG_exp] = meshgrid(xg_exp, zg_exp);
-PG_exp = F_exp(XG_exp, ZG_exp);
 
 %% ============================================================
 % =============================================================
