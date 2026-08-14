@@ -13,19 +13,19 @@ import os
 
 # Full Inputs
 INPUT_FILES= [
-    "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD00/RD00_004/latest.volcano",  # RD00 Path
+    # "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD00/RD00_004/latest.volcano",  # RD00 Path
     # "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD09/RD09_001/latest.volcano", # RD09 Path
     # "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD17/RD17_022/latest.volcano", # RD17 Path
     # "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD52/RD52_057/latest.volcano" # RD52 Path
-    # "/home/bollerma/LESdata/SSWT/fullCav/injectionTest/J35InjectionTest19/test19M2SSWTInjection_000/latest.volcano" # J35 Injection Path
+    "/home/bollerma/LESdata/SSWT/fullCav/injectionTest/J35InjectionTest19/test19M2SSWTInjection_000/latest.volcano" # J35 Injection Path
 ]
 
 OUTPUT_DIRS = [
-    "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/3DfigOutput/RD00", #RD00 Output
+    # "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/3DfigOutput/RD00", #RD00 Output
     # "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/3DfigOutput/RD09", # RD09 Output
     # "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/3DfigOutput/RD17", # RD17 Output
     # "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/thesisReprobe/RD52", # RD52 Output
-    # "/home/bollerma/LESdata/SSWT/fullCav/injectionTest/3DfigOutput", # J35 Injection Output
+    "/home/bollerma/LESdata/SSWT/fullCav/injectionTest/3DfigOutput", # J35 Injection Output
 
 ]
 
@@ -115,8 +115,8 @@ for i in range(len(INPUT_FILES)):
     # YZ slices shown in the 3D composite view (subset of YZ_SLICE_X).
     # Corresponds to the slices named qPlane / 3qPlane / xL0p3 / 0p86 / xL1p2 / farwall
     # in the trace.  Adjust to match whatever YZ planes you want visible in the 3D render.
-    YZ_SLICE_X_3D = [2.155, 2.194, 2.23]  # x/L ≈ 0.03, 0.45, 1
-    XY_SLICE_Z_3D = [-0.0381] # quarter plane
+    # YZ_SLICE_X_3D = [2.155, 2.194, 2.23]  # x/L ≈ 0.03, 0.45, 1
+    # XY_SLICE_Z_3D = [-0.0381] # quarter plane
 
     IMG_RES = [1920, 1080]
 
@@ -418,18 +418,18 @@ for i in range(len(INPUT_FILES)):
     for s in SCALARS:
 
         # ---- 2-D slices (YZ, XZ, XY) ----
-        for x in YZ_SLICE_X:
-            create_slice([x, 0, 0], [1, 0, 0], "YZ", f"YZ_x{x:+0.5f}", s)
+        # for x in YZ_SLICE_X:
+        #     create_slice([x, 0, 0], [1, 0, 0], "YZ", f"YZ_x{x:+0.5f}", s)
 
-        for y in XZ_SLICE_Y:
-            create_slice([0, y, 0], [0, 1, 0], "XZ", f"XZ_y{y:+0.5f}", s)
+        # for y in XZ_SLICE_Y:
+        #     create_slice([0, y, 0], [0, 1, 0], "XZ", f"XZ_y{y:+0.5f}", s)
 
         for z in XY_SLICE_Z:
             create_slice([0, 0, z], [0, 0, 1], "XY_NEAR", f"XY_near_z{z:+0.5f}", s)
             # create_slice([0, 0, z], [0, 0, 1], "XY_FAR", f"XY_far_z{z:+0.5f}", s)
 
         # ---- 3-D composite view ----
-        make_3D_composite_view(YZ_SLICE_X_3D, XY_SLICE_Z_3D, s, output_fname="3D_composite")
+        # make_3D_composite_view(YZ_SLICE_X_3D, XY_SLICE_Z_3D, s, output_fname="3D_composite")
 
 
     print(f"\nAll slices rendered correctly for {INPUT_FILES[i]}.")
