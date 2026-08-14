@@ -16,14 +16,16 @@ INPUT_FILES= [
     # "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD00/RD00_004/latest.volcano",  # RD00 Path
     # "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD09/RD09_001/latest.volcano", # RD09 Path
     # "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD17/RD17_022/latest.volcano", # RD17 Path
-    "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD52/RD52_057/latest.volcano" # RD52 Path
+    # "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/RD52/RD52_057/latest.volcano" # RD52 Path
+    "/home/bollerma/LESdata/SSWT/fullCav/injectionTest/J35InjectionTest19/test19M2SSWTInjection_000/latest.volcano" # J35 Injection Path
 ]
 
 OUTPUT_DIRS = [
     # "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/3DfigOutput/RD00", #RD00 Output
     # "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/3DfigOutput/RD09", # RD09 Output
     # "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/3DfigOutput/RD17", # RD17 Output
-    "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/thesisReprobe/RD52", # RD52 Output
+    # "/home/bollerma/LESdata/SSWT/fullCav/RDsteps/thesisReprobe/RD52", # RD52 Output
+    "/home/bollerma/LESdata/SSWT/fullCav/injectionTest/3DfigOutput", # J35 Injection Output
 
 ]
 
