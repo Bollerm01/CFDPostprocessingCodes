@@ -40,12 +40,16 @@ variableName = 'velocityxavg';  % Volcano
 
 % Volcano paths (injecting slice cases)
 path  = "E:\Boller CFD\CFD Bulk Slice Data\Shear Thickness Data\All Thickness Data\";
+% files = {'VolcanoCondensedProbeData_RD00s.xlsx',...
+%          'VolcanoCondensedProbeData_RD52s.xlsx',...
+%          'VolcanoCondensedProbeData_J0p35_RD00si.xlsx',...
+%          'VolcanoCondensedProbeData_J0p35_RD52si.xlsx',...
+%          'VolcanoCondensedProbeData_J1p40_RD00si.xlsx',...
+%          'VolcanoCondensedProbeData_J1p40_RD52si.xlsx'};
+
 files = {'VolcanoCondensedProbeData_RD00s.xlsx',...
-         'VolcanoCondensedProbeData_RD52s.xlsx',...
          'VolcanoCondensedProbeData_J0p35_RD00si.xlsx',...
-         'VolcanoCondensedProbeData_J0p35_RD52si.xlsx',...
-         'VolcanoCondensedProbeData_J1p40_RD00si.xlsx',...
-         'VolcanoCondensedProbeData_J1p40_RD52si.xlsx'};
+         'VolcanoCondensedProbeData_J0p35E_RD00.xlsx'};
 
 filePaths = fullfile(path, files);
 
@@ -59,7 +63,7 @@ normSheetName = 'US_MP'; % Volcano
 
 % ---- Figure / export settings (style section) --------------
 mainTitle  = '\textbf{Volcano WMLES}';   % <-- MAIN TITLE (sgtitle)
-outputFile = 'InjectionAxialProfiles_VxNorm_Volcano.jpg';       % <-- OUTPUT FILENAME
+outputFile = 'EthyleneInjectionAxialProfiles_VxNorm_Volcano.jpg';       % <-- OUTPUT FILENAME
 outputDPI  = 300;                                      % <-- EXPORT RESOLUTION (dpi)
 
 %% ------------- PLOT APPEARANCE SETTINGS -------------------
@@ -119,17 +123,18 @@ nAxial  = numel(axialSheets);
 numSheets = nAxial;     % for clarity with your example notation
 
 % Extract geometry labels from filenames (tail after last underscore)
-% geomLabels = cell(nGeom,1);
-% for i = 1:nGeom
-%     [~, fname, ~] = fileparts(filePaths{i});
-%     underscoreIdx = strfind(fname, '_');
-%     if ~isempty(underscoreIdx)
-%         geomLabels{i} = fname(underscoreIdx(end)+1:end);
-%     else
-%         geomLabels{i} = fname;
-%     end
-% end
-geomLabels = {'R/D = 0.0, J = 0.0','R/D = 0.52, J = 0.0','R/D = 0.0, J = 0.35','R/D = 0.52, J = 0.35', 'R/D = 0.0, J = 1.4','R/D = 0.52, J = 1.4'};
+geomLabels = cell(nGeom,1);
+for i = 1:nGeom
+    [~, fname, ~] = fileparts(filePaths{i});
+    underscoreIdx = strfind(fname, '_');
+    if ~isempty(underscoreIdx)
+        geomLabels{i} = fname(underscoreIdx(end)+1:end);
+    else
+        geomLabels{i} = fname;
+    end
+end
+% geomLabels = {'R/D = 0.0, J = 0.0','R/D = 0.52, J = 0.0','R/D = 0.0, J = 0.35','R/D = 0.52, J = 0.35', 'R/D = 0.0, J = 1.4','R/D = 0.52, J = 1.4'};
+% geomLabels = {'R/D = 0.0, J = 0.0','R/D = 0.52, J = 0.0','R/D = 0.0, J = 0.35','R/D = 0.52, J = 0.35', 'R/D = 0.0, J = 1.4','R/D = 0.52, J = 1.4'};
 % geomLabels = {'R/D = 0.0', 'R/D = 0.17', 'R/D = 0.52'};
 legendEntries = geomLabels;  % <-- Legend entries per geometry
 
@@ -311,7 +316,7 @@ set(fig, 'PaperPositionMode', 'auto');  % Ensure proper sizing
 exportgraphics(fig, outputFile, 'Resolution', outputDPI);
 
 % Vector PDF export
-outputFile = 'InjectionAxialProfiles_VxNorm_Volcano.pdf';  % <-- vector PDF
+outputFile = 'EthyleneInjectionAxialProfiles_VxNorm_Volcano.pdf';  % <-- vector PDF
 exportgraphics(fig, outputFile, 'ContentType', 'vector');  % forces vector output
 
 %% ----------------- END OF SCRIPT ---------------------------

@@ -34,11 +34,11 @@ for i in range(len(INPUT_FILES)):
     file_name   = os.path.basename(folder_path)
 
     # Scalars to render
-    SCALARS = ["reynoldsstressyz", "vorticitymag", "vorticitymagavg"]
-    # SCALARS = [
-    #     "velocityx", "velocityxavg", "tke", "pressure", "pressureavg",
-    #     "vorticitymag", "vorticitymagavg"
-    # ]
+    # SCALARS = ["reynoldsstressyz", "vorticitymag", "vorticitymagavg"]
+    SCALARS = [
+        "velocityx", "velocityxavg", "tke", "pressure", "pressureavg",
+        "vorticitymag", "vorticitymagavg", "reynoldsstressyz"
+    ]
 
     # User-defined scalar ranges (min, max) per array name.
     # If a scalar is not listed the script falls back to the data range.

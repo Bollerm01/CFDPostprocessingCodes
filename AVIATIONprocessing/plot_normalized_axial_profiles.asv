@@ -24,7 +24,9 @@ variableName = 'velocityxavg';  % Volcano
 % Data files (geometries)
 % VULCAN PATHS
 % path  = "E:\Boller CFD\CFD Bulk Slice Data\Shear Thickness Data\All Thickness Data\";
-% files = {'VULCANCondensedProbeData_J0p35_RD00.xlsx',...
+% files = {'VULCANCondensedProbeData_RD00.xlsx',...
+%          'VULCANCondensedProbeData_RD52.xlsx',...'
+%          'VULCANCondensedProbeData_J0p35_RD00.xlsx',...
 %          'VULCANCondensedProbeData_J0p35_RD52.xlsx',...
 %          'VULCANCondensedProbeData_J1p40_RD00.xlsx',...
 %          'VULCANCondensedProbeData_J1p40_RD52.xlsx'};
@@ -38,12 +40,16 @@ variableName = 'velocityxavg';  % Volcano
 
 % Volcano paths (injecting slice cases)
 path  = "E:\Boller CFD\CFD Bulk Slice Data\Shear Thickness Data\All Thickness Data\";
-files = {'VolcanoCondensedProbeData_RD00si.xlsx',...
-   
+% files = {'VolcanoCondensedProbeData_RD00s.xlsx',...
+%          'VolcanoCondensedProbeData_RD52s.xlsx',...
+%          'VolcanoCondensedProbeData_J0p35_RD00si.xlsx',...
+%          'VolcanoCondensedProbeData_J0p35_RD52si.xlsx',...
+%          'VolcanoCondensedProbeData_J1p40_RD00si.xlsx',...
+%          'VolcanoCondensedProbeData_J1p40_RD52si.xlsx'};
+
+files = {'VolcanoCondensedProbeData_RD00s.xlsx',...
          'VolcanoCondensedProbeData_J0p35_RD00si.xlsx',...
-         'VolcanoCondensedProbeData_J0p35_RD52si.xlsx',...
-         'VolcanoCondensedProbeData_J1p40_RD00si.xlsx',...
-         'VolcanoCondensedProbeData_J1p40_RD52si.xlsx'};
+         'VolcanoCondensedProbeData_J1p40_RD00si.xlsx'};
 
 filePaths = fullfile(path, files);
 
@@ -56,7 +62,7 @@ normSheetName = 'US_MP'; % Volcano
 % normSheetName = 'xL1'; % VULCAN
 
 % ---- Figure / export settings (style section) --------------
-mainTitle  = '\textbf{VULCAN y/D vs Normalized $$\bar{V_x}$$}';   % <-- MAIN TITLE (sgtitle)
+mainTitle  = '\textbf{Volcano WMLES}';   % <-- MAIN TITLE (sgtitle)
 outputFile = 'InjectionAxialProfiles_VxNorm_Volcano.jpg';       % <-- OUTPUT FILENAME
 outputDPI  = 300;                                      % <-- EXPORT RESOLUTION (dpi)
 
@@ -82,9 +88,11 @@ colorOrder = [
     0.0 0.4470 0.7410;  % blue
     0.8500 0.3250 0.0980;  % orange
     0.8500 0.3250 0.0980;  % orange
+    0.9 0.8 0.05; % gem yellow
+    0.9 0.8 0.05; % gem yellow
 ];
 
-lineStyles = {'-', ':', '-', ':'};
+lineStyles = {'-', ':', '-', ':','-', ':'};
 % lineStyles = {'-', '-', '-'};
 
 % Axis labels (LaTeX interpreter in the plots)
@@ -115,17 +123,18 @@ nAxial  = numel(axialSheets);
 numSheets = nAxial;     % for clarity with your example notation
 
 % Extract geometry labels from filenames (tail after last underscore)
-% geomLabels = cell(nGeom,1);
-% for i = 1:nGeom
-%     [~, fname, ~] = fileparts(filePaths{i});
-%     underscoreIdx = strfind(fname, '_');
-%     if ~isempty(underscoreIdx)
-%         geomLabels{i} = fname(underscoreIdx(end)+1:end);
-%     else
-%         geomLabels{i} = fname;
-%     end
-% end
-geomLabels = {'R/D = 0.0, J = 0.35','R/D = 0.52, J = 0.35', 'R/D = 0.0, J = 1.4','R/D = 0.52, J = 1.4'};
+geomLabels = cell(nGeom,1);
+for i = 1:nGeom
+    [~, fname, ~] = fileparts(filePaths{i});
+    underscoreIdx = strfind(fname, '_');
+    if ~isempty(underscoreIdx)
+        geomLabels{i} = fname(underscoreIdx(end)+1:end);
+    else
+        geomLabels{i} = fname;
+    end
+end
+% geomLabels = {'R/D = 0.0, J = 0.0','R/D = 0.52, J = 0.0','R/D = 0.0, J = 0.35','R/D = 0.52, J = 0.35', 'R/D = 0.0, J = 1.4','R/D = 0.52, J = 1.4'};
+% geomLabels = {'R/D = 0.0, J = 0.0','R/D = 0.52, J = 0.0','R/D = 0.0, J = 0.35','R/D = 0.52, J = 0.35', 'R/D = 0.0, J = 1.4','R/D = 0.52, J = 1.4'};
 % geomLabels = {'R/D = 0.0', 'R/D = 0.17', 'R/D = 0.52'};
 legendEntries = geomLabels;  % <-- Legend entries per geometry
 
@@ -270,7 +279,7 @@ end
 if ~isempty(allLineHandles) && ~isempty(ax(1)) && isvalid(ax(1))
     % 1. Attach the legend natively below the entire grid layout
     lg = legend(ax(1), allLineHandles, legendEntries, ...
-                'Box', 'on', 'NumColumns', 4);            
+                'Box', 'on', 'NumColumns', 3);            
     lg.Layout.Tile = 'south'; % Natively centers perfectly below all 4 plots
     lg.FontSize = legendFontSize;
 end
@@ -298,7 +307,7 @@ ylabel(axShared, yLabelStr, 'FontSize', labelFontSize+1,...
 uistack(axShared, 'bottom');  % keep plots and legend on top
 
 %% ----------------- SHARED MAIN TITLE -----------------------
-% sgtitle(tl, mainTitle, 'FontSize', 20, 'FontWeight', 'bold', 'Interpreter','latex');
+sgtitle(tl, mainTitle, 'FontSize', 20, 'FontWeight', 'bold', 'Interpreter','latex');
 
 %% ----------------- SAVE HIGH-RES FIGURE --------------------
 set(fig, 'PaperPositionMode', 'auto');  % Ensure proper sizing
