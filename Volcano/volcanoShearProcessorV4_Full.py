@@ -77,7 +77,7 @@ for i in range(len(INPUT_FILES)):
         "vorticitymagavg": "Avg. Vorticity Magnitude (1/s)",
 
         # Reynolds Stress
-        "reynoldsstressyz": "reynoldsstressyz",
+        "reynoldsstressyz": "YZ Planar Reynolds Stress (J/kg)",
     }
 
     DEFAULT_COLORMAP_PRESET = "Cool to Warm (Extended)"
