@@ -12,12 +12,14 @@ INPUT_FILES= [
     "/home/bollerma/LESdata/SSWT/sliceCav/J35/RD00si/SSWTM2TestInjectSlice_airOnly_001/latest.volcano", # J35/RD00si Path 3
     "/home/bollerma/LESdata/SSWT/sliceCav/J35/RD52si/SSWTM2RD52InjectSlice_airOnly_000/latest.volcano", # J35/RD52si Path 4
     "/home/bollerma/LESdata/SSWT/sliceCav/J140/RD00si/SSWTM2RD00si_airOnly_001/latest.volcano", # J140/RD00si Path 5 
-    "/home/bollerma/LESdata/SSWT/sliceCav/J140/RD52si/SSWTM2RD52si_airOnly_002/latest.volcano" # J140/RD52si Path 6
+    "/home/bollerma/LESdata/SSWT/sliceCav/J140/RD52si/SSWTM2RD52si_airOnly_002/latest.volcano", # J140/RD52si Path 6 
+    "/home/bollerma/LESdata/SSWT/fullCav/injectionTest/J35InjectionTest19/test19M2SSWTInjection_000/latest.volcano", # J35 Ethylene Injection Path 7
 ]
 
 # --- Input volcano file (Edit prior to executing) ---
-VOLCANO_FILE = INPUT_FILES[1]
-OUTPUT_DIR = f"/home/bollerma/LESdata/SSWT/sliceCav/highResShearOutput/{CASE}"  # Change tailing folder
+VOLCANO_FILE = INPUT_FILES[7]
+# OUTPUT_DIR = f"/home/bollerma/LESdata/SSWT/sliceCav/highResShearOutput/{CASE}"  # Change tailing folder
+OUTPUT_DIR = "/home/bollerma/LESdata/SSWT/fullCav/injectionTest/highResShearOutput" # Folder for ethylene injection results
 
 # Slice Inputs
 # VOLCANO_FILE = "/home/bollerma/LESdata/SSWT/sliceCav/RD00s/SSWTM2Test2s_000/latest.volcano" # RD00 Slice
@@ -60,14 +62,14 @@ X_OVER_L_END   = 1.0
 # z = -0.0381  -> "_z75"
 # z =  0.0     -> "_MP"
 # z = +0.0381  -> "_z25"
-# PLANES = [
-#     ("_z75", -0.0381),
-#     ("_MP",   0.0),
-#     ("_z25",  0.0381),
-# ]
 PLANES = [
-    ("_MP",   0.0)
+    ("_z75", -0.0381),
+    ("_MP",   0.0),
+    ("_z25",  0.0381),
 ]
+# PLANES = [
+#     ("_MP",   0.0)
+# ]
 
 # ============================================================
 # ========== BASELINE LINES TO INTERPOLATE BETWEEN ===========
