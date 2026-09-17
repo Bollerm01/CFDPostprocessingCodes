@@ -45,7 +45,7 @@ csvExp = fullfile(expPath, expFile);
 
 answer = inputdlg( ...
     'Enter barometric pressure (inHg):', ...
-    'Barometric Pressure', 1, {'29.175'});
+    'Barometric Pressure', 1, {'29.24'});
 
 if isempty(answer)
     error('No barometric pressure entered.');
@@ -324,11 +324,12 @@ set(gca, 'FontSize', 12, 'YDir', 'reverse');
 % =============================================================
 %% ============================================================
 
-figure('Color','w','Position',[200 200 1400 600]);
+figure('Color','w','Position',[200 200 750 600]);
 
 % -- CFD subplot --
 subplot(1,2,1);
-contourf(XG, ZG, PG_cfd, 30, 'LineColor','none');
+% contourf(XG, ZG, PG_cfd, 30, 'LineColor','none');
+pcolor(XG, ZG, PG_cfd);
 hold on;
 scatter(sensorXZ(:,1), sensorXZ(:,2), 80, sensorP_CFD_norm, ...
     'filled', 'MarkerEdgeColor','w');
@@ -338,17 +339,22 @@ for k = 1:9
 end
 xlabel('X (m)'); ylabel('Z (m)');
 title('CFD Normalized Pressure');
+shading interp;
 colormap(turbo); 
 cb = colorbar; %clim([0.1 0.2]);
 cb.Label.String = 'P / P_{ref}';
 % clim([0.116 0.1412]);
 % clim([0.13 0.145]);
 set(gca,'FontSize',11,'YDir','reverse');
+% xlim([xmin_exp xmax_exp]);
+% ylim([zmin_exp zmax_exp]);
 % axis tight;
+axis equal tight;
 
 % -- Exp subplot --
 subplot(1,2,2);
-contourf(XG_exp, ZG_exp, PG_exp, 30, 'LineColor','none');
+% contourf(XG_exp, ZG_exp, PG_exp, 30, 'LineColor','none');
+pcolor(XG_exp, ZG_exp, PG_exp)
 hold on;
 scatter(sensorXZ(:,1), sensorXZ(:,2), 80, sensorP_Exp_norm, ...
     'filled', 'MarkerEdgeColor','w');
@@ -359,12 +365,13 @@ end
 xlabel('X (m)'); ylabel('Z (m)');
 title('Experimental Normalized Pressure');
 colormap(turbo); 
+shading interp;
 cb = colorbar; %clim([0.1 0.2]);
 cb.Label.String = 'P / P_{ref}';
 % clim([0.116 0.1412]);
 % clim([0.13 0.145]);
 set(gca,'FontSize',11,'YDir','reverse');
-% axis equal;
+axis equal;
 xlim([xmin_exp xmax_exp]);
 ylim([zmin_exp zmax_exp]);
 

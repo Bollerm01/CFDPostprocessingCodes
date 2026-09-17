@@ -60,11 +60,11 @@ r = 0.3 / 2;
 
 ratio = 0.085 * ((1 - r) / (1 + r*sqrt(s))) * (1 + sqrt(s) - ((1 - sqrt(s)) / (1 + 2.9*(1 + r)/(1 - r))));
 
-delta_vals = ratio .* x_vals;     % delta = (delta/x) * x
+delta_vals = ratio .* x_vals + 0.092 .*D_norm;     % delta = (delta/x) * x
 delta_D    = delta_vals / D_norm; % normalized y (delta/D)
 
 plot(ax, xL_vals, delta_D, 'LineWidth', 2, 'Color', 'k', 'LineStyle', '--',...
-    'DisplayName', sprintf('2D Shear Layer Thy. (s = %.2f, r = %.2f)', s, r));
+    'DisplayName', sprintf('2D Shear Layer Thy. (s = %.2f, r = %.2f, shifted)', s, r));
 % end
 
 legend(ax, 'show', 'Location', 'best');

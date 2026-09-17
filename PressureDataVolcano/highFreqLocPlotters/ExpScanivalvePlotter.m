@@ -278,7 +278,8 @@ set(gca, 'YDir','reverse')
 
 figure('Color','w','Position',[150 150 1100 700]);
 
-contourf(XG,ZG,PG,30,'LineColor','none');
+% contourf(XG,ZG,PG,500,'LineColor','none');
+pcolor(XG,ZG,PG);
 hold on;
 
 scatter(sensorXZ(:,1),sensorXZ(:,2),100,'white','filled');
@@ -294,6 +295,7 @@ ylabel('Spanwise Location Z (m)')
 title('Experimental Cavity Floor Surface Pressure Contours')
 
 axis equal
+shading interp
 xlim([xmin xmax])
 ylim([zmin zmax])
 
