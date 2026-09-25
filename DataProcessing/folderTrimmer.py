@@ -2,10 +2,10 @@
 """
 Select folders -> pick variables -> copy matching files into Output/<folder name>/.
 
-Assumes files are named  <prefix>.<variable>  e.g. "DS_z25.pressureavg",
-where the text after the last dot is the variable name. The variable list is
-built from the FIRST selected folder; every selected folder is then filtered
-using the variables you tick.
+Assumes files are named  <prefix>.<variable>.<ext>  e.g. "DS_MP.machnumber.dat",
+where the middle dot-separated segment is the variable name. The variable
+list is built from the FIRST selected folder; every selected folder is then
+filtered using the variables you tick.
 
 Only the standard library is used (tkinter, shutil, os).
 """
@@ -16,22 +16,30 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 
 OUTPUT_NAME = "Output"
-PREFIX_FILTER = ""  # e.g. "DS_z25" to only consider files starting with that; "" = any prefix
+PREFIX_FILTER = ""  # e.g. "DS_MP" to only consider files starting with that; "" = any prefix
 
 
 # --------------------------------------------------------------------------- #
 # Helpers
 # --------------------------------------------------------------------------- #
 def variable_of(filename):
-    """Return the variable name (text after the last dot), or None."""
+    """
+    Filenames look like  <prefix>.<variable>.<ext>  e.g. "DS_MP.machnumber.dat".
+    Return the variable name (the middle segment), or None if the name doesn't
+    have at least three dot-separated parts.
+    """
     if filename.startswith("."):
         return None
-    base, dot, ext = filename.rpartition(".")
-    if not dot or not base or not ext:
+    parts = filename.split(".")
+    if len(parts) < 3:
         return None
-    if PREFIX_FILTER and not base.startswith(PREFIX_FILTER):
+    prefix = parts[0]
+    variable = parts[-2]
+    if not prefix or not variable:
         return None
-    return ext
+    if PREFIX_FILTER and not prefix.startswith(PREFIX_FILTER):
+        return None
+    return variable
 
 
 def scan_folder(folder):
@@ -190,7 +198,7 @@ def main():
     if not first_scan:
         r = tk.Tk(); r.withdraw()
         messagebox.showerror("No variables found",
-                             f"No '<name>.<variable>' files found in:\n{folders[0]}")
+                             f"No '<prefix>.<variable>.<ext>' files found in:\n{folders[0]}")
         return
 
     keep = pick_variables(folders[0], list(first_scan))
